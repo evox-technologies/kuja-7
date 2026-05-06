@@ -5,12 +5,13 @@ import { ChevronRight } from 'lucide-react'
 import { motion } from 'motion/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { asset } from '@/lib/assets'
 
 export default function Hero() {
   return (
     <section className="relative h-[90vh] min-h-[560px] w-full overflow-hidden">
       <Image
-        src="/images/hero.jpg"
+        src={asset('/images/hero.jpg')}
         alt="Happy couple"
         fill
         priority
