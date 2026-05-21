@@ -39,7 +39,7 @@ export class JwtAuthGuard implements CanActivate {
 
       if (!profile) {
         this.logger.warn(`No profile found for supabaseId=${payload.sub}`);
-        throw new UnauthorizedException('Profile not found');
+        throw new NotFoundException('Profile not found');
       }
       if (!profile.isActive) {
         this.logger.warn(`Profile inactive for supabaseId=${payload.sub}`);
@@ -49,7 +49,7 @@ export class JwtAuthGuard implements CanActivate {
       req.user = profile;
       return true;
     } catch (err: unknown) {
-      if (err instanceof UnauthorizedException) throw err;
+      if (err instanceof UnauthorizedException || err instanceof NotFoundException) throw err;
       const message = err instanceof Error ? err.message : String(err);
       const stack = err instanceof Error ? err.stack : undefined;
       this.logger.error(`Auth error: ${message}`, stack);
