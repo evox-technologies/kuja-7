@@ -17,6 +17,7 @@ export default function GoogleButton({ label = 'Continue with Google' }: GoogleB
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/callback/`,
+        queryParams: { prompt: 'select_account' },
       },
     })
     // browser navigates away — no need to setLoading(false)
