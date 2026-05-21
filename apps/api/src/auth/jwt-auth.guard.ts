@@ -3,6 +3,7 @@ import {
   CanActivate,
   ExecutionContext,
   UnauthorizedException,
+  NotFoundException,
   Logger,
 } from '@nestjs/common';
 import type { Request } from 'express';
