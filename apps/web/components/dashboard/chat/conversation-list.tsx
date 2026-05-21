@@ -186,7 +186,10 @@ export default function ConversationList({ selectedId, onSelect, currentUserId }
       )
 
   return (
-    <div className="w-72 shrink-0 bg-white border-r border-gray-100 flex flex-col h-full">
+    <div className={cn(
+      'shrink-0 bg-white border-r border-gray-100 flex-col h-full',
+      selectedId ? 'hidden md:flex md:w-72' : 'flex w-full md:w-72'
+    )}>
       {/* Header */}
       <div className="p-4 border-b border-gray-100">
         <div className="flex items-center justify-between mb-3">

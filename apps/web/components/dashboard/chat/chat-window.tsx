@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import Image from 'next/image'
-import { Info, Smile, Send, Loader2 } from 'lucide-react'
+import { ArrowLeft, Info, Smile, Send, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { apiFetch } from '@/lib/api'
 import { getSocket } from '@/lib/socket'
@@ -34,6 +34,7 @@ interface Props {
   conversationId: string | null
   other: ChatUser | null
   currentUserId: string
+  onBack: () => void
 }
 
 function timeLabel(iso: string) {
@@ -49,7 +50,7 @@ function avatarColor(id: string) {
   return AVATAR_COLORS[code % AVATAR_COLORS.length]
 }
 
-export default function ChatWindow({ conversationId, other, currentUserId }: Props) {
+export default function ChatWindow({ conversationId, other, currentUserId, onBack }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [hasMore, setHasMore] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -159,7 +160,7 @@ export default function ChatWindow({ conversationId, other, currentUserId }: Pro
 
   if (!conversationId || !other) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-gray-50 gap-3">
+      <div className="hidden md:flex flex-1 flex-col items-center justify-center bg-gray-50 gap-3">
         <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
           <Send className="w-7 h-7 text-gray-300" />
         </div>
@@ -173,6 +174,12 @@ export default function ChatWindow({ conversationId, other, currentUserId }: Pro
       {/* Header */}
       <div className="bg-gray-900 px-5 py-3.5 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
+          <button
+            onClick={onBack}
+            className="md:hidden text-gray-400 hover:text-white transition-colors mr-1"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
           {other.avatarUrl ? (
             <Image
               src={other.avatarUrl}

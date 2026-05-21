@@ -45,6 +45,11 @@ export default function DashboardPage() {
     setSelectedOther(other)
   }
 
+  function handleBack() {
+    setSelectedId(null)
+    setSelectedOther(null)
+  }
+
   if (!currentUser) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -64,6 +69,7 @@ export default function DashboardPage() {
         conversationId={selectedId}
         other={selectedOther}
         currentUserId={currentUser.id}
+        onBack={handleBack}
       />
     </div>
   )
