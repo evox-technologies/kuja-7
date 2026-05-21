@@ -1,0 +1,231 @@
+'use client'
+
+import { useState } from 'react'
+import Link from 'next/link'
+import { AnimatePresence, motion } from 'motion/react'
+import { Eye, EyeOff } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import OtpInput from '@/components/auth/otp-input'
+import SuccessModal from '@/components/auth/success-modal'
+import GoogleButton from '@/components/auth/google-button'
+import { createClient } from '@/lib/supabase/client'
+
+type Step = 'email' | 'otp' | 'password' | 'done'
+
+const slide = {
+  enter: { x: 40, opacity: 0 },
+  center: { x: 0, opacity: 1 },
+  exit: { x: -40, opacity: 0 },
+}
+
+export default function RegisterPage() {
+  const supabase = createClient()
+  const [step, setStep] = useState<Step>('email')
+  const [email, setEmail] = useState('')
+  const [otp, setOtp] = useState<string[]>(Array(6).fill(''))
+  const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [showPass, setShowPass] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  async function sendOtp() {
+    if (!email) return
+    setLoading(true)
+    setError('')
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { shouldCreateUser: true },
+    })
+    setLoading(false)
+    if (error) { setError(error.message); return }
+    setStep('otp')
+  }
+
+  async function verifyOtp() {
+    const token = otp.join('')
+    if (token.length < 6) return
+    setLoading(true)
+    setError('')
+    const { error } = await supabase.auth.verifyOtp({ email, token, type: 'email' })
+    setLoading(false)
+    if (error) { setError(error.message); return }
+    setStep('password')
+  }
+
+  async function finish() {
+    if (password.length < 8) { setError('Password must be at least 8 characters.'); return }
+    if (password !== confirm) { setError('Passwords do not match.'); return }
+    setLoading(true)
+    setError('')
+    const { error } = await supabase.auth.updateUser({ password })
+    setLoading(false)
+    if (error) { setError(error.message); return }
+    setStep('done')
+  }
+
+  return (
+    <>
+      {step === 'done' && <SuccessModal />}
+
+      <div className="mx-auto max-w-md">
+        <AnimatePresence mode="wait">
+          {step === 'email' && (
+            <motion.div
+              key="email"
+              variants={slide}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              className="bg-white rounded-3xl shadow-xl px-8 py-10"
+            >
+              <h1 className="text-2xl font-bold text-gray-900 mb-1">Create Account</h1>
+              <p className="text-sm text-gray-400 mb-6">Find meaningful connections for marriage.</p>
+              <hr className="mb-6 border-gray-100" />
+
+              <label className="block text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">
+                Continue With Email
+              </label>
+              <Input
+                type="email"
+                placeholder="your@email.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && sendOtp()}
+                className="rounded-xl mb-4"
+                autoFocus
+              />
+              {error && <p className="text-xs text-red-500 mb-3">{error}</p>}
+              <Button
+                variant="gradient"
+                className="w-full rounded-full"
+                size="lg"
+                onClick={sendOtp}
+                disabled={loading || !email}
+              >
+                {loading ? 'Sending…' : 'Continue'}
+              </Button>
+              <div className="flex items-center gap-3 my-5">
+                <hr className="flex-1 border-gray-100" />
+                <span className="text-xs text-gray-300">or</span>
+                <hr className="flex-1 border-gray-100" />
+              </div>
+
+              <GoogleButton label="Continue with Google" />
+
+              <p className="text-center text-xs text-gray-400 mt-5">
+                Already have an account?{' '}
+                <Link href="/login" className="text-brand font-semibold hover:underline">
+                  Log in
+                </Link>
+              </p>
+            </motion.div>
+          )}
+
+          {step === 'otp' && (
+            <motion.div
+              key="otp"
+              variants={slide}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              className="bg-white rounded-3xl shadow-xl px-8 py-10"
+            >
+              <h1 className="text-2xl font-bold text-gray-900 mb-1">Verify Email</h1>
+              <p className="text-sm text-gray-400 mb-6">
+                Enter the 6-digit code sent to{' '}
+                <span className="text-brand font-semibold">{email}</span>
+              </p>
+              <hr className="mb-8 border-gray-100" />
+
+              <OtpInput value={otp} onChange={setOtp} disabled={loading} />
+              {error && <p className="text-xs text-red-500 mt-4 text-center">{error}</p>}
+              <Button
+                variant="gradient"
+                className="w-full rounded-full mt-8"
+                size="lg"
+                onClick={verifyOtp}
+                disabled={loading || otp.join('').length < 6}
+              >
+                {loading ? 'Verifying…' : 'Verify'}
+              </Button>
+              <button
+                onClick={() => { setStep('email'); setOtp(Array(6).fill('')); setError('') }}
+                className="w-full text-center text-xs text-gray-400 mt-4 hover:text-gray-600 transition-colors"
+              >
+                ← Change email
+              </button>
+            </motion.div>
+          )}
+
+          {step === 'password' && (
+            <motion.div
+              key="password"
+              variants={slide}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              className="bg-white rounded-3xl shadow-xl px-8 py-10"
+            >
+              <h1 className="text-2xl font-bold text-gray-900 mb-1">Set Log In Password</h1>
+              <p className="text-sm text-gray-400 mb-6">Choose a secure password for your account.</p>
+              <hr className="mb-6 border-gray-100" />
+
+              <div className="relative mb-4">
+                <Input
+                  type={showPass ? 'text' : 'password'}
+                  placeholder="Password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  className="rounded-xl pr-11"
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPass(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+
+              <div className="relative mb-4">
+                <Input
+                  type={showConfirm ? 'text' : 'password'}
+                  placeholder="Confirm password"
+                  value={confirm}
+                  onChange={e => setConfirm(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && finish()}
+                  className="rounded-xl pr-11"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+
+              {error && <p className="text-xs text-red-500 mb-3">{error}</p>}
+              <Button
+                variant="gradient"
+                className="w-full rounded-full"
+                size="lg"
+                onClick={finish}
+                disabled={loading || !password || !confirm}
+              >
+                {loading ? 'Creating…' : 'Create Account'}
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </>
+  )
+}

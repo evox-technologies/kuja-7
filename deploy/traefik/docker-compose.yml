@@ -1,0 +1,23 @@
+# Run once on the droplet: docker compose up -d
+# This stays running permanently and routes all apps.
+
+services:
+  traefik:
+    image: traefik:v3.3
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+      - traefik-certs:/letsencrypt
+    networks:
+      - traefik-public
+
+volumes:
+  traefik-certs:
+
+networks:
+  traefik-public:
+    name: traefik-public

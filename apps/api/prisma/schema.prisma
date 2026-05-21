@@ -1,0 +1,113 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+  MODERATOR
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum InterestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model Profile {
+  id          String   @id @default(uuid())
+  supabaseId  String   @unique
+  email       String   @unique
+  role        Role     @default(USER)
+  firstName   String
+  lastName    String
+  gender      Gender
+  dateOfBirth DateTime
+  religion    String?
+  profession  String?
+  location    String?
+  bio         String?
+  avatarUrl   String?
+  isVerified  Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sentInterests     Interest[]     @relation("SentInterests")
+  receivedInterests Interest[]     @relation("ReceivedInterests")
+  shortlisted       Shortlist[]    @relation("ShortlistedBy")
+  shortlistedBy     Shortlist[]    @relation("ShortlistedUser")
+  sentMessages      Message[]      @relation("SentMessages")
+  conversations1    Conversation[] @relation("Participant1")
+  conversations2    Conversation[] @relation("Participant2")
+
+  @@map("profiles")
+}
+
+model Interest {
+  id         String         @id @default(uuid())
+  senderId   String
+  receiverId String
+  status     InterestStatus @default(PENDING)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  sender   Profile @relation("SentInterests", fields: [senderId], references: [id])
+  receiver Profile @relation("ReceivedInterests", fields: [receiverId], references: [id])
+
+  @@unique([senderId, receiverId])
+  @@map("interests")
+}
+
+model Shortlist {
+  id        String   @id @default(uuid())
+  userId    String
+  targetId  String
+  createdAt DateTime @default(now())
+
+  user   Profile @relation("ShortlistedBy", fields: [userId], references: [id])
+  target Profile @relation("ShortlistedUser", fields: [targetId], references: [id])
+
+  @@unique([userId, targetId])
+  @@map("shortlists")
+}
+
+model Conversation {
+  id             String    @id @default(uuid())
+  participant1Id String
+  participant2Id String
+  lastMessageAt  DateTime?
+  createdAt      DateTime  @default(now())
+
+  participant1 Profile   @relation("Participant1", fields: [participant1Id], references: [id])
+  participant2 Profile   @relation("Participant2", fields: [participant2Id], references: [id])
+  messages     Message[]
+
+  @@unique([participant1Id, participant2Id])
+  @@map("conversations")
+}
+
+model Message {
+  id             String    @id @default(uuid())
+  conversationId String
+  senderId       String
+  content        String
+  readAt         DateTime?
+  createdAt      DateTime  @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+  sender       Profile      @relation("SentMessages", fields: [senderId], references: [id])
+
+  @@map("messages")
+}

@@ -12,6 +12,7 @@ const buttonVariants = cva(
         outline: 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50',
         ghost: 'hover:bg-gray-100 text-gray-700',
         dark: 'bg-gray-900 text-white hover:bg-gray-800',
+        gradient: 'bg-gradient-to-r from-orange-500 to-pink-600 text-white hover:opacity-90 active:opacity-80',
       },
       size: {
         default: 'h-10 px-5 py-2',

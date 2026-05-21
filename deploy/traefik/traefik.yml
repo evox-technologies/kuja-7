@@ -1,0 +1,33 @@
+# Traefik static configuration
+# Edit ACME email below before deploying.
+
+api:
+  dashboard: false   # flip to true + add basic auth label if you want the UI
+
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+  websecure:
+    address: ":443"
+
+providers:
+  docker:
+    exposedByDefault: false  # containers must opt-in with traefik.enable=true
+    network: traefik-public
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: info@evoxtechnologies.com
+      storage: /letsencrypt/acme.json
+      httpChallenge:
+        entryPoint: web
+
+log:
+  level: INFO
