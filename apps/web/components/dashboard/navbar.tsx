@@ -1,10 +1,33 @@
 'use client'
 
 import Link from 'next/link'
-import { Bell, Crown, Users } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
+import { Bell, Crown, LogOut, Users } from 'lucide-react'
 import LanguageToggle from '@/components/layout/language-toggle'
+import { createClient } from '@/lib/supabase/client'
 
 export default function DashboardNavbar() {
+  const router = useRouter()
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  async function handleLogout() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
+
   return (
     <nav className="bg-white border-b border-gray-100 shrink-0">
       <div className="px-6 h-16 flex items-center justify-between">
@@ -27,8 +50,24 @@ export default function DashboardNavbar() {
             <Bell className="w-5 h-5 text-gray-400" />
           </button>
 
-          {/* Avatar */}
-          <div className="w-9 h-9 rounded-full bg-gray-200 ring-2 ring-gray-100 overflow-hidden cursor-pointer" />
+          {/* Avatar + dropdown */}
+          <div ref={ref} className="relative">
+            <div
+              onClick={() => setOpen(v => !v)}
+              className="w-9 h-9 rounded-full bg-gray-200 ring-2 ring-gray-100 overflow-hidden cursor-pointer"
+            />
+            {open && (
+              <div className="absolute right-0 mt-2 w-36 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Log out
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* Upgrade */}
           <button className="flex items-center gap-1.5 bg-gradient-to-r from-orange-500 to-pink-600 text-white text-sm font-semibold px-4 py-2 rounded-full hover:opacity-90 transition-opacity">
