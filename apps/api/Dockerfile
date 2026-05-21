@@ -29,5 +29,6 @@ RUN npx prisma generate
 COPY --from=builder /app/dist ./dist
 
 ENV NODE_ENV=production
+ENV NODE_OPTIONS=--dns-result-order=ipv4first
 EXPOSE 3001
 CMD ["node", "dist/main"]
