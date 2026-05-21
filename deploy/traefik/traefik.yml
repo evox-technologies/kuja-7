@@ -17,9 +17,9 @@ entryPoints:
     address: ":443"
 
 providers:
-  docker:
-    exposedByDefault: false  # containers must opt-in with traefik.enable=true
-    network: traefik-public
+  file:
+    directory: /etc/traefik/conf.d
+    watch: true
 
 certificatesResolvers:
   letsencrypt:
