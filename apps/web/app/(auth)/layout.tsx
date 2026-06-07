@@ -1,12 +1,17 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
 import { ChevronLeft } from 'lucide-react'
 import LanguageToggle from '@/components/layout/language-toggle'
 import { asset } from '@/lib/assets'
+import { useI18n } from '@/lib/i18n/use-i18n'
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
+  const { messages, t } = useI18n()
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div data-scale-zone="auth" className="min-h-screen flex flex-col">
       <nav className="relative z-10 bg-gray-950">
         <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -14,13 +19,13 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               <ChevronLeft className="w-5 h-5" />
             </Link>
             <Link href="/" className="text-xl font-bold tracking-widest text-white">
-              LOGO
+              {messages.nav.brand}
             </Link>
           </div>
           <div className="flex items-center gap-4">
             <LanguageToggle dark />
             <Link href="/login" className="text-sm text-white/60 hover:text-white transition-colors">
-              Log In
+              {t('nav.login')}
             </Link>
           </div>
         </div>

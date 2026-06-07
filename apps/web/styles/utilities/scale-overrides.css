@@ -1,0 +1,9 @@
+/* Counter-scale a subtree back to 1:1 (e.g. tooltips that need crisp text) */
+html.supports-zoom [data-scale-lock] {
+  zoom: calc(1 / var(--scale-factor));
+}
+
+html.no-zoom [data-scale-lock] {
+  transform: scale(calc(1 / var(--scale-factor)));
+  transform-origin: top left;
+}

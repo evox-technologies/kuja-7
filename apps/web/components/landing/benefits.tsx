@@ -14,54 +14,19 @@ import {
   Headphones,
 } from 'lucide-react'
 import { motion } from 'motion/react'
+import { useI18n } from '@/lib/i18n/use-i18n'
 
-const BENEFITS = [
-  {
-    icon: Search,
-    title: 'Advanced Search & Filters',
-    description: 'Find the right partner using filters like age, religion, profession, location, and more.',
-  },
-  {
-    icon: MessageCircle,
-    title: 'Private Chat',
-    description: 'Start secure conversations only when both users show interest.',
-  },
-  {
-    icon: ShieldCheck,
-    title: 'Safe & Secure',
-    description: 'Every profile is manually verified by our team to ensure your safety and privacy at all times.',
-  },
-  {
-    icon: Bell,
-    title: 'Real-Time Notifications',
-    description: 'Get instant alerts for new matches, messages, and profile activity.',
-  },
-  {
-    icon: Heart,
-    title: 'Express Interest & Shortlist',
-    description: 'Like profiles, send interests, and save your favorites to revisit anytime.',
-  },
-  {
-    icon: Users,
-    title: 'Trusted by Thousands',
-    description: 'Over 50,000 Sri Lankans have found their meaningful connections through Kuja7.lk.',
-  },
-  {
-    icon: Sparkles,
-    title: 'Matches Made for You',
-    description: 'Get highly relevant matches based on your preferences, lifestyle, and values.',
-  },
-  {
-    icon: MousePointerClick,
-    title: 'Simple to Use',
-    description: 'Intuitive interface designed for all users. Easily browse, search, and connect.',
-  },
-  {
-    icon: Headphones,
-    title: 'Customer Service',
-    description: 'Customer center helps you to find your matching partner today.',
-  },
-]
+const BENEFIT_ICONS = [
+  Search,
+  MessageCircle,
+  ShieldCheck,
+  Bell,
+  Heart,
+  Users,
+  Sparkles,
+  MousePointerClick,
+  Headphones,
+] as const
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -69,6 +34,8 @@ const fadeUp = {
 }
 
 export default function Benefits() {
+  const { messages } = useI18n()
+
   return (
     <section>
       {/* Background image */}
@@ -92,7 +59,7 @@ export default function Benefits() {
         >
           <div className="flex items-center gap-2 bg-white/95 rounded-full px-4 py-2 shadow-lg text-sm font-semibold text-brand">
             <div className="w-2 h-2 rounded-full bg-brand animate-pulse" />
-            70+ Members
+            {messages.benefits.statsMembers}
           </div>
         </motion.div>
       </div>
@@ -111,25 +78,27 @@ export default function Benefits() {
             transition={{ duration: 0.5 }}
             className="text-3xl font-bold text-gray-900 mb-2"
           >
-            Our Benefits
+            {messages.benefits.title}
           </motion.h2>
           <motion.p
             variants={fadeUp}
             transition={{ duration: 0.5 }}
             className="text-gray-400"
           >
-            Everything you need to find a meaningful, lifelong connection.
+            {messages.benefits.subtitle}
           </motion.p>
         </motion.div>
 
         <motion.div
-          className="mx-auto max-w-4xl grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10"
+          className="mx-auto max-w-4xl grid grid-cols-3 gap-10"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: '-40px' }}
           transition={{ staggerChildren: 0.08 }}
         >
-          {BENEFITS.map(({ icon: Icon, title, description }) => (
+          {messages.benefits.items.map(({ title, description }, idx) => {
+            const Icon = BENEFIT_ICONS[idx] ?? Search
+            return (
             <motion.div
               key={title}
               variants={fadeUp}
@@ -147,7 +116,8 @@ export default function Benefits() {
               <h3 className="font-semibold text-gray-900 text-sm mb-1.5">{title}</h3>
               <p className="text-xs text-gray-400 leading-relaxed">{description}</p>
             </motion.div>
-          ))}
+            )
+          })}
         </motion.div>
       </div>
     </section>

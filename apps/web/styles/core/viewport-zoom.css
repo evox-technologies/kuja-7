@@ -1,0 +1,9 @@
+html.supports-zoom {
+  min-width: calc(var(--design-width) * 1px);
+  zoom: var(--scale-factor);
+  overflow-x: hidden;
+}
+
+html.supports-zoom body {
+  min-width: calc(var(--design-width) * 1px);
+}

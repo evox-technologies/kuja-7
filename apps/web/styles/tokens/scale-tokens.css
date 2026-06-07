@@ -1,0 +1,4 @@
+:root {
+  --design-width: 1280;
+  --scale-factor: min(1, 100vw / (var(--design-width) * 1px));
+}

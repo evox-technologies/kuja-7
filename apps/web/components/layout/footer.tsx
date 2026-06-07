@@ -1,22 +1,23 @@
+'use client'
+
 import Link from 'next/link'
 import { Globe, Camera, Phone } from 'lucide-react'
-
-const QUICK_LINKS = ['Search Profiles', 'Membership Plans', 'Safety Tips', 'Success Stories']
-const SUPPORT_LINKS = ['Contact Us', 'FAQs', 'Terms of Service', 'Privacy Policy']
+import { useI18n } from '@/lib/i18n/use-i18n'
 
 export default function Footer() {
+  const { messages } = useI18n()
+
   return (
     <footer className="bg-gray-950 text-gray-400">
-      <div className="mx-auto max-w-6xl px-6 py-14 grid grid-cols-1 md:grid-cols-4 gap-10">
+      <div className="mx-auto max-w-6xl px-6 py-14 grid grid-cols-4 gap-10">
         {/* Brand */}
         <div>
           <div className="flex items-center gap-2 mb-3">
             <div className="w-5 h-5 bg-brand rounded-sm" />
-            <span className="text-white font-bold text-lg">Kuja7.lk</span>
+            <span className="text-white font-bold text-lg">{messages.footer.brand}</span>
           </div>
           <p className="text-xs leading-relaxed mb-5">
-            Sri Lanka&apos;s leading matrimonial platform, dedicated to bringing hearts together
-            across the island and the globe.
+            {messages.footer.blurb}
           </p>
           <div className="flex gap-3">
             {[Globe, Camera, Phone].map((Icon, i) => (
@@ -33,10 +34,10 @@ export default function Footer() {
         {/* Quick Links */}
         <div>
           <h4 className="text-white font-semibold text-xs uppercase tracking-wider mb-4">
-            Quick Links
+            {messages.footer.quickLinksTitle}
           </h4>
           <ul className="space-y-2.5">
-            {QUICK_LINKS.map((label) => (
+            {messages.footer.quickLinks.map((label) => (
               <li key={label}>
                 <Link href="#" className="text-sm hover:text-white transition-colors">
                   {label}
@@ -49,10 +50,10 @@ export default function Footer() {
         {/* Help & Support */}
         <div>
           <h4 className="text-white font-semibold text-xs uppercase tracking-wider mb-4">
-            Help &amp; Support
+            {messages.footer.supportLinksTitle}
           </h4>
           <ul className="space-y-2.5">
-            {SUPPORT_LINKS.map((label) => (
+            {messages.footer.supportLinks.map((label) => (
               <li key={label}>
                 <Link href="#" className="text-sm hover:text-white transition-colors">
                   {label}

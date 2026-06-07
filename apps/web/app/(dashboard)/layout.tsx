@@ -3,7 +3,7 @@ import DashboardTabs from '@/components/dashboard/tabs'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
+    <div data-scale-zone="dashboard" className="h-screen flex flex-col bg-gray-50 overflow-hidden">
       <DashboardNavbar />
       <DashboardTabs />
       {/* flex-1 + overflow-hidden lets each page control its own scroll */}

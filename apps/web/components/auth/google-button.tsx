@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useI18n } from '@/lib/i18n/use-i18n'
 
 interface GoogleButtonProps {
   label?: string
@@ -10,6 +11,7 @@ interface GoogleButtonProps {
 export default function GoogleButton({ label = 'Continue with Google' }: GoogleButtonProps) {
   const [loading, setLoading] = useState(false)
   const supabase = createClient()
+  const { t } = useI18n()
 
   async function signInWithGoogle() {
     setLoading(true)
@@ -36,7 +38,7 @@ export default function GoogleButton({ label = 'Continue with Google' }: GoogleB
         <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332Z" fill="#FBBC05"/>
         <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58Z" fill="#EA4335"/>
       </svg>
-      {loading ? 'Redirecting…' : label}
+      {loading ? t('auth.google.redirecting') : label}
     </button>
   )
 }
