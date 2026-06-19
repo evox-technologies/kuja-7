@@ -1,28 +1,13 @@
-import {
-  IsString,
-  IsEmail,
-  IsEnum,
-  IsDateString,
-  IsOptional,
-  IsArray,
-} from 'class-validator';
-import { Gender } from '@prisma/client';
+import { IsString, IsOptional, IsArray } from 'class-validator';
 
-export class CreateProfileDto {
+export class UpdateProfileDto {
   @IsString()
-  firstName: string;
+  @IsOptional()
+  firstName?: string;
 
   @IsString()
-  lastName: string;
-
-  @IsEmail()
-  email: string;
-
-  @IsEnum(Gender)
-  gender: Gender;
-
-  @IsDateString()
-  dateOfBirth: string;
+  @IsOptional()
+  lastName?: string;
 
   @IsString()
   @IsOptional()
@@ -44,7 +29,6 @@ export class CreateProfileDto {
   @IsOptional()
   avatarUrl?: string;
 
-  // Extended personal info
   @IsString()
   @IsOptional()
   nationality?: string;
@@ -65,7 +49,6 @@ export class CreateProfileDto {
   @IsOptional()
   civilStatus?: string;
 
-  // Residency
   @IsString()
   @IsOptional()
   country?: string;
@@ -78,7 +61,6 @@ export class CreateProfileDto {
   @IsOptional()
   stateDistrict?: string;
 
-  // Education & habits
   @IsString()
   @IsOptional()
   educationLevel?: string;
@@ -95,7 +77,6 @@ export class CreateProfileDto {
   @IsOptional()
   foodPreference?: string;
 
-  // Horoscope
   @IsString()
   @IsOptional()
   kujaNumber?: string;
@@ -104,7 +85,6 @@ export class CreateProfileDto {
   @IsOptional()
   birthDay?: string;
 
-  // Private contact
   @IsString()
   @IsOptional()
   mobileNumber?: string;

@@ -25,6 +25,12 @@ enum InterestStatus {
   REJECTED
 }
 
+enum ContactRequestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
 model Profile {
   id          String   @id @default(uuid())
   supabaseId  String   @unique
@@ -44,6 +50,34 @@ model Profile {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  // Extended personal info
+  nationality   String?
+  height        String?
+  ethnicity     String?
+  caste         String?
+  civilStatus   String?
+
+  // Structured residency
+  country       String?
+  city          String?
+  stateDistrict String?
+
+  // Education & habits
+  educationLevel String?
+  drinking       String?
+  smoking        String?
+  foodPreference String?
+
+  // Horoscope
+  kujaNumber String?
+  birthDay   String?
+
+  // Private contact (only visible to mutual matches who accepted contact request)
+  mobileNumber   String?
+  whatsappNumber String?
+  address        String?
+  images         String[]
+
   sentInterests     Interest[]     @relation("SentInterests")
   receivedInterests Interest[]     @relation("ReceivedInterests")
   shortlisted       Shortlist[]    @relation("ShortlistedBy")
@@ -51,6 +85,9 @@ model Profile {
   sentMessages      Message[]      @relation("SentMessages")
   conversations1    Conversation[] @relation("Participant1")
   conversations2    Conversation[] @relation("Participant2")
+
+  contactRequestsSent     ContactRequest[] @relation("ContactRequestsSent")
+  contactRequestsReceived ContactRequest[] @relation("ContactRequestsReceived")
 
   @@map("profiles")
 }
@@ -110,4 +147,19 @@ model Message {
   sender       Profile      @relation("SentMessages", fields: [senderId], references: [id])
 
   @@map("messages")
+}
+
+model ContactRequest {
+  id          String               @id @default(uuid())
+  requesterId String
+  targetId    String
+  status      ContactRequestStatus @default(PENDING)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  requester Profile @relation("ContactRequestsSent", fields: [requesterId], references: [id])
+  target    Profile @relation("ContactRequestsReceived", fields: [targetId], references: [id])
+
+  @@unique([requesterId, targetId])
+  @@map("contact_requests")
 }

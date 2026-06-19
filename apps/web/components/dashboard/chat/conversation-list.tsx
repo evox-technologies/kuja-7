@@ -38,6 +38,7 @@ interface Props {
   selectedId: string | null
   onSelect: (id: string, other: ChatUser) => void
   currentUserId: string
+  autoSelectId?: string
 }
 
 function initials(user: ChatUser) {
@@ -69,7 +70,7 @@ function timeLabel(iso: string) {
   return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })
 }
 
-export default function ConversationList({ selectedId, onSelect, currentUserId }: Props) {
+export default function ConversationList({ selectedId, onSelect, currentUserId, autoSelectId }: Props) {
   const [conversations, setConversations] = useState<ConversationItem[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -89,6 +90,13 @@ export default function ConversationList({ selectedId, onSelect, currentUserId }
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [])
+
+  // Auto-select a specific conversation when navigated via ?c= param
+  useEffect(() => {
+    if (!autoSelectId || loading) return
+    const conv = conversations.find(c => c.id === autoSelectId)
+    if (conv) onSelect(conv.id, conv.other)
+  }, [autoSelectId, conversations, loading, onSelect])
 
   // Socket: update last message preview on new_message
   useEffect(() => {
@@ -186,7 +194,7 @@ export default function ConversationList({ selectedId, onSelect, currentUserId }
       )
 
   return (
-    <div className="shrink-0 bg-white border-r border-gray-100 flex flex-col w-72 h-full">
+    <div className="shrink-0 bg-white border-r border-gray-100 flex flex-col w-full md:w-72 h-full">
       {/* Header */}
       <div className="p-4 border-b border-gray-100">
         <div className="flex items-center justify-between mb-3">

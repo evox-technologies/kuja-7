@@ -34,6 +34,7 @@ interface Props {
   conversationId: string | null
   other: ChatUser | null
   currentUserId: string
+  onBack?: () => void
 }
 
 function timeLabel(iso: string) {
@@ -49,7 +50,7 @@ function avatarColor(id: string) {
   return AVATAR_COLORS[code % AVATAR_COLORS.length]
 }
 
-export default function ChatWindow({ conversationId, other, currentUserId }: Props) {
+export default function ChatWindow({ conversationId, other, currentUserId, onBack }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [hasMore, setHasMore] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -171,8 +172,13 @@ export default function ChatWindow({ conversationId, other, currentUserId }: Pro
   return (
     <div className="flex-1 flex flex-col h-full">
       {/* Header */}
-      <div className="bg-gray-900 px-5 py-3.5 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-3">
+      <div className="bg-gray-900 px-4 sm:px-5 py-3.5 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3">
+          {onBack && (
+            <button onClick={onBack} className="text-gray-400 hover:text-white transition-colors mr-1 md:hidden">
+              ←
+            </button>
+          )}
           {other.avatarUrl ? (
             <Image
               src={other.avatarUrl}
@@ -191,7 +197,7 @@ export default function ChatWindow({ conversationId, other, currentUserId }: Pro
               {other.firstName[0]}{other.lastName[0]}
             </div>
           )}
-          <span className="text-white font-semibold">
+          <span className="text-white font-semibold text-sm sm:text-base">
             {other.firstName} {other.lastName}
           </span>
         </div>
