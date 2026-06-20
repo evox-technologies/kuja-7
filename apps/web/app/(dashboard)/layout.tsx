@@ -6,8 +6,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div data-scale-zone="dashboard" className="h-screen flex flex-col bg-gray-50 overflow-hidden">
       <DashboardNavbar />
       <DashboardTabs />
-      {/* flex-1 + overflow-hidden lets each page control its own scroll */}
-      <main className="flex-1 overflow-hidden">
+      <main className="flex-1 overflow-hidden pb-14 md:pb-0">
         {children}
       </main>
     </div>

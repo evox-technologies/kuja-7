@@ -20,10 +20,14 @@ export function useI18n() {
 
   const messages = useMemo<Messages>(() => MESSAGES_BY_LOCALE[locale], [locale])
 
-  function t(key: string): string {
+  function t(key: string, vars?: Record<string, string>): string {
     const value = getByPath(messages, key)
-    if (typeof value === 'string') return value
-    return key
+    if (typeof value !== 'string') return key
+    if (!vars) return value
+    return Object.entries(vars).reduce(
+      (str, [k, v]) => str.replaceAll(`{{${k}}}`, v),
+      value,
+    )
   }
 
   return { locale, setLocale, messages, t }

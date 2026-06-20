@@ -9,7 +9,7 @@ export default function Footer() {
 
   return (
     <footer className="bg-gray-950 text-gray-400">
-      <div className="mx-auto max-w-6xl px-6 py-14 grid grid-cols-4 gap-10">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-10">
         {/* Brand */}
         <div>
           <div className="flex items-center gap-2 mb-3">
@@ -66,7 +66,7 @@ export default function Footer() {
         {/* App Download */}
         <div>
           <h4 className="text-white font-semibold text-xs uppercase tracking-wider mb-4">
-            App Download
+            {messages.footer.appDownloadTitle}
           </h4>
           <div className="space-y-2 opacity-40">
             {['Google Play', 'App Store'].map((label) => (
@@ -82,7 +82,7 @@ export default function Footer() {
       </div>
 
       <div className="border-t border-gray-800 py-5 text-center text-xs text-gray-600">
-        © 2026 Kuja7.lk. All rights reserved.
+        {messages.footer.copyright}
       </div>
     </footer>
   )

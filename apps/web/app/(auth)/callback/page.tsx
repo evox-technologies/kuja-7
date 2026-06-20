@@ -23,7 +23,7 @@ function CallbackHandler() {
       if (error) console.error('[auth/callback]', error.message)
 
       if (session) {
-        router.replace('/dashboard')
+        router.replace('/dashboard/home')
       } else {
         router.replace('/login?error=oauth_failed')
       }

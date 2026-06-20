@@ -2,244 +2,105 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { AnimatePresence, motion } from 'motion/react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { createClient } from '@/lib/supabase/client'
-import { apiFetch } from '@/lib/api'
+import ProfileLayout, { ProfileFooterButtons } from '@/components/profile/profile-layout'
+import BasicDetailsForm from '@/components/profile/basic-details-form'
+import HoroscopeForm from '@/components/profile/horoscope-form'
+import PrivateDataForm from '@/components/profile/private-data-form'
+import ReviewProfile from '@/components/profile/review-profile'
+import { EMPTY_PROFILE_DRAFT, type ProfileDraft } from '@/lib/profile/types'
+import {
+  getWizardDraft,
+  saveWizardDraft,
+  clearWizardDraft,
+  saveProfileDraft,
+  useRegisterUser,
+} from '@/lib/hooks/use-register-user'
+import { useI18n } from '@/lib/i18n/use-i18n'
 
-type Step = 'basics' | 'details'
-
-const slide = {
-  enter: { x: 40, opacity: 0 },
-  center: { x: 0, opacity: 1 },
-  exit: { x: -40, opacity: 0 },
-}
+type Step = 1 | 2 | 3 | 'review'
 
 export default function OnboardingPage() {
   const router = useRouter()
-  const [step, setStep] = useState<Step>('basics')
-  const [loading, setLoading] = useState(false)
+  const { t } = useI18n()
+  const { registered, setRegisterUser } = useRegisterUser()
+  const [step, setStep] = useState<Step>(1)
+  const [data, setData] = useState<ProfileDraft>(EMPTY_PROFILE_DRAFT)
   const [error, setError] = useState('')
 
-  const [email, setEmail] = useState('')
-  const [firstName, setFirstName] = useState('')
-  const [lastName, setLastName] = useState('')
-  const [gender, setGender] = useState<'MALE' | 'FEMALE' | ''>('')
-  const [dateOfBirth, setDateOfBirth] = useState('')
-
-  const [religion, setReligion] = useState('')
-  const [profession, setProfession] = useState('')
-  const [location, setLocation] = useState('')
+  useEffect(() => {
+    const draft = getWizardDraft<ProfileDraft>()
+    if (draft) setData(draft)
+  }, [])
 
   useEffect(() => {
-    createClient()
-      .auth.getSession()
-      .then(({ data: { session } }) => {
-        if (!session) { router.replace('/login'); return }
-        setEmail(session.user.email ?? '')
-      })
-  }, [router])
-
-  async function submitBasics() {
-    if (!firstName || !lastName || !gender || !dateOfBirth) {
-      setError('Please fill in all required fields.')
-      return
+    if (registered === true) {
+      router.replace('/dashboard/home')
     }
+  }, [registered, router])
+
+  useEffect(() => {
+    saveWizardDraft(data)
+  }, [data])
+
+  function goTo(s: Step) {
     setError('')
-    setStep('details')
+    setStep(s)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  async function submitProfile() {
-    setLoading(true)
-    setError('')
-    try {
-      await apiFetch('/auth/profile', {
-        method: 'POST',
-        body: JSON.stringify({
-          firstName,
-          lastName,
-          email,
-          gender,
-          dateOfBirth,
-          ...(religion ? { religion } : {}),
-          ...(profession ? { profession } : {}),
-          ...(location ? { location } : {}),
-        }),
-      })
-      router.replace('/dashboard')
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong.')
-    } finally {
-      setLoading(false)
+  function validateStep1() {
+    if (!data.firstName || !data.lastName || !data.gender) {
+      setError(t('profile.requiredFields'))
+      return false
     }
+    return true
+  }
+
+  function handleConfirm() {
+    saveProfileDraft(data)
+    clearWizardDraft()
+    setRegisterUser(true)
+    router.replace('/dashboard/home')
+  }
+
+  if (registered === null || registered === true) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-6 h-6 rounded-full border-2 border-brand border-t-transparent animate-spin" />
+      </div>
+    )
   }
 
   return (
-    <div className="mx-auto max-w-md">
-      <AnimatePresence mode="wait">
-        {step === 'basics' && (
-          <motion.div
-            key="basics"
-            variants={slide}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="bg-white rounded-3xl shadow-xl px-8 py-10"
-          >
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">Complete Your Profile</h1>
-            <p className="text-sm text-gray-400 mb-6">Tell us a little about yourself to get started.</p>
-            <hr className="mb-6 border-gray-100" />
-
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-1">
-                    First Name <span className="text-red-400">*</span>
-                  </label>
-                  <Input
-                    placeholder="First name"
-                    value={firstName}
-                    onChange={e => setFirstName(e.target.value)}
-                    className="rounded-xl"
-                    autoFocus
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-1">
-                    Last Name <span className="text-red-400">*</span>
-                  </label>
-                  <Input
-                    placeholder="Last name"
-                    value={lastName}
-                    onChange={e => setLastName(e.target.value)}
-                    className="rounded-xl"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-1">
-                  Gender <span className="text-red-400">*</span>
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  {(['MALE', 'FEMALE'] as const).map(g => (
-                    <button
-                      key={g}
-                      type="button"
-                      onClick={() => setGender(g)}
-                      className={`py-2.5 rounded-xl border text-sm font-medium transition-colors ${
-                        gender === g
-                          ? 'border-brand bg-brand/5 text-brand'
-                          : 'border-gray-200 text-gray-500 hover:border-gray-300'
-                      }`}
-                    >
-                      {g.charAt(0) + g.slice(1).toLowerCase()}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-1">
-                  Date of Birth <span className="text-red-400">*</span>
-                </label>
-                <Input
-                  type="date"
-                  value={dateOfBirth}
-                  onChange={e => setDateOfBirth(e.target.value)}
-                  className="rounded-xl"
-                  max={new Date(Date.now() - 18 * 365.25 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
-                />
-              </div>
-            </div>
-
-            {error && <p className="text-xs text-red-500 mt-4">{error}</p>}
-
-            <Button
-              variant="gradient"
-              className="w-full rounded-full mt-6"
-              size="lg"
-              onClick={submitBasics}
-              disabled={!firstName || !lastName || !gender || !dateOfBirth}
-            >
-              Continue
-            </Button>
-          </motion.div>
-        )}
-
-        {step === 'details' && (
-          <motion.div
-            key="details"
-            variants={slide}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="bg-white rounded-3xl shadow-xl px-8 py-10"
-          >
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">A Bit More About You</h1>
-            <p className="text-sm text-gray-400 mb-6">These help others find meaningful matches. All optional.</p>
-            <hr className="mb-6 border-gray-100" />
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-1">
-                  Religion
-                </label>
-                <Input
-                  placeholder="e.g. Islam, Christianity…"
-                  value={religion}
-                  onChange={e => setReligion(e.target.value)}
-                  className="rounded-xl"
-                  autoFocus
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-1">
-                  Profession
-                </label>
-                <Input
-                  placeholder="e.g. Engineer, Teacher…"
-                  value={profession}
-                  onChange={e => setProfession(e.target.value)}
-                  className="rounded-xl"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-1">
-                  Location
-                </label>
-                <Input
-                  placeholder="e.g. London, UK"
-                  value={location}
-                  onChange={e => setLocation(e.target.value)}
-                  className="rounded-xl"
-                />
-              </div>
-            </div>
-
-            {error && <p className="text-xs text-red-500 mt-4">{error}</p>}
-
-            <Button
-              variant="gradient"
-              className="w-full rounded-full mt-6"
-              size="lg"
-              onClick={submitProfile}
-              disabled={loading}
-            >
-              {loading ? 'Creating profile…' : 'Get Started'}
-            </Button>
-            <button
-              onClick={() => { setStep('basics'); setError('') }}
-              className="w-full text-center text-xs text-gray-400 mt-4 hover:text-gray-600 transition-colors"
-            >
-              ← Back
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+    <ProfileLayout
+      step={step}
+      onBack={step === 1 ? undefined : () => goTo(step === 'review' ? 3 : ((step - 1) as Step))}
+      footer={
+        step === 'review' ? (
+          <ProfileFooterButtons
+            onBack={() => goTo(3)}
+            onContinue={handleConfirm}
+            continueLabel={t('common.confirmCreate')}
+          />
+        ) : (
+          <ProfileFooterButtons
+            onBack={step > 1 ? () => goTo((step - 1) as Step) : undefined}
+            onSkip={step < 3 ? () => goTo((step + 1) as Step) : () => goTo('review')}
+            onContinue={() => {
+              if (step === 1 && !validateStep1()) return
+              if (step === 3) goTo('review')
+              else goTo((step + 1) as Step)
+            }}
+            continueLabel={step === 3 ? t('common.saveReview') : t('common.saveContinue')}
+          />
+        )
+      }
+    >
+      {error && <p className="text-sm text-red-500 mb-4">{error}</p>}
+      {step === 1 && <BasicDetailsForm data={data} onChange={setData} />}
+      {step === 2 && <HoroscopeForm data={data} onChange={setData} />}
+      {step === 3 && <PrivateDataForm data={data} onChange={setData} />}
+      {step === 'review' && <ReviewProfile data={data} onEdit={(s) => goTo(s)} />}
+    </ProfileLayout>
   )
 }

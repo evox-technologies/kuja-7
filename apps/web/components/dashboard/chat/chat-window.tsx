@@ -6,6 +6,7 @@ import { Info, Smile, Send, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { apiFetch } from '@/lib/api'
 import { getSocket } from '@/lib/socket'
+import { useI18n } from '@/lib/i18n/use-i18n'
 import type { Socket } from 'socket.io-client'
 
 interface ChatUser {
@@ -36,8 +37,9 @@ interface Props {
   currentUserId: string
 }
 
-function timeLabel(iso: string) {
-  return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+function timeLabel(iso: string, locale: string) {
+  const loc = locale === 'si' ? 'si-LK' : 'en-GB'
+  return new Date(iso).toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' })
 }
 
 const AVATAR_COLORS = [
@@ -50,6 +52,7 @@ function avatarColor(id: string) {
 }
 
 export default function ChatWindow({ conversationId, other, currentUserId }: Props) {
+  const { t, locale } = useI18n()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [hasMore, setHasMore] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -148,7 +151,7 @@ export default function ChatWindow({ conversationId, other, currentUserId }: Pro
     // The ack callback may never fire if the socket disconnects mid-send.
     const timeout = setTimeout(() => {
       setSending(false)
-      setSendError('Message not delivered. Check your connection.')
+      setSendError(t('dashboard.chat.notDelivered'))
     }, 10_000)
 
     socketRef.current.emit('send_message', { conversationId, content }, () => {
@@ -163,7 +166,7 @@ export default function ChatWindow({ conversationId, other, currentUserId }: Pro
         <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
           <Send className="w-7 h-7 text-gray-300" />
         </div>
-        <p className="text-sm text-gray-400">Select a conversation or start a new one</p>
+        <p className="text-sm text-gray-400">{t('dashboard.chat.selectConversation')}</p>
       </div>
     )
   }
@@ -208,7 +211,7 @@ export default function ChatWindow({ conversationId, other, currentUserId }: Pro
               onClick={loadMore}
               className="text-xs text-brand hover:underline"
             >
-              Load earlier messages
+              {t('dashboard.chat.loadEarlier')}
             </button>
           </div>
         )}
@@ -219,7 +222,7 @@ export default function ChatWindow({ conversationId, other, currentUserId }: Pro
           </div>
         ) : messages.length === 0 ? (
           <p className="text-xs text-gray-400 text-center py-10">
-            No messages yet. Say hello!
+            {t('dashboard.chat.noMessagesYet')}
           </p>
         ) : (
           <div className="space-y-3">
@@ -245,7 +248,7 @@ export default function ChatWindow({ conversationId, other, currentUserId }: Pro
                         isMe ? 'text-white/60 text-right' : 'text-gray-400'
                       )}
                     >
-                      {timeLabel(msg.createdAt)}
+                      {timeLabel(msg.createdAt, locale)}
                     </p>
                   </div>
                 </div>
@@ -270,7 +273,7 @@ export default function ChatWindow({ conversationId, other, currentUserId }: Pro
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && send()}
-          placeholder="Write a message"
+          placeholder={t('dashboard.chat.writeMessage')}
           className="flex-1 text-sm bg-transparent focus:outline-none placeholder:text-gray-300"
           disabled={sending}
         />

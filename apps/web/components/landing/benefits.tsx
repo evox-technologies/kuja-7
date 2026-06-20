@@ -90,7 +90,7 @@ export default function Benefits() {
         </motion.div>
 
         <motion.div
-          className="mx-auto max-w-4xl grid grid-cols-3 gap-10"
+          className="mx-auto max-w-4xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: '-40px' }}

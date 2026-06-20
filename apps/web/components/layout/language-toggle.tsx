@@ -27,7 +27,7 @@ export default function LanguageToggle({ dark = false }: LanguageToggleProps) {
 
   return (
     <div
-      className={`hidden sm:flex items-center rounded-full p-0.5 text-xs ${
+      className={`flex items-center rounded-full p-0.5 text-xs ${
         dark ? "bg-white/10" : "bg-gray-100"
       }`}
     >

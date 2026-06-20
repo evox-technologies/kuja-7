@@ -6,6 +6,7 @@ import { Search, PenSquare, X, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { apiFetch } from '@/lib/api'
 import { getSocket } from '@/lib/socket'
+import { useI18n } from '@/lib/i18n/use-i18n'
 import type { Socket } from 'socket.io-client'
 
 interface ChatUser {
@@ -58,18 +59,20 @@ function avatarColor(id: string) {
   return AVATAR_COLORS[code % AVATAR_COLORS.length]
 }
 
-function timeLabel(iso: string) {
+function timeLabel(iso: string, locale: string) {
   const d = new Date(iso)
   const now = new Date()
   const sameDay =
     d.getFullYear() === now.getFullYear() &&
     d.getMonth() === now.getMonth() &&
     d.getDate() === now.getDate()
-  if (sameDay) return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
-  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })
+  const loc = locale === 'si' ? 'si-LK' : 'en-GB'
+  if (sameDay) return d.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' })
+  return d.toLocaleDateString(loc, { day: '2-digit', month: 'short' })
 }
 
 export default function ConversationList({ selectedId, onSelect, currentUserId }: Props) {
+  const { t, locale, messages } = useI18n()
   const [conversations, setConversations] = useState<ConversationItem[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -186,11 +189,11 @@ export default function ConversationList({ selectedId, onSelect, currentUserId }
       )
 
   return (
-    <div className="shrink-0 bg-white border-r border-gray-100 flex flex-col w-72 h-full">
+    <div className="shrink-0 bg-white border-r border-gray-100 flex flex-col w-full md:w-72 h-full">
       {/* Header */}
       <div className="p-4 border-b border-gray-100">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-bold text-gray-900">Messages</h2>
+          <h2 className="text-lg font-bold text-gray-900">{messages.dashboard.chat.messages}</h2>
           <button
             onClick={() => {
               setNewChatMode((v) => !v)
@@ -198,7 +201,7 @@ export default function ConversationList({ selectedId, onSelect, currentUserId }
               setUserResults([])
             }}
             className="text-gray-400 hover:text-brand transition-colors"
-            title={newChatMode ? 'Cancel' : 'New chat'}
+            title={newChatMode ? t('dashboard.chat.cancel') : t('dashboard.chat.newChat')}
           >
             {newChatMode ? <X className="w-5 h-5" /> : <PenSquare className="w-5 h-5" />}
           </button>
@@ -209,7 +212,7 @@ export default function ConversationList({ selectedId, onSelect, currentUserId }
           <input
             value={query}
             onChange={handleQueryChange}
-            placeholder={newChatMode ? 'Search people…' : 'Search'}
+            placeholder={newChatMode ? t('dashboard.chat.searchPeople') : t('dashboard.chat.search')}
             className="w-full pl-9 pr-3 py-2 text-sm bg-gray-50 border border-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-brand/20"
             autoFocus={newChatMode}
           />
@@ -217,7 +220,7 @@ export default function ConversationList({ selectedId, onSelect, currentUserId }
 
         {newChatMode && (
           <p className="text-[10px] text-gray-400 mt-2 text-center">
-            Type a name to start a new conversation
+            {t('dashboard.chat.newChatHint')}
           </p>
         )}
       </div>
@@ -261,10 +264,10 @@ export default function ConversationList({ selectedId, onSelect, currentUserId }
                 </button>
               ))
             ) : query.trim() ? (
-              <p className="text-xs text-gray-400 text-center py-8">No users found</p>
+              <p className="text-xs text-gray-400 text-center py-8">{t('dashboard.chat.noUsersFound')}</p>
             ) : (
               <p className="text-xs text-gray-400 text-center py-8">
-                Start typing to search
+                {t('dashboard.chat.startTyping')}
               </p>
             )}
           </>
@@ -277,7 +280,7 @@ export default function ConversationList({ selectedId, onSelect, currentUserId }
               </div>
             ) : filteredConversations.length === 0 ? (
               <p className="text-xs text-gray-400 text-center py-8">
-                {query ? 'No conversations match' : 'No conversations yet'}
+                {query ? t('dashboard.chat.noConversationsMatch') : t('dashboard.chat.emptyConversations')}
               </p>
             ) : (
               filteredConversations.map((c) => (
@@ -315,16 +318,16 @@ export default function ConversationList({ selectedId, onSelect, currentUserId }
                       </span>
                       {c.lastMessage && (
                         <span className="text-xs text-gray-400 shrink-0 ml-2">
-                          {timeLabel(c.lastMessage.createdAt)}
+                          {timeLabel(c.lastMessage.createdAt, locale)}
                         </span>
                       )}
                     </div>
                     <span className="text-xs text-gray-400 truncate block">
                       {c.lastMessage
                         ? c.lastMessage.senderId === currentUserId
-                          ? `You: ${c.lastMessage.content}`
+                          ? `${t('dashboard.chat.youPrefix')} ${c.lastMessage.content}`
                           : c.lastMessage.content
-                        : 'Start the conversation'}
+                        : t('dashboard.chat.startConversation')}
                     </span>
                   </div>
                 </button>

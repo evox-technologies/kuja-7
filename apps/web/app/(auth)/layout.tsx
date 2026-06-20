@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
+import { usePathname } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
 import LanguageToggle from '@/components/layout/language-toggle'
 import { asset } from '@/lib/assets'
@@ -9,6 +10,13 @@ import { useI18n } from '@/lib/i18n/use-i18n'
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   const { messages, t } = useI18n()
+  const pathname = usePathname()
+ // const isOnboarding = pathname === '/onboarding' || pathname === '/onboarding/'
+  const isOnboarding = pathname === '/onboarding'
+
+  if (isOnboarding) {
+    return <>{children}</>
+  }
 
   return (
     <div data-scale-zone="auth" className="min-h-screen flex flex-col">
