@@ -49,7 +49,7 @@ const EDUCATION_LEVELS = ["Below O/L", "O/L", "A/L", "Diploma", "Bachelor's", "M
 const FOOD_PREFS = ['Vegetarian', 'Non-Vegetarian', 'Vegan', 'Halal']
 const DRINKING_OPTS = ['Never', 'Occasionally', 'Regularly']
 const SMOKING_OPTS = ['Never', 'Occasionally', 'Regularly']
-const KUJA_NUMBERS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']
+const KUJA_NUMBERS = ['1', '2', '4', '7', '8', '12']
 
 function FilterSelect({ label, value, onChange, options, placeholder }: {
   label: string; value: string; onChange: (v: string) => void; options: string[]; placeholder: string
@@ -148,28 +148,36 @@ export default function HomePage() {
 
   const filterPanel = (
     <div className="flex flex-col gap-0">
-      {/* Kuja Number — pill buttons at top */}
-      <div className="mb-4">
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Kuja Number</p>
-          {filters.kujaNumber && (
-            <button onClick={() => setFilter('kujaNumber', '')} className="text-gray-300 hover:text-brand transition-colors">
-              <X className="w-3 h-3" />
-            </button>
-          )}
+      {/* Kuja Number — card with grid buttons */}
+      <div className="mb-4 rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #e53e3e 0%, #f687b3 100%)' }}>
+        <div className="flex items-center justify-between px-4 pt-4 pb-3">
+          <p className="text-sm font-bold text-white tracking-wide">Kuja Number</p>
+          <div className="flex items-center gap-2">
+            {filters.kujaNumber && (
+              <button onClick={() => setFilter('kujaNumber', '')} className="text-white/70 hover:text-white transition-colors">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+            <div className="w-5 h-5 rounded-full border border-white/50 flex items-center justify-center">
+              <span className="text-white text-[10px] font-bold">i</span>
+            </div>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="grid grid-cols-3 gap-2 px-3 pb-3">
           {KUJA_NUMBERS.map(n => (
             <button
               key={n}
               onClick={() => setFilter('kujaNumber', filters.kujaNumber === n ? '' : n)}
-              className={`px-2 py-1 rounded-full text-[11px] font-bold border transition-colors ${
+              className={`flex flex-col items-center justify-center py-3 rounded-xl font-bold transition-all ${
                 filters.kujaNumber === n
-                  ? 'bg-brand text-white border-brand'
-                  : 'bg-red-50 text-red-500 border-red-100 hover:bg-red-100'
+                  ? 'bg-white/30 text-white border-2 border-white'
+                  : 'bg-white text-red-500 border-2 border-transparent hover:bg-white/90'
               }`}
             >
-              Kuja {n}
+              <span className="text-[10px] font-semibold tracking-wide">Kuja</span>
+              <span className="text-xl font-black leading-tight">
+                {n.padStart(2, '0')}
+              </span>
             </button>
           ))}
         </div>

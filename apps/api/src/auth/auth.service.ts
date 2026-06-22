@@ -1,10 +1,12 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import { Injectable, ConflictException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(private prisma: PrismaService) {}
 
   async createProfile(supabaseId: string, dto: CreateProfileDto) {
@@ -12,9 +14,14 @@ export class AuthService {
       where: { supabaseId },
     });
 
-    if (existing) throw new ConflictException('Profile already exists');
+    if (existing) {
+      this.logger.warn(
+        `createProfile – profile already exists for supabaseId=${supabaseId}`,
+      );
+      throw new ConflictException('Profile already exists');
+    }
 
-    return this.prisma.profile.create({
+    const profile = await this.prisma.profile.create({
       data: {
         supabaseId,
         email: dto.email,
@@ -47,10 +54,17 @@ export class AuthService {
         images: dto.images ?? [],
       },
     });
+
+    this.logger.log(
+      `createProfile – profile created: id=${profile.id} email=${profile.email}`,
+    );
+    return profile;
   }
 
   async updateProfile(supabaseId: string, dto: UpdateProfileDto) {
-    return this.prisma.profile.update({
+    this.logger.log(`updateProfile – updating profile for supabaseId=${supabaseId}`);
+
+    const profile = await this.prisma.profile.update({
       where: { supabaseId },
       data: {
         ...(dto.firstName !== undefined && { firstName: dto.firstName }),
@@ -80,9 +94,20 @@ export class AuthService {
         ...(dto.images !== undefined && { images: dto.images }),
       },
     });
+
+    this.logger.log(`updateProfile – profile updated: id=${profile.id}`);
+    return profile;
   }
 
   async getProfile(supabaseId: string) {
-    return this.prisma.profile.findUnique({ where: { supabaseId } });
+    const profile = await this.prisma.profile.findUnique({
+      where: { supabaseId },
+    });
+
+    if (!profile) {
+      this.logger.warn(`getProfile – no profile found for supabaseId=${supabaseId}`);
+    }
+
+    return profile;
   }
 }

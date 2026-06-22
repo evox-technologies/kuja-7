@@ -11,7 +11,7 @@ const MESSAGES_BY_LOCALE = { en, si } as const
 type Messages = (typeof MESSAGES_BY_LOCALE)[Locale]
 
 function getByPath(obj: unknown, path: string): unknown {
-  return path.split('.').reduce((acc: any, key) => (acc == null ? undefined : acc[key]), obj as any)
+  return path.split('.').reduce((acc: Record<string, unknown> | null | undefined, key) => (acc == null ? undefined : acc[key] as Record<string, unknown>), obj as Record<string, unknown>)
 }
 
 export function useI18n() {

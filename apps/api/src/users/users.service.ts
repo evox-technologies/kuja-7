@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Gender } from '@prisma/client';
 import { IsOptional, IsString, IsEnum, IsInt, Min, Max } from 'class-validator';
@@ -104,9 +104,13 @@ const PUBLIC_PROFILE_SELECT = {
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(private prisma: PrismaService) {}
 
   async search(dto: SearchProfilesDto, requesterId: string) {
+    this.logger.log(`search – requesterId=${requesterId} page=${dto.page ?? 1}`);
+
     const page = dto.page ?? 1;
     const take = 20;
     const skip = (page - 1) * take;
@@ -159,6 +163,10 @@ export class UsersService {
     });
     const interestMap = new Map(interests.map((i) => [i.receiverId, i.status]));
 
+    this.logger.log(
+      `search – returned ${profiles.length}/${total} profile(s) for requesterId=${requesterId}`,
+    );
+
     return {
       profiles: profiles.map((p) => ({ ...p, myInterestStatus: interestMap.get(p.id) ?? null })),
       total,
@@ -168,7 +176,9 @@ export class UsersService {
   }
 
   async chatSearch(q: string, requesterId: string) {
-    return this.prisma.profile.findMany({
+    this.logger.log(`chatSearch – query="${q}" requesterId=${requesterId}`);
+
+    const results = await this.prisma.profile.findMany({
       where: {
         id: { not: requesterId },
         isActive: true,
@@ -180,9 +190,14 @@ export class UsersService {
       select: { id: true, firstName: true, lastName: true, avatarUrl: true },
       take: 10,
     });
+
+    this.logger.log(`chatSearch – returned ${results.length} result(s) for query="${q}"`);
+    return results;
   }
 
   async findOne(id: string, requesterId: string) {
+    this.logger.log(`findOne – profileId=${id} requesterId=${requesterId}`);
+
     const profile = await this.prisma.profile.findUnique({
       where: { id },
       select: {
@@ -192,7 +207,11 @@ export class UsersService {
         address: true,
       },
     });
-    if (!profile) throw new NotFoundException('Profile not found');
+
+    if (!profile) {
+      this.logger.warn(`findOne – profile not found: id=${id}`);
+      throw new NotFoundException('Profile not found');
+    }
 
     // Fetch all relationship data in one round-trip
     const [myInterest, theirInterest, contactRequest, incomingContactRequest] = await Promise.all([

@@ -46,7 +46,7 @@ const EMPTY: FormData = {
   mobileNumber: '', whatsappNumber: '', address: '', images: [],
 }
 
-const KUJA_NUMBERS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']
+const KUJA_NUMBERS = ['1', '2', '4', '7', '8', '12']
 const CIVIL_STATUSES = ['Never Married', 'Divorced', 'Widowed', 'Separated']
 const EDUCATION_LEVELS = ['Below O/L', 'O/L', 'A/L', 'Diploma', 'Bachelor\'s', 'Master\'s', 'PhD']
 const FOOD_PREFS = ['Vegetarian', 'Non-Vegetarian', 'Vegan', 'Halal']
@@ -62,8 +62,8 @@ function FieldGroup({ label, children }: { label: string; children: React.ReactN
   )
 }
 
-function TextInput({ value, onChange, placeholder, type = 'text' }: {
-  value: string; onChange: (v: string) => void; placeholder?: string; type?: string
+function TextInput({ value, onChange, placeholder, type = 'text', max }: {
+  value: string; onChange: (v: string) => void; placeholder?: string; type?: string; max?: string
 }) {
   return (
     <input
@@ -71,6 +71,7 @@ function TextInput({ value, onChange, placeholder, type = 'text' }: {
       value={value}
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
+      max={max}
       className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors"
     />
   )
@@ -366,7 +367,16 @@ export default function OnboardingPage() {
           <PrivacyBanner text="Private information such as pictures, contact details and horoscope information are only visible to matched profiles." />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FieldGroup label="Kuja Number">
-              <SelectInput value={form.kujaNumber} onChange={v => set('kujaNumber', v)} options={KUJA_NUMBERS} placeholder="-" />
+              <select
+                value={form.kujaNumber}
+                onChange={e => set('kujaNumber', e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors appearance-none"
+              >
+                <option value="">-</option>
+                {KUJA_NUMBERS.map(n => (
+                  <option key={n} value={n}>Kuja {n}</option>
+                ))}
+              </select>
             </FieldGroup>
             <FieldGroup label="Birth Day">
               <TextInput type="date" value={form.birthDay} onChange={v => set('birthDay', v)} />

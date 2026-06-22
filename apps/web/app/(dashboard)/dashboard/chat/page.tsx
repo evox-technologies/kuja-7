@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import ConversationList from '@/components/dashboard/chat/conversation-list'
 import ChatWindow from '@/components/dashboard/chat/chat-window'
@@ -20,7 +20,7 @@ interface ChatUser {
   avatarUrl: string | null
 }
 
-export default function ChatPage() {
+function ChatPageInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const autoSelectId = searchParams.get('c') ?? undefined
@@ -53,7 +53,6 @@ export default function ChatPage() {
 
   return (
     <div data-scale-component="chat" className="h-full flex overflow-hidden">
-      {/* On mobile: show list OR chat window, toggled by back button */}
       <div className={`${showList ? 'flex' : 'hidden'} md:flex shrink-0`}>
         <ConversationList
           selectedId={selectedId}
@@ -72,5 +71,17 @@ export default function ChatPage() {
         />
       </div>
     </div>
+  )
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense fallback={
+      <div className="h-full flex items-center justify-center">
+        <div className="w-6 h-6 rounded-full border-2 border-brand border-t-transparent animate-spin" />
+      </div>
+    }>
+      <ChatPageInner />
+    </Suspense>
   )
 }

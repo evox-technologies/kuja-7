@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Heart, MessageCircle, Phone, ChevronLeft, User, Lock, Bell } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
-import { cn } from '@/lib/utils'
 
 interface Relationship {
   isMutual: boolean
