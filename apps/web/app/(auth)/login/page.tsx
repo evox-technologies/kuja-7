@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion } from 'motion/react'
@@ -20,6 +20,13 @@ export default function LoginPage() {
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  // Surface the failure the OAuth callback redirects back with.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('error') === 'oauth_failed') {
+      setError(t('auth.login.oauthFailed'))
+    }
+  }, [t])
 
   async function login() {
     if (!email || !password) return
@@ -74,6 +81,12 @@ export default function LoginPage() {
           >
             {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
+        </div>
+
+        <div className="flex justify-end mb-4 -mt-1">
+          <Link href="/forgot-password" className="text-xs text-brand font-semibold hover:underline">
+            {t('auth.login.forgotPassword')}
+          </Link>
         </div>
 
         {error && <p className="text-xs text-red-500 mb-3">{error}</p>}
