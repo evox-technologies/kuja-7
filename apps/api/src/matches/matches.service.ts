@@ -56,7 +56,7 @@ export class MatchesService {
         `sendInterest – mutual detected, auto-accepting both. senderId=${senderId} receiverId=${receiverId}`,
       );
 
-      const [myInterest] = await Promise.all([
+      const [myInterest] = await this.prisma.$transaction([
         this.prisma.interest.upsert({
           where: { senderId_receiverId: { senderId, receiverId } },
           create: { senderId, receiverId, status: InterestStatus.ACCEPTED },
@@ -333,6 +333,13 @@ export class MatchesService {
         `respondContactRequest – contact request not found: requesterId=${requesterId} targetId=${targetId}`,
       );
       throw new NotFoundException('Contact request not found');
+    }
+
+    if (req.status !== ContactRequestStatus.PENDING) {
+      this.logger.warn(
+        `respondContactRequest – already resolved (${req.status}): requesterId=${requesterId} targetId=${targetId}`,
+      );
+      throw new BadRequestException(`Contact request is already ${req.status.toLowerCase()}`);
     }
 
     const updated = await this.prisma.contactRequest.update({

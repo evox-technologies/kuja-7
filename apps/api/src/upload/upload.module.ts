@@ -7,7 +7,7 @@ import { AuthModule } from '../auth/auth.module';
 @Module({
   imports: [
     AuthModule,
-    MulterModule.register({ storage: memoryStorage() }),
+    MulterModule.register({ storage: memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } }),
   ],
   controllers: [UploadController],
 })
