@@ -9,10 +9,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { createClient } from '@/lib/supabase/client'
 import GoogleButton from '@/components/auth/google-button'
+import { useI18n } from '@/lib/i18n/use-i18n'
 
 export default function LoginPage() {
   const supabase = createClient()
   const router = useRouter()
+  const { t, messages } = useI18n()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
@@ -37,16 +39,16 @@ export default function LoginPage() {
         transition={{ duration: 0.3, ease: 'easeOut' }}
         className="bg-white rounded-3xl shadow-xl px-8 py-10"
       >
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">Welcome Back</h1>
-        <p className="text-sm text-gray-400 mb-6">Log in to continue your journey.</p>
+        <h1 className="text-2xl font-bold text-gray-900 mb-1">{t('auth.login.title')}</h1>
+        <p className="text-sm text-gray-400 mb-6">{t('auth.login.subtitle')}</p>
         <hr className="mb-6 border-gray-100" />
 
         <label className="block text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">
-          Email
+          {t('auth.login.email')}
         </label>
         <Input
           type="email"
-          placeholder="your@email.com"
+          placeholder={t('auth.login.emailPlaceholder')}
           value={email}
           onChange={e => setEmail(e.target.value)}
           className="rounded-xl mb-4"
@@ -54,12 +56,12 @@ export default function LoginPage() {
         />
 
         <label className="block text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">
-          Password
+          {t('auth.login.password')}
         </label>
         <div className="relative mb-4">
           <Input
             type={showPass ? 'text' : 'password'}
-            placeholder="Password"
+            placeholder={t('auth.login.password')}
             value={password}
             onChange={e => setPassword(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && login()}
@@ -82,21 +84,21 @@ export default function LoginPage() {
           onClick={login}
           disabled={loading || !email || !password}
         >
-          {loading ? 'Logging in…' : 'Log In'}
+          {loading ? `${messages.auth.layoutTitle}…` : t('auth.login.login')}
         </Button>
 
         <div className="flex items-center gap-3 my-5">
           <hr className="flex-1 border-gray-100" />
-          <span className="text-xs text-gray-300">or</span>
+          <span className="text-xs text-gray-300">{t('auth.register.or')}</span>
           <hr className="flex-1 border-gray-100" />
         </div>
 
-        <GoogleButton label="Continue with Google" />
+        <GoogleButton label={t('auth.register.continueWithGoogle')} />
 
         <p className="text-center text-xs text-gray-400 mt-5">
-          Don&apos;t have an account?{' '}
+          {t('auth.login.dontHaveAccount')}{' '}
           <Link href="/register" className="text-brand font-semibold hover:underline">
-            Create one
+            {t('auth.login.createAccount')}
           </Link>
         </p>
       </motion.div>

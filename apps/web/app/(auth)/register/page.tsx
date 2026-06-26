@@ -10,6 +10,7 @@ import OtpInput from '@/components/auth/otp-input'
 import SuccessModal from '@/components/auth/success-modal'
 import GoogleButton from '@/components/auth/google-button'
 import { createClient } from '@/lib/supabase/client'
+import { useI18n } from '@/lib/i18n/use-i18n'
 
 type Step = 'email' | 'otp' | 'password' | 'done'
 
@@ -21,6 +22,7 @@ const slide = {
 
 export default function RegisterPage() {
   const supabase = createClient()
+  const { t } = useI18n()
   const [step, setStep] = useState<Step>('email')
   const [email, setEmail] = useState('')
   const [otp, setOtp] = useState<string[]>(Array(6).fill(''))
@@ -56,8 +58,8 @@ export default function RegisterPage() {
   }
 
   async function finish() {
-    if (password.length < 8) { setError('Password must be at least 8 characters.'); return }
-    if (password !== confirm) { setError('Passwords do not match.'); return }
+    if (password.length < 8) { setError(t('auth.register.passwordMin')); return }
+    if (password !== confirm) { setError(t('auth.register.passwordMismatch')); return }
     setLoading(true)
     setError('')
     const { error } = await supabase.auth.updateUser({ password })
@@ -82,12 +84,12 @@ export default function RegisterPage() {
               transition={{ duration: 0.25, ease: 'easeOut' }}
               className="bg-white rounded-3xl shadow-xl px-8 py-10"
             >
-              <h1 className="text-2xl font-bold text-gray-900 mb-1">Create Account</h1>
-              <p className="text-sm text-gray-400 mb-6">Find meaningful connections for marriage.</p>
+              <h1 className="text-2xl font-bold text-gray-900 mb-1">{t('auth.register.title')}</h1>
+              <p className="text-sm text-gray-400 mb-6">{t('auth.register.subtitle')}</p>
               <hr className="mb-6 border-gray-100" />
 
               <label className="block text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">
-                Continue With Email
+                {t('auth.register.continueWithEmail')}
               </label>
               <Input
                 type="email"
@@ -106,20 +108,20 @@ export default function RegisterPage() {
                 onClick={sendOtp}
                 disabled={loading || !email}
               >
-                {loading ? 'Sending…' : 'Continue'}
+                {loading ? t('auth.register.sending') : t('auth.register.continue')}
               </Button>
               <div className="flex items-center gap-3 my-5">
                 <hr className="flex-1 border-gray-100" />
-                <span className="text-xs text-gray-300">or</span>
+                <span className="text-xs text-gray-300">{t('auth.register.or')}</span>
                 <hr className="flex-1 border-gray-100" />
               </div>
 
-              <GoogleButton label="Continue with Google" />
+              <GoogleButton label={t('auth.register.continueWithGoogle')} />
 
               <p className="text-center text-xs text-gray-400 mt-5">
-                Already have an account?{' '}
+                {t('auth.register.alreadyHaveAccount')}{' '}
                 <Link href="/login" className="text-brand font-semibold hover:underline">
-                  Log in
+                  {t('auth.register.signIn')}
                 </Link>
               </p>
             </motion.div>
@@ -135,9 +137,9 @@ export default function RegisterPage() {
               transition={{ duration: 0.25, ease: 'easeOut' }}
               className="bg-white rounded-3xl shadow-xl px-8 py-10"
             >
-              <h1 className="text-2xl font-bold text-gray-900 mb-1">Verify Email</h1>
+              <h1 className="text-2xl font-bold text-gray-900 mb-1">{t('auth.register.verifyEmailTitle')}</h1>
               <p className="text-sm text-gray-400 mb-6">
-                Enter the 6-digit code sent to{' '}
+                {t('auth.register.verifyEmailSubtitlePrefix')}{' '}
                 <span className="text-brand font-semibold">{email}</span>
               </p>
               <hr className="mb-8 border-gray-100" />
@@ -151,13 +153,13 @@ export default function RegisterPage() {
                 onClick={verifyOtp}
                 disabled={loading || otp.join('').length < 6}
               >
-                {loading ? 'Verifying…' : 'Verify'}
+                {loading ? t('auth.register.verifying') : t('auth.register.verify')}
               </Button>
               <button
                 onClick={() => { setStep('email'); setOtp(Array(6).fill('')); setError('') }}
                 className="w-full text-center text-xs text-gray-400 mt-4 hover:text-gray-600 transition-colors"
               >
-                ← Change email
+                ← {t('auth.register.changeEmail')}
               </button>
             </motion.div>
           )}
@@ -172,14 +174,14 @@ export default function RegisterPage() {
               transition={{ duration: 0.25, ease: 'easeOut' }}
               className="bg-white rounded-3xl shadow-xl px-8 py-10"
             >
-              <h1 className="text-2xl font-bold text-gray-900 mb-1">Set Log In Password</h1>
-              <p className="text-sm text-gray-400 mb-6">Choose a secure password for your account.</p>
+              <h1 className="text-2xl font-bold text-gray-900 mb-1">{t('auth.register.setPasswordTitle')}</h1>
+              <p className="text-sm text-gray-400 mb-6">{t('auth.register.setPasswordSubtitle')}</p>
               <hr className="mb-6 border-gray-100" />
 
               <div className="relative mb-4">
                 <Input
                   type={showPass ? 'text' : 'password'}
-                  placeholder="Password"
+                  placeholder={t('auth.login.password')}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   className="rounded-xl pr-11"
@@ -197,7 +199,7 @@ export default function RegisterPage() {
               <div className="relative mb-4">
                 <Input
                   type={showConfirm ? 'text' : 'password'}
-                  placeholder="Confirm password"
+                  placeholder={t('auth.register.confirmPasswordPlaceholder')}
                   value={confirm}
                   onChange={e => setConfirm(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && finish()}
@@ -220,7 +222,7 @@ export default function RegisterPage() {
                 onClick={finish}
                 disabled={loading || !password || !confirm}
               >
-                {loading ? 'Creating…' : 'Create Account'}
+                {loading ? t('auth.register.creating') : t('auth.register.title')}
               </Button>
             </motion.div>
           )}

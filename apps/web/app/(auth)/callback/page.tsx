@@ -3,9 +3,11 @@
 import { Suspense, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { useI18n } from '@/lib/i18n/use-i18n'
 
 function CallbackHandler() {
   const router = useRouter()
+  const { t } = useI18n()
   const handledRef = useRef(false)
 
   useEffect(() => {
@@ -31,7 +33,7 @@ function CallbackHandler() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3">
       <div className="w-8 h-8 rounded-full border-2 border-brand border-t-transparent animate-spin" />
-      <p className="text-sm text-gray-400">Completing sign in…</p>
+      <p className="text-sm text-gray-400">{t('auth.callback.completing')}</p>
     </div>
   )
 }

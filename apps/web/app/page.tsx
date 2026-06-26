@@ -6,7 +6,7 @@ import Benefits from '@/components/landing/benefits'
 
 export default function Page() {
   return (
-    <>
+    <div data-scale-zone="landing">
       <Navbar />
       <main>
         <Hero />
@@ -14,6 +14,6 @@ export default function Page() {
         <Benefits />
       </main>
       <Footer />
-    </>
+    </div>
   )
 }

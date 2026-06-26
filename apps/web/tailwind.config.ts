@@ -21,6 +21,9 @@ const config: Config = {
       fontFamily: {
         sans: ['var(--font-nunito)', 'var(--font-sinhala)', 'sans-serif'],
       },
+      screens: {
+        design: '1280px',
+      },
     },
   },
   plugins: [],

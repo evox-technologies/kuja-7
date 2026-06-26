@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Gender } from '@prisma/client';
 import { IsOptional, IsString, IsEnum, IsInt, Min, Max } from 'class-validator';
@@ -30,17 +30,87 @@ export class SearchProfilesDto {
   location?: string;
 
   @IsOptional()
+  @IsString()
+  country?: string;
+
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @IsOptional()
+  @IsString()
+  ethnicity?: string;
+
+  @IsOptional()
+  @IsString()
+  civilStatus?: string;
+
+  @IsOptional()
+  @IsString()
+  educationLevel?: string;
+
+  @IsOptional()
+  @IsString()
+  drinking?: string;
+
+  @IsOptional()
+  @IsString()
+  smoking?: string;
+
+  @IsOptional()
+  @IsString()
+  foodPreference?: string;
+
+  @IsOptional()
+  @IsString()
+  kujaNumber?: string;
+
+  @IsOptional()
   @IsInt()
   @Min(1)
   @Type(() => Number)
   page?: number = 1;
 }
 
+const PUBLIC_PROFILE_SELECT = {
+  id: true,
+  firstName: true,
+  lastName: true,
+  gender: true,
+  dateOfBirth: true,
+  religion: true,
+  profession: true,
+  location: true,
+  bio: true,
+  avatarUrl: true,
+  isVerified: true,
+  nationality: true,
+  height: true,
+  ethnicity: true,
+  caste: true,
+  civilStatus: true,
+  country: true,
+  city: true,
+  stateDistrict: true,
+  educationLevel: true,
+  drinking: true,
+  smoking: true,
+  foodPreference: true,
+  kujaNumber: true,
+  birthDay: true,
+  images: true,
+  createdAt: true,
+};
+
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(private prisma: PrismaService) {}
 
   async search(dto: SearchProfilesDto, requesterId: string) {
+    this.logger.log(`search – requesterId=${requesterId} page=${dto.page ?? 1}`);
+
     const page = dto.page ?? 1;
     const take = 20;
     const skip = (page - 1) * take;
@@ -53,25 +123,25 @@ export class UsersService {
     };
 
     if (dto.gender) where.gender = dto.gender;
-    if (dto.religion) where.religion = dto.religion;
-    if (dto.location)
-      where.location = { contains: dto.location, mode: 'insensitive' };
+    if (dto.religion) where.religion = { contains: dto.religion, mode: 'insensitive' };
+    if (dto.location) where.location = { contains: dto.location, mode: 'insensitive' };
+    if (dto.country) where.country = { contains: dto.country, mode: 'insensitive' };
+    if (dto.city) where.city = { contains: dto.city, mode: 'insensitive' };
+    if (dto.ethnicity) where.ethnicity = { contains: dto.ethnicity, mode: 'insensitive' };
+    if (dto.civilStatus) where.civilStatus = dto.civilStatus;
+    if (dto.educationLevel) where.educationLevel = dto.educationLevel;
+    if (dto.drinking) where.drinking = dto.drinking;
+    if (dto.smoking) where.smoking = dto.smoking;
+    if (dto.foodPreference) where.foodPreference = dto.foodPreference;
+    if (dto.kujaNumber) where.kujaNumber = dto.kujaNumber;
 
     if (dto.ageMin || dto.ageMax) {
       where.dateOfBirth = {
         ...(dto.ageMax && {
-          gte: new Date(
-            now.getFullYear() - dto.ageMax,
-            now.getMonth(),
-            now.getDate(),
-          ),
+          gte: new Date(now.getFullYear() - dto.ageMax, now.getMonth(), now.getDate()),
         }),
         ...(dto.ageMin && {
-          lte: new Date(
-            now.getFullYear() - dto.ageMin,
-            now.getMonth(),
-            now.getDate(),
-          ),
+          lte: new Date(now.getFullYear() - dto.ageMin, now.getMonth(), now.getDate()),
         }),
       };
     }
@@ -81,28 +151,34 @@ export class UsersService {
         where,
         skip,
         take,
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          gender: true,
-          dateOfBirth: true,
-          religion: true,
-          profession: true,
-          location: true,
-          avatarUrl: true,
-          isVerified: true,
-        },
+        select: PUBLIC_PROFILE_SELECT,
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.profile.count({ where }),
     ]);
 
-    return { profiles, total, page, totalPages: Math.ceil(total / take) };
+    const interests = await this.prisma.interest.findMany({
+      where: { senderId: requesterId, receiverId: { in: profiles.map((p) => p.id) } },
+      select: { receiverId: true, status: true },
+    });
+    const interestMap = new Map(interests.map((i) => [i.receiverId, i.status]));
+
+    this.logger.log(
+      `search – returned ${profiles.length}/${total} profile(s) for requesterId=${requesterId}`,
+    );
+
+    return {
+      profiles: profiles.map((p) => ({ ...p, myInterestStatus: interestMap.get(p.id) ?? null })),
+      total,
+      page,
+      totalPages: Math.ceil(total / take),
+    };
   }
 
   async chatSearch(q: string, requesterId: string) {
-    return this.prisma.profile.findMany({
+    this.logger.log(`chatSearch – query="${q}" requesterId=${requesterId}`);
+
+    const results = await this.prisma.profile.findMany({
       where: {
         id: { not: requesterId },
         isActive: true,
@@ -114,26 +190,71 @@ export class UsersService {
       select: { id: true, firstName: true, lastName: true, avatarUrl: true },
       take: 10,
     });
+
+    this.logger.log(`chatSearch – returned ${results.length} result(s) for query="${q}"`);
+    return results;
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, requesterId: string) {
+    this.logger.log(`findOne – profileId=${id} requesterId=${requesterId}`);
+
     const profile = await this.prisma.profile.findUnique({
       where: { id },
       select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        gender: true,
-        dateOfBirth: true,
-        religion: true,
-        profession: true,
-        location: true,
-        bio: true,
-        avatarUrl: true,
-        isVerified: true,
+        ...PUBLIC_PROFILE_SELECT,
+        mobileNumber: true,
+        whatsappNumber: true,
+        address: true,
       },
     });
-    if (!profile) throw new NotFoundException('Profile not found');
-    return profile;
+
+    if (!profile) {
+      this.logger.warn(`findOne – profile not found: id=${id}`);
+      throw new NotFoundException('Profile not found');
+    }
+
+    // Fetch all relationship data in one round-trip
+    const [myInterest, theirInterest, contactRequest, incomingContactRequest] = await Promise.all([
+      this.prisma.interest.findFirst({
+        where: { senderId: requesterId, receiverId: id },
+        select: { id: true, status: true },
+      }),
+      this.prisma.interest.findFirst({
+        where: { senderId: id, receiverId: requesterId },
+        select: { id: true, status: true },
+      }),
+      this.prisma.contactRequest.findUnique({
+        where: { requesterId_targetId: { requesterId, targetId: id } },
+        select: { status: true },
+      }),
+      this.prisma.contactRequest.findUnique({
+        where: { requesterId_targetId: { requesterId: id, targetId: requesterId } },
+        select: { status: true },
+      }),
+    ]);
+
+    const isMutual =
+      myInterest?.status === 'ACCEPTED' && theirInterest?.status === 'ACCEPTED';
+
+    const contactVisible =
+      isMutual &&
+      contactRequest?.status === 'ACCEPTED' &&
+      incomingContactRequest?.status === 'ACCEPTED';
+
+    return {
+      ...profile,
+      mobileNumber: contactVisible ? profile.mobileNumber : null,
+      whatsappNumber: contactVisible ? profile.whatsappNumber : null,
+      address: contactVisible ? profile.address : null,
+      _relationship: {
+        isMutual,
+        myInterestStatus: myInterest?.status ?? null,
+        myInterestId: myInterest?.id ?? null,
+        theirInterestStatus: theirInterest?.status ?? null,
+        theirInterestId: theirInterest?.id ?? null,
+        myContactRequestStatus: contactRequest?.status ?? null,
+        theirContactRequestStatus: incomingContactRequest?.status ?? null,
+      },
+    };
   }
 }

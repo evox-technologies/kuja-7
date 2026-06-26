@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import Image from 'next/image'
-import { ArrowLeft, Info, Smile, Send, Loader2 } from 'lucide-react'
+import { Info, Smile, Send, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { apiFetch } from '@/lib/api'
 import { getSocket } from '@/lib/socket'
@@ -34,7 +34,7 @@ interface Props {
   conversationId: string | null
   other: ChatUser | null
   currentUserId: string
-  onBack: () => void
+  onBack?: () => void
 }
 
 function timeLabel(iso: string) {
@@ -160,7 +160,7 @@ export default function ChatWindow({ conversationId, other, currentUserId, onBac
 
   if (!conversationId || !other) {
     return (
-      <div className="hidden md:flex flex-1 flex-col items-center justify-center bg-gray-50 gap-3">
+      <div className="flex flex-1 flex-col items-center justify-center bg-gray-50 gap-3">
         <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
           <Send className="w-7 h-7 text-gray-300" />
         </div>
@@ -172,14 +172,13 @@ export default function ChatWindow({ conversationId, other, currentUserId, onBac
   return (
     <div className="flex-1 flex flex-col h-full">
       {/* Header */}
-      <div className="bg-gray-900 px-5 py-3.5 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onBack}
-            className="md:hidden text-gray-400 hover:text-white transition-colors mr-1"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
+      <div className="bg-gray-900 px-4 sm:px-5 py-3.5 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3">
+          {onBack && (
+            <button onClick={onBack} className="text-gray-400 hover:text-white transition-colors mr-1 md:hidden">
+              ←
+            </button>
+          )}
           {other.avatarUrl ? (
             <Image
               src={other.avatarUrl}
@@ -198,7 +197,7 @@ export default function ChatWindow({ conversationId, other, currentUserId, onBac
               {other.firstName[0]}{other.lastName[0]}
             </div>
           )}
-          <span className="text-white font-semibold">
+          <span className="text-white font-semibold text-sm sm:text-base">
             {other.firstName} {other.lastName}
           </span>
         </div>

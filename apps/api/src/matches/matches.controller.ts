@@ -2,12 +2,13 @@ import {
   Controller,
   Post,
   Patch,
+  Delete,
   Get,
   Param,
   Body,
   UseGuards,
 } from '@nestjs/common';
-import { IsEnum, IsUUID } from 'class-validator';
+import { IsEnum, IsUUID, IsIn } from 'class-validator';
 import { InterestStatus } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
@@ -22,6 +23,11 @@ class RespondInterestDto {
 class SendInterestDto {
   @IsUUID()
   receiverId!: string;
+}
+
+class RespondContactRequestDto {
+  @IsIn(['ACCEPT', 'DECLINE'])
+  action!: 'ACCEPT' | 'DECLINE';
 }
 
 @Controller('matches')
@@ -39,6 +45,19 @@ export class MatchesController {
     return this.matchesService.getReceivedInterests(user.id);
   }
 
+  @Get('interests/sent')
+  getSent(@CurrentUser() user: Profile) {
+    return this.matchesService.getSentInterests(user.id);
+  }
+
+  @Delete('interests/:receiverId')
+  removeInterest(
+    @Param('receiverId') receiverId: string,
+    @CurrentUser() user: Profile,
+  ) {
+    return this.matchesService.removeInterest(user.id, receiverId);
+  }
+
   @Patch('interests/:id')
   respond(
     @Param('id') id: string,
@@ -46,6 +65,11 @@ export class MatchesController {
     @CurrentUser() user: Profile,
   ) {
     return this.matchesService.respondToInterest(id, user.id, dto.status);
+  }
+
+  @Get('mutual')
+  getMutual(@CurrentUser() user: Profile) {
+    return this.matchesService.getMutualInterests(user.id);
   }
 
   @Post('shortlist/:targetId')
@@ -59,5 +83,30 @@ export class MatchesController {
   @Get('shortlist')
   getShortlist(@CurrentUser() user: Profile) {
     return this.matchesService.getShortlist(user.id);
+  }
+
+  @Post('contact-request/:targetId')
+  sendContactRequest(
+    @Param('targetId') targetId: string,
+    @CurrentUser() user: Profile,
+  ) {
+    return this.matchesService.sendContactRequest(user.id, targetId);
+  }
+
+  @Patch('contact-request/:requesterId')
+  respondContactRequest(
+    @Param('requesterId') requesterId: string,
+    @Body() dto: RespondContactRequestDto,
+    @CurrentUser() user: Profile,
+  ) {
+    return this.matchesService.respondContactRequest(requesterId, user.id, dto.action);
+  }
+
+  @Get('contact-request/status/:targetId')
+  getContactRequestStatus(
+    @Param('targetId') targetId: string,
+    @CurrentUser() user: Profile,
+  ) {
+    return this.matchesService.getContactRequestStatus(user.id, targetId);
   }
 }

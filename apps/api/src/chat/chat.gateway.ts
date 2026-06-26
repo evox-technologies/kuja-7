@@ -8,10 +8,11 @@ import {
   OnGatewayDisconnect,
   WsException,
 } from '@nestjs/websockets';
-import { UseGuards } from '@nestjs/common';
+import { UseGuards, UseFilters, Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { PrismaService } from '../prisma/prisma.service';
 import { WsJwtGuard } from './ws-jwt.guard';
+import { WsExceptionFilter } from '../common/filters/ws-exception.filter';
 import { SupabaseJwtService } from '../auth/supabase-jwt.service';
 import { AuthenticatedSocket } from './chat.types';
 import { IsString, IsUUID, MaxLength } from 'class-validator';
@@ -25,17 +26,18 @@ class SendMessageDto {
   content!: string;
 }
 
-// CORS origin must be read from process.env here — decorators are evaluated at
-// class-definition time, before the NestJS DI container is available.
 @WebSocketGateway({
   cors: {
     origin: process.env.FRONTEND_URL ?? 'http://localhost:3000',
     credentials: true,
   },
 })
+@UseFilters(WsExceptionFilter)
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server!: Server;
+
+  private readonly logger = new Logger(ChatGateway.name);
 
   constructor(
     private readonly prisma: PrismaService,
@@ -43,19 +45,31 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {}
 
   async handleConnection(client: Socket) {
+    this.logger.log(`handleConnection – client=${client.id}`);
+
     try {
       const token =
         (client.handshake.auth as Record<string, string> | undefined)?.token ??
         client.handshake.headers.authorization?.replace('Bearer ', '');
 
-      if (!token) throw new WsException('Missing token');
+      if (!token) {
+        this.logger.warn(`handleConnection – missing token, disconnecting client=${client.id}`);
+        client.disconnect();
+        return;
+      }
 
       const payload = await this.jwtService.verifyToken(token);
       const profile = await this.prisma.profile.findUnique({
         where: { supabaseId: payload.sub },
       });
 
-      if (!profile || !profile.isActive) throw new WsException('Unauthorized');
+      if (!profile || !profile.isActive) {
+        this.logger.warn(
+          `handleConnection – profile not found or inactive for sub=${payload.sub}, disconnecting client=${client.id}`,
+        );
+        client.disconnect();
+        return;
+      }
 
       (client as AuthenticatedSocket).profile = profile;
 
@@ -69,12 +83,23 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       for (const { id } of conversations) {
         await client.join(id);
       }
-    } catch {
+
+      this.logger.log(
+        `handleConnection – authenticated profileId=${profile.id}, joined ${conversations.length} room(s)`,
+      );
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.error(
+        `handleConnection – unexpected error for client=${client.id}: ${message}`,
+        err instanceof Error ? err.stack : undefined,
+      );
       client.disconnect();
     }
   }
 
   handleDisconnect(client: Socket) {
+    const profileId = (client as unknown as Partial<AuthenticatedSocket>).profile?.id ?? 'unauthenticated';
+    this.logger.log(`handleDisconnect – client=${client.id} profileId=${profileId}`);
     delete (client as unknown as Partial<AuthenticatedSocket>).profile;
   }
 
@@ -85,14 +110,28 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: { conversationId: string },
   ) {
     const { profile } = client as AuthenticatedSocket;
+    this.logger.log(
+      `join_conversation – profileId=${profile.id} conversationId=${data.conversationId}`,
+    );
+
     const conv = await this.prisma.conversation.findFirst({
       where: {
         id: data.conversationId,
         OR: [{ participant1Id: profile.id }, { participant2Id: profile.id }],
       },
     });
-    if (!conv) throw new WsException('Not authorized');
+
+    if (!conv) {
+      this.logger.warn(
+        `join_conversation – access denied: profileId=${profile.id} conversationId=${data.conversationId}`,
+      );
+      throw new WsException('Not authorized');
+    }
+
     await client.join(data.conversationId);
+    this.logger.log(
+      `join_conversation – joined room: profileId=${profile.id} conversationId=${data.conversationId}`,
+    );
   }
 
   @UseGuards(WsJwtGuard)
@@ -102,6 +141,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() dto: SendMessageDto,
   ) {
     const { profile: sender } = client as AuthenticatedSocket;
+    this.logger.log(
+      `send_message – senderId=${sender.id} conversationId=${dto.conversationId}`,
+    );
 
     const conversation = await this.prisma.conversation.findFirst({
       where: {
@@ -110,7 +152,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       },
     });
 
-    if (!conversation) throw new WsException('Conversation not found');
+    if (!conversation) {
+      this.logger.warn(
+        `send_message – conversation not found or access denied: senderId=${sender.id} conversationId=${dto.conversationId}`,
+      );
+      throw new WsException('Conversation not found');
+    }
 
     const message = await this.prisma.message.create({
       data: {
@@ -120,12 +167,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       },
       include: {
         sender: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            avatarUrl: true,
-          },
+          select: { id: true, firstName: true, lastName: true, avatarUrl: true },
         },
       },
     });
@@ -134,6 +176,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       where: { id: dto.conversationId },
       data: { lastMessageAt: message.createdAt },
     });
+
+    this.logger.log(
+      `send_message – message created: id=${message.id} conversationId=${dto.conversationId}`,
+    );
 
     this.server.to(dto.conversationId).emit('new_message', message);
     return message;
@@ -146,8 +192,26 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: { conversationId: string },
   ) {
     const { profile: reader } = client as AuthenticatedSocket;
+    this.logger.log(
+      `mark_read – readerId=${reader.id} conversationId=${data.conversationId}`,
+    );
 
-    await this.prisma.message.updateMany({
+    // Verify the reader belongs to this conversation before marking
+    const conv = await this.prisma.conversation.findFirst({
+      where: {
+        id: data.conversationId,
+        OR: [{ participant1Id: reader.id }, { participant2Id: reader.id }],
+      },
+    });
+
+    if (!conv) {
+      this.logger.warn(
+        `mark_read – access denied: readerId=${reader.id} conversationId=${data.conversationId}`,
+      );
+      throw new WsException('Not authorized');
+    }
+
+    const result = await this.prisma.message.updateMany({
       where: {
         conversationId: data.conversationId,
         senderId: { not: reader.id },
@@ -155,6 +219,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       },
       data: { readAt: new Date() },
     });
+
+    this.logger.log(
+      `mark_read – marked ${result.count} message(s) as read: readerId=${reader.id} conversationId=${data.conversationId}`,
+    );
 
     this.server.to(data.conversationId).emit('messages_read', {
       conversationId: data.conversationId,

@@ -1,0 +1,11 @@
+html.no-zoom {
+  overflow-x: hidden;
+}
+
+html.no-zoom #viewport-canvas {
+  width: calc(var(--design-width) * 1px);
+  min-width: calc(var(--design-width) * 1px);
+  transform: scale(var(--scale-factor));
+  transform-origin: top left;
+  min-height: calc(100vh / var(--scale-factor));
+}

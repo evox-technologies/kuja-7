@@ -4,8 +4,11 @@ import Link from 'next/link'
 import { motion } from 'motion/react'
 import { BadgeCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useI18n } from '@/lib/i18n/use-i18n'
 
 export default function SuccessModal() {
+  const { t } = useI18n()
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -26,15 +29,15 @@ export default function SuccessModal() {
         >
           <BadgeCheck className="w-16 h-16 text-emerald-500" />
         </motion.div>
-        <h2 className="text-xl font-bold text-gray-900 mb-2">You&apos;re all set!</h2>
+        <h2 className="text-xl font-bold text-gray-900 mb-2">{t('auth.successModal.title')}</h2>
         <p className="text-sm text-gray-400 mb-8">
-          Your account has been created. Complete your profile to start finding meaningful connections.
+          {t('auth.successModal.subtitle')}
         </p>
         <Button variant="gradient" className="w-full rounded-full mb-3" size="lg" asChild>
-          <Link href="/profile/setup">Complete Profile →</Link>
+          <Link href="/profile/setup">{t('auth.successModal.completeProfile')} →</Link>
         </Button>
         <Button variant="outline" className="w-full rounded-full" size="lg" asChild>
-          <Link href="/">Skip For Later</Link>
+          <Link href="/">{t('auth.successModal.skip')}</Link>
         </Button>
       </motion.div>
     </motion.div>

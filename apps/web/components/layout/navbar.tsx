@@ -1,23 +1,22 @@
+'use client'
+
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import LanguageToggle from '@/components/layout/language-toggle'
-
-const NAV_LINKS = [
-  { label: 'Home', href: '/' },
-  { label: 'About', href: '/about' },
-  { label: 'Pricing', href: '/pricing' },
-]
+import { useI18n } from '@/lib/i18n/use-i18n'
 
 export default function Navbar() {
+  const { messages, t } = useI18n()
+
   return (
     <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
       <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
         <Link href="/" className="text-xl font-bold tracking-widest text-gray-900">
-          LOGO
+          {messages.nav.brand}
         </Link>
 
-        <ul className="hidden md:flex items-center gap-8">
-          {NAV_LINKS.map(({ label, href }) => (
+        <ul className="flex items-center gap-8">
+          {messages.nav.links.map(({ label, href }) => (
             <li key={href}>
               <Link
                 href={href}
@@ -33,11 +32,11 @@ export default function Navbar() {
           <LanguageToggle />
 
           <Button variant="outline" size="sm" className="rounded-full" asChild>
-            <Link href="/login">Log In</Link>
+            <Link href="/login">{t('nav.login')}</Link>
           </Button>
 
           <Button size="sm" className="rounded-full" asChild>
-            <Link href="/register">Let&apos;s Join</Link>
+            <Link href="/register">{t('nav.join')}</Link>
           </Button>
         </div>
       </div>
