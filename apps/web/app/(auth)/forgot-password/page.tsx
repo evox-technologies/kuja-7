@@ -6,6 +6,7 @@ import { motion } from 'motion/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { createClient } from '@/lib/supabase/client'
+import { useCooldown, rateLimitSeconds } from '@/lib/auth/password'
 import { useI18n } from '@/lib/i18n/use-i18n'
 
 export default function ForgotPasswordPage() {
@@ -15,17 +16,26 @@ export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
   const [error, setError] = useState('')
+  const cooldown = useCooldown()
 
   async function send() {
-    if (!email) return
+    if (!email || cooldown.remaining > 0) return
     setLoading(true)
     setError('')
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password/`,
     })
     setLoading(false)
-    // ponytail: always show "sent" even on error — don't leak which emails exist
+    // Rate limits are the one error worth showing — otherwise stay generic
+    // so we don't leak which emails have accounts.
+    const wait = rateLimitSeconds(error)
+    if (wait != null) {
+      cooldown.start(wait)
+      setError(t('auth.rateLimit.wait').replace('{s}', String(wait)))
+      return
+    }
     if (error) console.error('[forgot-password]', error.message)
+    cooldown.start(60)
     setSent(true)
   }
 
@@ -74,9 +84,11 @@ export default function ForgotPasswordPage() {
               className="w-full rounded-full"
               size="lg"
               onClick={send}
-              disabled={loading || !email}
+              disabled={loading || !email || cooldown.remaining > 0}
             >
-              {loading ? t('auth.forgotPassword.sending') : t('auth.forgotPassword.send')}
+              {cooldown.remaining > 0
+                ? t('auth.rateLimit.resendIn').replace('{s}', String(cooldown.remaining))
+                : loading ? t('auth.forgotPassword.sending') : t('auth.forgotPassword.send')}
             </Button>
 
             <p className="text-center text-xs text-gray-400 mt-5">

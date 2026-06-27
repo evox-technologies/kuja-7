@@ -150,6 +150,16 @@ export const si = {
       invalidLink: "මෙම සබැඳිය වලංගු නැත හෝ කල් ඉකුත් වී ඇත. නව එකක් ඉල්ලන්න.",
       verifying: "සබැඳිය සත්‍යාපනය කරමින්…",
     },
+    passwordStrength: {
+      weak: "දුර්වල මුරපදය",
+      fair: "සාධාරණ මුරපදය",
+      good: "හොඳ මුරපදය",
+      strong: "ශක්තිමත් මුරපදය",
+    },
+    rateLimit: {
+      wait: "ඉල්ලීම් වැඩියි. තත්පර {s}කින් නැවත උත්සාහ කරන්න.",
+      resendIn: "තත්පර {s}කින් නැවත එවන්න",
+    },
     register: {
       title: "ගිණුමක් සාදන්න",
       subtitle: "විවාහය සඳහා අර්ථවත් සම්බන්ධතා සොයාගන්න.",
@@ -159,6 +169,7 @@ export const si = {
       verifying: "සත්‍යාපනය කරමින්…",
       verify: "සත්‍යාපනය කරන්න",
       changeEmail: "ඊමේල් වෙනස් කරන්න",
+      resend: "කේතය නැවත එවන්න",
       setPasswordTitle: "පිවිසුම් මුරපදය සකසන්න",
       setPasswordSubtitle: "ඔබගේ ගිණුම සඳහා ආරක්ෂිත මුරපදයක් තෝරන්න.",
       confirmPasswordPlaceholder: "මුරපදය තහවුරු කරන්න",

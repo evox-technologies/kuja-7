@@ -133,6 +133,16 @@ export const en = {
       invalidLink: 'This reset link is invalid or has expired. Please request a new one.',
       verifying: 'Verifying link…',
     },
+    passwordStrength: {
+      weak: 'Weak password',
+      fair: 'Fair password',
+      good: 'Good password',
+      strong: 'Strong password',
+    },
+    rateLimit: {
+      wait: 'Too many requests. Try again in {s}s.',
+      resendIn: 'Resend in {s}s',
+    },
     register: {
       title: 'Create Account',
       subtitle: 'Find meaningful connections for marriage.',
@@ -142,6 +152,7 @@ export const en = {
       verifying: 'Verifying…',
       verify: 'Verify',
       changeEmail: 'Change email',
+      resend: 'Resend code',
       setPasswordTitle: 'Set Log In Password',
       setPasswordSubtitle: 'Choose a secure password for your account.',
       confirmPasswordPlaceholder: 'Confirm password',

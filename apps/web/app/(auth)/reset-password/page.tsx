@@ -6,6 +6,7 @@ import { motion } from 'motion/react'
 import { Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import PasswordStrength from '@/components/auth/password-strength'
 import { createClient } from '@/lib/supabase/client'
 import { useI18n } from '@/lib/i18n/use-i18n'
 
@@ -100,6 +101,8 @@ function ResetHandler() {
                 {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
+
+            <PasswordStrength value={password} />
 
             <div className="relative mb-4">
               <Input
