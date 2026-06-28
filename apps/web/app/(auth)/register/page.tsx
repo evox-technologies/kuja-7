@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { AnimatePresence, motion } from 'motion/react'
 import { Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,12 +14,6 @@ import { useCooldown, rateLimitSeconds } from '@/lib/auth/password'
 import { useI18n } from '@/lib/i18n/use-i18n'
 
 type Step = 'email' | 'otp' | 'password' | 'done'
-
-const slide = {
-  enter: { x: 40, opacity: 0 },
-  center: { x: 0, opacity: 1 },
-  exit: { x: -40, opacity: 0 },
-}
 
 export default function RegisterPage() {
   const supabase = createClient()
@@ -86,17 +79,8 @@ export default function RegisterPage() {
       {step === 'done' && <SuccessModal />}
 
       <div className="mx-auto max-w-md">
-        <AnimatePresence mode="wait">
           {step === 'email' && (
-            <motion.div
-              key="email"
-              variants={slide}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{ duration: 0.25, ease: 'easeOut' }}
-              className="bg-white rounded-3xl shadow-xl px-8 py-10"
-            >
+            <div className="bg-white rounded-3xl shadow-xl px-8 py-10 animate-slide-in">
               <h1 className="text-2xl font-bold text-gray-900 mb-1">{t('auth.register.title')}</h1>
               <p className="text-sm text-gray-400 mb-6">{t('auth.register.subtitle')}</p>
               <hr className="mb-6 border-gray-100" />
@@ -139,19 +123,11 @@ export default function RegisterPage() {
                   {t('auth.register.signIn')}
                 </Link>
               </p>
-            </motion.div>
+            </div>
           )}
 
           {step === 'otp' && (
-            <motion.div
-              key="otp"
-              variants={slide}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{ duration: 0.25, ease: 'easeOut' }}
-              className="bg-white rounded-3xl shadow-xl px-8 py-10"
-            >
+            <div className="bg-white rounded-3xl shadow-xl px-8 py-10 animate-slide-in">
               <h1 className="text-2xl font-bold text-gray-900 mb-1">{t('auth.register.verifyEmailTitle')}</h1>
               <p className="text-sm text-gray-400 mb-6">
                 {t('auth.register.verifyEmailSubtitlePrefix')}{' '}
@@ -187,19 +163,11 @@ export default function RegisterPage() {
                     : t('auth.register.resend')}
                 </button>
               </div>
-            </motion.div>
+            </div>
           )}
 
           {step === 'password' && (
-            <motion.div
-              key="password"
-              variants={slide}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{ duration: 0.25, ease: 'easeOut' }}
-              className="bg-white rounded-3xl shadow-xl px-8 py-10"
-            >
+            <div className="bg-white rounded-3xl shadow-xl px-8 py-10 animate-slide-in">
               <h1 className="text-2xl font-bold text-gray-900 mb-1">{t('auth.register.setPasswordTitle')}</h1>
               <p className="text-sm text-gray-400 mb-6">{t('auth.register.setPasswordSubtitle')}</p>
               <hr className="mb-6 border-gray-100" />
@@ -252,9 +220,8 @@ export default function RegisterPage() {
               >
                 {loading ? t('auth.register.creating') : t('auth.register.title')}
               </Button>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
       </div>
     </>
   )

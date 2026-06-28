@@ -33,7 +33,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
       <div className="flex-1 relative flex items-center justify-center">
         <Image
-          src={asset('/images/benefits.jpg')}
+          src={asset('/images/benefits.webp')}
           alt=""
           fill
           className="object-cover object-center grayscale"

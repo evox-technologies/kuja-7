@@ -225,7 +225,7 @@ function OtherProfileInner() {
             <div className="w-20 h-20 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center shrink-0">
               {profile.avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" />
+                <img src={profile.avatarUrl} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
               ) : (
                 <User className="w-9 h-9 text-gray-300" />
               )}
@@ -402,7 +402,7 @@ function OtherProfileInner() {
               {profile.images.map((url, i) => (
                 <div key={i} className="w-20 h-20 rounded-xl overflow-hidden border border-gray-100">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={url} alt="" className="w-full h-full object-cover" />
+                  <img src={url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 </div>
               ))}
             </div>

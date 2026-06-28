@@ -14,7 +14,7 @@ export default function Hero() {
   return (
     <section className="relative h-[90vh] min-h-[560px] w-full overflow-hidden">
       <Image
-        src={asset("/images/hero.jpg")}
+        src={asset("/images/hero.webp")}
         alt="Happy couple"
         fill
         priority

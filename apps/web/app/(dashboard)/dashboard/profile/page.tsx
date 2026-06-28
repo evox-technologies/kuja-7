@@ -171,7 +171,7 @@ export default function OwnProfilePage() {
           <div className="w-20 h-20 rounded-full bg-gray-700 overflow-hidden flex items-center justify-center shrink-0">
             {profile.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" />
+              <img src={profile.avatarUrl} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
             ) : (
               <User className="w-9 h-9 text-gray-500" />
             )}
@@ -216,7 +216,7 @@ export default function OwnProfilePage() {
             {profile.images.map((url, i) => (
               <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden border border-gray-200">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={url} alt="" className="w-full h-full object-cover" />
+                <img src={url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 <button
                   onClick={() => removeImage(url)}
                   className="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center"
