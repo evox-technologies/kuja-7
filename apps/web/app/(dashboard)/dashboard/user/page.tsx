@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Heart, MessageCircle, Phone, ChevronLeft, User, Lock, Bell } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 
@@ -68,8 +68,9 @@ function Section({ title, icon, children }: { title: string; icon?: React.ReactN
   )
 }
 
-export default function OtherProfilePage({ params }: { params: { id: string } }) {
-  const { id } = params
+function OtherProfileInner() {
+  const searchParams = useSearchParams()
+  const id = searchParams.get('id') ?? ''
   const router = useRouter()
   const [profile, setProfile] = useState<OtherProfile | null>(null)
   const [loading, setLoading] = useState(true)
@@ -78,6 +79,7 @@ export default function OtherProfilePage({ params }: { params: { id: string } })
   const [contactLoading, setContactLoading] = useState(false)
 
   useEffect(() => {
+    if (!id) { router.replace('/dashboard/home'); return }
     apiFetch<OtherProfile>(`/users/${id}`)
       .then(setProfile)
       .catch(() => router.replace('/dashboard/home'))
@@ -454,5 +456,17 @@ export default function OtherProfilePage({ params }: { params: { id: string } })
         </Section>
       </div>
     </div>
+  )
+}
+
+export default function OtherProfilePage() {
+  return (
+    <Suspense fallback={
+      <div className="h-full flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <OtherProfileInner />
+    </Suspense>
   )
 }

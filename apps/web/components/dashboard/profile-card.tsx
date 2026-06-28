@@ -155,7 +155,7 @@ export default function ProfileCard({ profile, badge, actions, note }: Props) {
             {actions}
 
             <Link
-              href={`/dashboard/profile/${profile.id}`}
+              href={`/dashboard/user?id=${profile.id}`}
               className="flex items-center gap-1 px-4 py-1.5 rounded-full border border-gray-200 text-xs font-medium text-gray-600 hover:border-brand hover:text-brand transition-colors"
             >
               View →
