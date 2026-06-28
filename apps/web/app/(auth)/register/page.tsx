@@ -9,7 +9,9 @@ import { Input } from '@/components/ui/input'
 import OtpInput from '@/components/auth/otp-input'
 import SuccessModal from '@/components/auth/success-modal'
 import GoogleButton from '@/components/auth/google-button'
+import PasswordStrength from '@/components/auth/password-strength'
 import { createClient } from '@/lib/supabase/client'
+import { useCooldown, rateLimitSeconds } from '@/lib/auth/password'
 import { useI18n } from '@/lib/i18n/use-i18n'
 
 type Step = 'email' | 'otp' | 'password' | 'done'
@@ -32,9 +34,10 @@ export default function RegisterPage() {
   const [showConfirm, setShowConfirm] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const cooldown = useCooldown()
 
-  async function sendOtp() {
-    if (!email) return
+  async function sendOtp(resend = false) {
+    if (!email || cooldown.remaining > 0) return
     setLoading(true)
     setError('')
     const { error } = await supabase.auth.signInWithOtp({
@@ -42,8 +45,18 @@ export default function RegisterPage() {
       options: { shouldCreateUser: true },
     })
     setLoading(false)
-    if (error) { setError(error.message); return }
-    setStep('otp')
+    if (error) {
+      const wait = rateLimitSeconds(error)
+      if (wait != null) {
+        cooldown.start(wait)
+        setError(t('auth.rateLimit.wait').replace('{s}', String(wait)))
+      } else {
+        setError(error.message)
+      }
+      return
+    }
+    cooldown.start(60)
+    if (!resend) setStep('otp')
   }
 
   async function verifyOtp() {
@@ -105,10 +118,12 @@ export default function RegisterPage() {
                 variant="gradient"
                 className="w-full rounded-full"
                 size="lg"
-                onClick={sendOtp}
-                disabled={loading || !email}
+                onClick={() => sendOtp()}
+                disabled={loading || !email || cooldown.remaining > 0}
               >
-                {loading ? t('auth.register.sending') : t('auth.register.continue')}
+                {cooldown.remaining > 0
+                  ? t('auth.rateLimit.resendIn').replace('{s}', String(cooldown.remaining))
+                  : loading ? t('auth.register.sending') : t('auth.register.continue')}
               </Button>
               <div className="flex items-center gap-3 my-5">
                 <hr className="flex-1 border-gray-100" />
@@ -155,12 +170,23 @@ export default function RegisterPage() {
               >
                 {loading ? t('auth.register.verifying') : t('auth.register.verify')}
               </Button>
-              <button
-                onClick={() => { setStep('email'); setOtp(Array(6).fill('')); setError('') }}
-                className="w-full text-center text-xs text-gray-400 mt-4 hover:text-gray-600 transition-colors"
-              >
-                ← {t('auth.register.changeEmail')}
-              </button>
+              <div className="flex items-center justify-between mt-4">
+                <button
+                  onClick={() => { setStep('email'); setOtp(Array(6).fill('')); setError('') }}
+                  className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  ← {t('auth.register.changeEmail')}
+                </button>
+                <button
+                  onClick={() => sendOtp(true)}
+                  disabled={loading || cooldown.remaining > 0}
+                  className="text-xs text-brand font-semibold hover:underline disabled:text-gray-300 disabled:no-underline transition-colors"
+                >
+                  {cooldown.remaining > 0
+                    ? t('auth.rateLimit.resendIn').replace('{s}', String(cooldown.remaining))
+                    : t('auth.register.resend')}
+                </button>
+              </div>
             </motion.div>
           )}
 
@@ -195,6 +221,8 @@ export default function RegisterPage() {
                   {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+
+              <PasswordStrength value={password} />
 
               <div className="relative mb-4">
                 <Input
