@@ -21,12 +21,15 @@ jobs:
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
           NEXT_PUBLIC_WS_URL: ${{ secrets.NEXT_PUBLIC_WS_URL }}
-          API_ENV_PRODUCTION: ${{ secrets.API_ENV_PRODUCTION }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
         with:
           host: ${{ secrets.DROPLET_HOST }}
           username: ${{ secrets.DROPLET_USER }}
           key: ${{ secrets.DROPLET_SSH_KEY }}
-          envs: WEB_DOMAIN,API_DOMAIN,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,NEXT_PUBLIC_API_URL,NEXT_PUBLIC_WS_URL,API_ENV_PRODUCTION
+          envs: WEB_DOMAIN,API_DOMAIN,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,NEXT_PUBLIC_API_URL,NEXT_PUBLIC_WS_URL,DATABASE_URL,DIRECT_URL,SUPABASE_URL,FRONTEND_URL
           script: |
             set -e
             cd /opt/apps/kuja-seven
@@ -43,8 +46,14 @@ jobs:
             NEXT_PUBLIC_WS_URL=${NEXT_PUBLIC_WS_URL}
             EOF
 
-            # Write API secrets (stored as a single multi-line secret)
-            printf '%s' "${API_ENV_PRODUCTION}" > apps/api/.env.production
+            # Regenerate apps/api/.env.production from CI secrets (overwrites previous)
+            cat > apps/api/.env.production << EOF
+            DATABASE_URL=${DATABASE_URL}
+            DIRECT_URL=${DIRECT_URL}
+            SUPABASE_URL=${SUPABASE_URL}
+            PORT=3001
+            FRONTEND_URL=${FRONTEND_URL}
+            EOF
 
             # Ensure Traefik is running (no-op if already up)
             cd deploy/traefik && docker compose up -d && cd /opt/apps/kuja-seven
