@@ -12,3 +12,23 @@
     @apply antialiased text-gray-900;
   }
 }
+
+/* Lightweight entrance animations — replaces motion/react on auth pages.
+   ponytail: CSS keyframes instead of a ~100kB JS animation lib for fades. */
+@keyframes fade-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+@keyframes slide-in { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: none; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scale-in { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: none; } }
+@keyframes pop { from { transform: scale(0); } to { transform: none; } }
+
+.animate-fade-up { animation: fade-up 0.3s ease-out both; }
+.animate-slide-in { animation: slide-in 0.25s ease-out both; }
+.animate-fade-in { animation: fade-in 0.2s ease-out both; }
+.animate-scale-in { animation: scale-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both; }
+.animate-pop { animation: pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up, .animate-slide-in, .animate-fade-in, .animate-scale-in, .animate-pop {
+    animation: none;
+  }
+}

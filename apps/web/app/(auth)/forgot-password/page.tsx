@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { motion } from 'motion/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { createClient } from '@/lib/supabase/client'
@@ -41,12 +40,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="mx-auto max-w-md">
-      <motion.div
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.3, ease: 'easeOut' }}
-        className="bg-white rounded-3xl shadow-xl px-8 py-10"
-      >
+      <div className="bg-white rounded-3xl shadow-xl px-8 py-10 animate-fade-up">
         {sent ? (
           <>
             <h1 className="text-2xl font-bold text-gray-900 mb-1">{t('auth.forgotPassword.sentTitle')}</h1>
@@ -98,7 +92,7 @@ export default function ForgotPasswordPage() {
             </p>
           </>
         )}
-      </motion.div>
+      </div>
     </div>
   )
 }

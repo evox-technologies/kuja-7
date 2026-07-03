@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { motion } from 'motion/react'
 import { Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -45,12 +44,7 @@ function ResetHandler() {
 
   return (
     <div className="mx-auto max-w-md">
-      <motion.div
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.3, ease: 'easeOut' }}
-        className="bg-white rounded-3xl shadow-xl px-8 py-10"
-      >
+      <div className="bg-white rounded-3xl shadow-xl px-8 py-10 animate-fade-up">
         {phase === 'verifying' && (
           <div className="flex flex-col items-center justify-center gap-3 py-6">
             <div className="w-8 h-8 rounded-full border-2 border-brand border-t-transparent animate-spin" />
@@ -134,7 +128,7 @@ function ResetHandler() {
             </Button>
           </>
         )}
-      </motion.div>
+      </div>
     </div>
   )
 }

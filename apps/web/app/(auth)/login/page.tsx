@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { motion } from 'motion/react'
 import { Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -40,12 +39,7 @@ export default function LoginPage() {
 
   return (
     <div className="mx-auto max-w-md">
-      <motion.div
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.3, ease: 'easeOut' }}
-        className="bg-white rounded-3xl shadow-xl px-8 py-10"
-      >
+      <div className="bg-white rounded-3xl shadow-xl px-8 py-10 animate-fade-up">
         <h1 className="text-2xl font-bold text-gray-900 mb-1">{t('auth.login.title')}</h1>
         <p className="text-sm text-gray-400 mb-6">{t('auth.login.subtitle')}</p>
         <hr className="mb-6 border-gray-100" />
@@ -114,7 +108,7 @@ export default function LoginPage() {
             {t('auth.login.createAccount')}
           </Link>
         </p>
-      </motion.div>
+      </div>
     </div>
   )
 }

@@ -50,7 +50,7 @@ function Avatar({ profile }: { profile: ProfileCardData }) {
     <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gray-100 border border-gray-200 overflow-hidden shrink-0 flex items-center justify-center">
       {profile.avatarUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" />
+        <img src={profile.avatarUrl} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
       ) : (
         <User className="w-7 h-7 text-gray-300" />
       )}

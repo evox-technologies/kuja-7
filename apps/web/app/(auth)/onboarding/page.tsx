@@ -434,7 +434,7 @@ export default function OnboardingPage() {
               {form.images.map((url, i) => (
                 <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden border border-gray-200">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={url} alt="" className="w-full h-full object-cover" />
+                  <img src={url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                   <button
                     onClick={() => set('images', form.images.filter((_, j) => j !== i))}
                     className="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center"
@@ -494,7 +494,7 @@ export default function OnboardingPage() {
             {form.images.map((url, i) => (
               <div key={i} className="w-16 h-16 rounded-xl overflow-hidden border border-gray-200">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={url} alt="" className="w-full h-full object-cover" />
+                <img src={url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
               </div>
             ))}
             {form.images.length === 0 && <p className="text-xs text-gray-400">No images added</p>}

@@ -41,7 +41,7 @@ export default function Benefits() {
       {/* Background image */}
       <div className="relative h-80 overflow-hidden">
         <Image
-          src={asset('/images/benefits.jpg')}
+          src={asset('/images/benefits.webp')}
           alt="Couple"
           fill
           className="object-cover object-center"
