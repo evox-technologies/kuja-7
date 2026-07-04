@@ -1,1 +1,25 @@
 /* Landing zone overrides — target via [data-scale-zone="landing"] */
+
+/*
+ * Mobile: opt the landing page out of the global 1280px zoom-to-fit so it can
+ * reflow with real Tailwind breakpoints. Scoped via :has() to pages that render
+ * the landing zone, so auth/dashboard keep their zoom untouched.
+ * Cutoff (1024px) matches Tailwind's `lg` — components use `lg:` for the desktop
+ * layout and base classes for mobile, so the switch lines up exactly.
+ */
+@media (max-width: 1023px) {
+  /* Chrome / Safari (zoom) */
+  html.supports-zoom:has([data-scale-zone='landing']),
+  html.supports-zoom:has([data-scale-zone='landing']) body {
+    zoom: 1;
+    min-width: 0;
+  }
+
+  /* Firefox (transform fallback) */
+  html.no-zoom:has([data-scale-zone='landing']) #viewport-canvas {
+    width: auto;
+    min-width: 0;
+    transform: none;
+    min-height: 0;
+  }
+}

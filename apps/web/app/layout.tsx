@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Nunito, Noto_Sans_Sinhala } from 'next/font/google'
+import { Nunito, Noto_Sans_Sinhala, Playfair_Display } from 'next/font/google'
 import ScaleDetector from '@/components/layout/scale-detector'
 import LanguageSync from '@/components/providers/language-sync'
 import './globals.css'
@@ -13,6 +13,13 @@ const nunito = Nunito({
 const notoSinhala = Noto_Sans_Sinhala({
   subsets: ['sinhala'],
   variable: '--font-sinhala',
+  display: 'swap',
+})
+
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  variable: '--font-display',
+  weight: ['700', '800'],
   display: 'swap',
 })
 
@@ -33,7 +40,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" data-scale-root>
+    <html lang="en" data-scale-root suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -41,7 +48,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${nunito.variable} ${notoSinhala.variable} font-sans`}>
+      <body className={`${nunito.variable} ${notoSinhala.variable} ${playfair.variable} font-sans`}>
         <ScaleDetector />
         <LanguageSync />
         <div id="viewport-canvas">{children}</div>

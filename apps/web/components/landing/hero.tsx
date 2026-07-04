@@ -25,7 +25,7 @@ export default function Hero() {
 
       {/* Carousel dots */}
       <motion.div
-        className="absolute bottom-44 left-1/2 -translate-x-1/2 flex gap-2 z-10"
+        className="absolute bottom-44 left-1/2 -translate-x-1/2 hidden lg:flex gap-2 z-10"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8, duration: 0.6 }}
@@ -51,7 +51,7 @@ export default function Hero() {
           }}
         >
           <form action="/search" method="GET">
-            <div className="bg-white rounded-2xl shadow-2xl px-6 py-5 flex items-end gap-4">
+            <div className="bg-white rounded-2xl shadow-2xl px-4 py-4 lg:px-6 lg:py-5 flex flex-col lg:flex-row items-stretch lg:items-end gap-3 lg:gap-4">
               <div className="flex-1">
                 <label className="block text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">
                   {t("hero.lookingFor")}
@@ -93,7 +93,7 @@ export default function Hero() {
               </div>
               <Button
                 type="submit"
-                className="rounded-full px-6 shrink-0 -ml-2"
+                className="rounded-full px-6 shrink-0 w-full lg:w-auto lg:-ml-2"
               >
                 {t("hero.searchNow")} <ChevronRight className="w-2 h-4 ml-1" />
               </Button>
