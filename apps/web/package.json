@@ -20,6 +20,8 @@
     "axios": "^1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "embla-carousel-autoplay": "^8.6.0",
+    "embla-carousel-react": "^8.6.0",
     "lucide-react": "^1.14.0",
     "motion": "^12.38.0",
     "next": "14.2.29",
@@ -30,11 +32,11 @@
     "zustand": "^4"
   },
   "devDependencies": {
-    "cross-env": "^7",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10",
+    "cross-env": "^7",
     "eslint": "^8",
     "eslint-config-next": "14.2.29",
     "postcss": "^8",

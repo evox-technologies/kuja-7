@@ -2,28 +2,32 @@
 
 import Link from 'next/link'
 import { Globe, Camera, Phone } from 'lucide-react'
+import Logo from '@/components/layout/logo'
 import { useI18n } from '@/lib/i18n/use-i18n'
 
 export default function Footer() {
   const { messages } = useI18n()
 
   return (
-    <footer className="bg-gray-950 text-gray-400">
-      <div className="mx-auto max-w-6xl px-6 py-14 grid grid-cols-4 gap-10">
+    <footer className="relative overflow-hidden bg-[#160a0e] text-gray-400">
+      {/* Brand accent line + soft glow */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand to-transparent" />
+      <div className="pointer-events-none absolute -top-24 -right-16 w-80 h-80 rounded-full bg-brand/20 blur-3xl" />
+
+      <div className="relative mx-auto max-w-6xl px-6 py-16 grid grid-cols-2 lg:grid-cols-3 gap-10 lg:gap-16">
         {/* Brand */}
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-5 h-5 bg-brand rounded-sm" />
-            <span className="text-white font-bold text-lg">{messages.footer.brand}</span>
-          </div>
-          <p className="text-xs leading-relaxed mb-5">
+        <div className="col-span-2 lg:col-span-1">
+          <Link href="/" className="inline-block mb-4 transition-opacity hover:opacity-80">
+            <Logo className="text-2xl text-white" />
+          </Link>
+          <p className="text-sm leading-relaxed mb-6 max-w-xs text-gray-400/90">
             {messages.footer.blurb}
           </p>
-          <div className="flex gap-3">
+          <div className="flex gap-2.5">
             {[Globe, Camera, Phone].map((Icon, i) => (
               <button
                 key={i}
-                className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center hover:bg-brand transition-colors"
+                className="w-9 h-9 grid place-items-center rounded-full bg-white/5 ring-1 ring-white/10 text-gray-300 hover:bg-brand hover:text-white hover:ring-brand transition-colors"
               >
                 <Icon className="w-4 h-4" />
               </button>
@@ -39,7 +43,10 @@ export default function Footer() {
           <ul className="space-y-2.5">
             {messages.footer.quickLinks.map((label) => (
               <li key={label}>
-                <Link href="#" className="text-sm hover:text-white transition-colors">
+                <Link
+                  href="#"
+                  className="text-sm text-gray-400 hover:text-brand transition-colors"
+                >
                   {label}
                 </Link>
               </li>
@@ -55,7 +62,10 @@ export default function Footer() {
           <ul className="space-y-2.5">
             {messages.footer.supportLinks.map((label) => (
               <li key={label}>
-                <Link href="#" className="text-sm hover:text-white transition-colors">
+                <Link
+                  href="#"
+                  className="text-sm text-gray-400 hover:text-brand transition-colors"
+                >
                   {label}
                 </Link>
               </li>
@@ -63,26 +73,10 @@ export default function Footer() {
           </ul>
         </div>
 
-        {/* App Download */}
-        <div>
-          <h4 className="text-white font-semibold text-xs uppercase tracking-wider mb-4">
-            App Download
-          </h4>
-          <div className="space-y-2 opacity-40">
-            {['Google Play', 'App Store'].map((label) => (
-              <div
-                key={label}
-                className="border border-gray-600 rounded-lg px-4 py-2.5 text-xs text-gray-400"
-              >
-                {label}
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
 
-      <div className="border-t border-gray-800 py-5 text-center text-xs text-gray-600">
-        © 2026 Kuja7.lk. All rights reserved.
+      <div className="relative border-t border-white/10 py-5 text-center text-xs text-gray-500">
+        © 2026 {messages.footer.brand}. All rights reserved.
       </div>
     </footer>
   )

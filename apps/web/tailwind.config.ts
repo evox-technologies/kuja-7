@@ -20,6 +20,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: ['var(--font-nunito)', 'var(--font-sinhala)', 'sans-serif'],
+        display: ['var(--font-display)', 'serif'],
       },
       screens: {
         design: '1280px',
