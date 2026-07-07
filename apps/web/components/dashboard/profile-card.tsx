@@ -5,6 +5,7 @@ import { Heart, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { apiFetch } from '@/lib/api'
 import { useState } from 'react'
+import { useProfileGuard } from '@/contexts/profile-guard'
 
 export interface ProfileCardData {
   id: string
@@ -59,6 +60,7 @@ function Avatar({ profile }: { profile: ProfileCardData }) {
 }
 
 export default function ProfileCard({ profile, badge, actions, note }: Props) {
+  const { guardAction } = useProfileGuard()
   const [interestStatus, setInterestStatus] = useState<'PENDING' | 'ACCEPTED' | null>(
     profile.myInterestStatus ?? null
   )
@@ -68,20 +70,37 @@ export default function ProfileCard({ profile, badge, actions, note }: Props) {
   async function handleInterestToggle(e: React.MouseEvent) {
     e.preventDefault()
     if (toggling) return
-    // Don't toggle if already mutually accepted
     if (interestStatus === 'ACCEPTED') return
+
+    // Block sending (not removing) when profile is incomplete
+    if (!interestStatus) {
+      guardAction(() => doSendInterest())
+      return
+    }
+
+    doRemoveInterest()
+  }
+
+  async function doSendInterest() {
     setToggling(true)
     try {
-      if (interestStatus === 'PENDING') {
-        await apiFetch(`/matches/interests/${profile.id}`, { method: 'DELETE' })
-        setInterestStatus(null)
-      } else {
-        await apiFetch('/matches/interests', {
-          method: 'POST',
-          body: JSON.stringify({ receiverId: profile.id }),
-        })
-        setInterestStatus('PENDING')
-      }
+      await apiFetch('/matches/interests', {
+        method: 'POST',
+        body: JSON.stringify({ receiverId: profile.id }),
+      })
+      setInterestStatus('PENDING')
+    } catch {
+      // noop
+    } finally {
+      setToggling(false)
+    }
+  }
+
+  async function doRemoveInterest() {
+    setToggling(true)
+    try {
+      await apiFetch(`/matches/interests/${profile.id}`, { method: 'DELETE' })
+      setInterestStatus(null)
     } catch {
       // noop
     } finally {

@@ -1,33 +1,37 @@
 'use client'
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { Home, Heart, Users, MessageCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useProfileGuard } from '@/contexts/profile-guard'
 
 const TABS = [
-  { label: 'Home',             href: '/dashboard/home',      icon: Home },
-  { label: 'Interests',        href: '/dashboard/interests',  icon: Heart },
-  { label: 'Mutual Interests', href: '/dashboard/mutual',     icon: Users },
-  { label: 'Chat',             href: '/dashboard/chat',       icon: MessageCircle },
+  { label: 'Home',             href: '/dashboard/home',      icon: Home,          protected: false },
+  { label: 'Interests',        href: '/dashboard/interests',  icon: Heart,         protected: true  },
+  { label: 'Mutual Interests', href: '/dashboard/mutual',     icon: Users,         protected: true  },
+  { label: 'Chat',             href: '/dashboard/chat',       icon: MessageCircle, protected: true  },
 ]
 
 export default function DashboardTabs() {
   const pathname = usePathname()
-
-  function isActive(href: string) {
-    return pathname.startsWith(href)
-  }
+  const router = useRouter()
+  const { guardAction } = useProfileGuard()
 
   return (
     <div className="bg-white border-b border-gray-100 shrink-0 overflow-x-auto">
       <div className="px-2 sm:px-6 flex items-center gap-0 sm:gap-1 min-w-max sm:min-w-0">
-        {TABS.map(({ label, href, icon: Icon }) => {
-          const active = isActive(href)
+        {TABS.map(({ label, href, icon: Icon, protected: isProtected }) => {
+          const active = pathname.startsWith(href)
           return (
-            <Link
+            <button
               key={href}
-              href={href}
+              onClick={() => {
+                if (isProtected) {
+                  guardAction(() => router.push(href))
+                } else {
+                  router.push(href)
+                }
+              }}
               className={cn(
                 'flex items-center gap-1.5 px-3 sm:px-4 py-3 sm:py-4 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
                 active
@@ -37,7 +41,7 @@ export default function DashboardTabs() {
             >
               <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
               <span className="hidden xs:inline sm:inline">{label}</span>
-            </Link>
+            </button>
           )
         })}
       </div>

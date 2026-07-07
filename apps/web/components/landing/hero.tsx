@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { ChevronRight } from "lucide-react";
 import { motion } from "motion/react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { asset } from "@/lib/assets";
@@ -10,6 +11,20 @@ import { useI18n } from "@/lib/i18n/use-i18n";
 
 export default function Hero() {
   const { t } = useI18n();
+  const router = useRouter();
+
+  function handleSearch(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    const params = new URLSearchParams();
+    const gender = fd.get("gender") as string;
+    const ageMin = fd.get("ageMin") as string;
+    const ageMax = fd.get("ageMax") as string;
+    if (gender) params.set("gender", gender);
+    if (ageMin) params.set("ageMin", ageMin);
+    if (ageMax) params.set("ageMax", ageMax);
+    router.push(`/dashboard/home?${params.toString()}`);
+  }
 
   return (
     <section className="relative h-[90vh] min-h-[560px] w-full overflow-hidden">
@@ -50,7 +65,7 @@ export default function Hero() {
             delay: 0.3,
           }}
         >
-          <form action="/search" method="GET">
+          <form onSubmit={handleSearch}>
             <div className="bg-white rounded-2xl shadow-2xl px-4 py-4 lg:px-6 lg:py-5 flex flex-col lg:flex-row items-stretch lg:items-end gap-3 lg:gap-4">
               <div className="flex-1">
                 <label className="block text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">

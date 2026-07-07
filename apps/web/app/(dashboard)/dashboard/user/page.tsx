@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Heart, MessageCircle, Phone, ChevronLeft, User, Lock, Bell } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
+import { useProfileGuard } from '@/contexts/profile-guard'
 
 interface Relationship {
   isMutual: boolean
@@ -72,6 +73,7 @@ function OtherProfileInner() {
   const searchParams = useSearchParams()
   const id = searchParams.get('id') ?? ''
   const router = useRouter()
+  const { guardAction } = useProfileGuard()
   const [profile, setProfile] = useState<OtherProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [interestSent, setInterestSent] = useState(false)
@@ -294,7 +296,7 @@ function OtherProfileInner() {
               {/* No interest from either side yet — Show Interest button */}
               {!rel.isMutual && !rel.myInterestStatus && !rel.theirInterestStatus && (
                 <button
-                  onClick={sendInterest}
+                  onClick={() => guardAction(() => sendInterest())}
                   disabled={sendingInterest || interestSent}
                   className="px-4 py-2 rounded-full border border-brand text-brand text-sm font-medium hover:bg-brand hover:text-white transition-colors disabled:opacity-50"
                 >
@@ -304,7 +306,7 @@ function OtherProfileInner() {
 
               {/* Heart button: toggle interest */}
               <button
-                onClick={heartCanSend ? sendInterest : heartCanRemove ? removeInterest : undefined}
+                onClick={heartCanSend ? () => guardAction(() => sendInterest()) : heartCanRemove ? removeInterest : undefined}
                 disabled={sendingInterest}
                 title={heartTitle}
                 className={heartCls}

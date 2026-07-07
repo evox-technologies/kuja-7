@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Lock, User, Camera } from 'lucide-react'
 import { apiFetch, ApiError } from '@/lib/api'
+import { useProfileGuard } from '@/contexts/profile-guard'
 
 interface Profile {
   id: string
@@ -108,30 +109,39 @@ function ReadField({ label, value }: { label: string; value?: string | null }) {
   )
 }
 
-function FormField({ label, value, onChange, type = 'text', placeholder }: {
-  label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string
+function RequiredStar() {
+  return <span className="text-red-500 ml-0.5">*</span>
+}
+
+function FormField({ label, value, onChange, type = 'text', placeholder, required, error }: {
+  label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string; required?: boolean; error?: boolean
 }) {
   return (
     <div>
-      <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">{label}</p>
+      <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">
+        {label}{required && <RequiredStar />}
+      </p>
       <input
         type={type}
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        className={inputCls}
+        className={inputCls + (error ? ' border-red-400 focus:border-red-400 focus:ring-red-200' : '')}
       />
     </div>
   )
 }
 
-function FormSelect({ label, value, onChange, options }: {
-  label: string; value: string; onChange: (v: string) => void; options: string[]
+function FormSelect({ label, value, onChange, options, required, error }: {
+  label: string; value: string; onChange: (v: string) => void; options: string[]; required?: boolean; error?: boolean
 }) {
   return (
     <div>
-      <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">{label}</p>
-      <select value={value} onChange={e => onChange(e.target.value)} className={inputCls + ' appearance-none'}>
+      <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">
+        {label}{required && <RequiredStar />}
+      </p>
+      <select value={value} onChange={e => onChange(e.target.value)}
+        className={inputCls + ' appearance-none' + (error ? ' border-red-400 focus:border-red-400 focus:ring-red-200' : '')}>
         <option value="">— Select —</option>
         {options.map(o => <option key={o} value={o}>{o}</option>)}
       </select>
@@ -139,13 +149,16 @@ function FormSelect({ label, value, onChange, options }: {
   )
 }
 
-function FormDate({ label, value, onChange }: {
-  label: string; value: string; onChange: (v: string) => void
+function FormDate({ label, value, onChange, required, error }: {
+  label: string; value: string; onChange: (v: string) => void; required?: boolean; error?: boolean
 }) {
   return (
     <div>
-      <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">{label}</p>
-      <input type="date" value={value} onChange={e => onChange(e.target.value)} className={inputCls} />
+      <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">
+        {label}{required && <RequiredStar />}
+      </p>
+      <input type="date" value={value} onChange={e => onChange(e.target.value)}
+        className={inputCls + (error ? ' border-red-400 focus:border-red-400 focus:ring-red-200' : '')} />
     </div>
   )
 }
@@ -168,13 +181,29 @@ function Section({ title, icon, note, children }: {
   )
 }
 
+const REQUIRED_FIELDS: (keyof Draft)[] = [
+  'firstName', 'lastName', 'mobileNumber', 'address',
+  'height', 'country', 'city', 'educationLevel', 'profession',
+  'kujaNumber', 'birthDay',
+]
+
+function validateDraft(draft: Draft): Partial<Record<keyof Draft, true>> {
+  const errors: Partial<Record<keyof Draft, true>> = {}
+  for (const f of REQUIRED_FIELDS) {
+    if (!draft[f]?.trim()) errors[f] = true
+  }
+  return errors
+}
+
 export default function OwnProfilePage() {
   const router = useRouter()
+  const { refreshStatus } = useProfileGuard()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [draft, setDraft] = useState<Draft | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof Draft, true>>>({})
   const [uploadingIdx, setUploadingIdx] = useState<number | null>(null)
 
   useEffect(() => {
@@ -193,6 +222,13 @@ export default function OwnProfilePage() {
 
   async function handleSave() {
     if (!draft) return
+    const errors = validateDraft(draft)
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors)
+      setSaveError('Please fill in all required fields marked with *')
+      return
+    }
+    setFieldErrors({})
     setSaving(true)
     setSaveError('')
     try {
@@ -224,6 +260,7 @@ export default function OwnProfilePage() {
       })
       setProfile(updated)
       setDraft(profileToDraft(updated))
+      refreshStatus()
     } catch {
       setSaveError('Failed to save. Please try again.')
     } finally {
@@ -234,6 +271,7 @@ export default function OwnProfilePage() {
   function handleReset() {
     if (profile) setDraft(profileToDraft(profile))
     setSaveError('')
+    setFieldErrors({})
   }
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -379,10 +417,10 @@ export default function OwnProfilePage() {
           note="Contact info is only visible to profiles you grant permission to view."
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <FormField label="Mobile Number" value={draft.mobileNumber} onChange={v => set('mobileNumber', v)} placeholder="+94 77 000 0000" />
+            <FormField label="Mobile Number" value={draft.mobileNumber} onChange={v => set('mobileNumber', v)} placeholder="+94 77 000 0000" required error={!!fieldErrors.mobileNumber} />
             <FormField label="WhatsApp Number" value={draft.whatsappNumber} onChange={v => set('whatsappNumber', v)} placeholder="+94 77 000 0000" />
             <div className="sm:col-span-2">
-              <FormField label="Address" value={draft.address} onChange={v => set('address', v)} placeholder="Street, City, Country" />
+              <FormField label="Address" value={draft.address} onChange={v => set('address', v)} placeholder="Street, City, Country" required error={!!fieldErrors.address} />
             </div>
           </div>
         </Section>
@@ -390,11 +428,11 @@ export default function OwnProfilePage() {
         {/* ── Personal Info ── */}
         <Section title="Personal Info">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            <FormField label="First Name" value={draft.firstName} onChange={v => set('firstName', v)} />
-            <FormField label="Last Name" value={draft.lastName} onChange={v => set('lastName', v)} />
-            <ReadField label="Age" value={String(age(profile.dateOfBirth))} />
-            <ReadField label="Gender" value={profile.gender} />
-            <FormField label="Height" value={draft.height} onChange={v => set('height', v)} placeholder="e.g. 5ft 8in" />
+            <FormField label="First Name" value={draft.firstName} onChange={v => set('firstName', v)} required error={!!fieldErrors.firstName} />
+            <FormField label="Last Name" value={draft.lastName} onChange={v => set('lastName', v)} required error={!!fieldErrors.lastName} />
+            <ReadField label="Age *" value={String(age(profile.dateOfBirth))} />
+            <ReadField label="Gender *" value={profile.gender} />
+            <FormField label="Height" value={draft.height} onChange={v => set('height', v)} placeholder="e.g. 5ft 8in" required error={!!fieldErrors.height} />
             <FormField label="Nationality" value={draft.nationality} onChange={v => set('nationality', v)} />
             <FormField label="Ethnicity" value={draft.ethnicity} onChange={v => set('ethnicity', v)} />
             <FormField label="Caste" value={draft.caste} onChange={v => set('caste', v)} />
@@ -406,8 +444,8 @@ export default function OwnProfilePage() {
         {/* ── Residency ── */}
         <Section title="Residency">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            <FormField label="Country" value={draft.country} onChange={v => set('country', v)} />
-            <FormField label="City" value={draft.city} onChange={v => set('city', v)} />
+            <FormField label="Country" value={draft.country} onChange={v => set('country', v)} required error={!!fieldErrors.country} />
+            <FormField label="City" value={draft.city} onChange={v => set('city', v)} required error={!!fieldErrors.city} />
             <FormField label="State / District" value={draft.stateDistrict} onChange={v => set('stateDistrict', v)} />
           </div>
         </Section>
@@ -415,8 +453,8 @@ export default function OwnProfilePage() {
         {/* ── Education & Profession ── */}
         <Section title="Education & Profession">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <FormField label="Education Level" value={draft.educationLevel} onChange={v => set('educationLevel', v)} placeholder="e.g. Bachelor's" />
-            <FormField label="Profession" value={draft.profession} onChange={v => set('profession', v)} placeholder="e.g. Software Engineer" />
+            <FormField label="Education Level" value={draft.educationLevel} onChange={v => set('educationLevel', v)} placeholder="e.g. Bachelor's" required error={!!fieldErrors.educationLevel} />
+            <FormField label="Profession" value={draft.profession} onChange={v => set('profession', v)} placeholder="e.g. Software Engineer" required error={!!fieldErrors.profession} />
           </div>
         </Section>
 
@@ -436,8 +474,8 @@ export default function OwnProfilePage() {
           note="Horoscope details are only visible to profiles you grant permission to view."
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <FormSelect label="Kuja Number" value={draft.kujaNumber} options={KUJA_NUMBERS} onChange={v => set('kujaNumber', v)} />
-            <FormDate label="Birth Day" value={draft.birthDay} onChange={v => set('birthDay', v)} />
+            <FormSelect label="Kuja Number" value={draft.kujaNumber} options={KUJA_NUMBERS} onChange={v => set('kujaNumber', v)} required error={!!fieldErrors.kujaNumber} />
+            <FormDate label="Birth Day" value={draft.birthDay} onChange={v => set('birthDay', v)} required error={!!fieldErrors.birthDay} />
           </div>
         </Section>
 

@@ -39,6 +39,18 @@ export class MatchesService {
       throw new BadRequestException('Cannot send interest to yourself');
     }
 
+    const sender = await this.prisma.profile.findUnique({
+      where: { id: senderId },
+      select: { profileCompleted: true },
+    });
+
+    if (!sender?.profileCompleted) {
+      this.logger.warn(
+        `sendInterest – blocked: profile incomplete for senderId=${senderId}`,
+      );
+      throw new ForbiddenException('Complete your profile before sending interests');
+    }
+
     this.logger.log(
       `sendInterest – senderId=${senderId} → receiverId=${receiverId}`,
     );

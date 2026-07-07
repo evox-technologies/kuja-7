@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { SlidersHorizontal, X, AlertCircle, ArrowRight } from 'lucide-react'
 import { apiFetch, ApiError } from '@/lib/api'
 import ProfileCard, { ProfileCardData } from '@/components/dashboard/profile-card'
@@ -85,10 +85,16 @@ function FilterInput({ label, value, onChange, placeholder }: {
   )
 }
 
-export default function HomePage() {
+function HomePageInner() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
-  const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS)
+  const [filters, setFilters] = useState<Filters>(() => ({
+    ...EMPTY_FILTERS,
+    gender: searchParams.get('gender') ?? '',
+    ageMin: searchParams.get('ageMin') ?? '',
+    ageMax: searchParams.get('ageMax') ?? '',
+  }))
   const [results, setResults] = useState<ProfileCardData[]>([])
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
@@ -342,5 +348,17 @@ export default function HomePage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={
+      <div className="h-full flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <HomePageInner />
+    </Suspense>
   )
 }
