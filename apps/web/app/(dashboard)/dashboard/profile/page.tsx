@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Lock, Pencil, User, Check, X } from 'lucide-react'
+import { Lock, User, Camera } from 'lucide-react'
 import { apiFetch, ApiError } from '@/lib/api'
 
 interface Profile {
@@ -36,71 +36,133 @@ interface Profile {
   isVerified: boolean
 }
 
+interface Draft {
+  firstName: string
+  lastName: string
+  height: string
+  nationality: string
+  ethnicity: string
+  caste: string
+  civilStatus: string
+  religion: string
+  country: string
+  city: string
+  stateDistrict: string
+  educationLevel: string
+  profession: string
+  drinking: string
+  smoking: string
+  foodPreference: string
+  kujaNumber: string
+  birthDay: string
+  mobileNumber: string
+  whatsappNumber: string
+  address: string
+}
+
+const KUJA_NUMBERS = ['1', '2', '4', '7', '8', '12']
+const CIVIL_STATUSES = ['Never Married', 'Divorced', 'Widowed', 'Separated']
+const DRINKING_OPTS = ['Never', 'Occasionally', 'Regularly']
+const SMOKING_OPTS = ['Never', 'Occasionally', 'Regularly']
+const FOOD_PREFS = ['Vegetarian', 'Non-Vegetarian', 'Vegan', 'Halal']
+
 function age(dob: string) {
   return Math.floor((Date.now() - new Date(dob).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
 }
 
-function Field({ label, value }: { label: string; value?: string | null }) {
-  return (
-    <div>
-      <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-0.5">{label}</p>
-      <p className="text-sm bg-gray-50 rounded-xl px-3 py-2 text-gray-700 min-h-[36px]">{value || '-'}</p>
-    </div>
-  )
-}
-
-function EditableField({ label, value, onSave }: {
-  label: string; value: string; onSave: (v: string) => Promise<void>
-}) {
-  const [editing, setEditing] = useState(false)
-  const [val, setVal] = useState(value)
-  const [saving, setSaving] = useState(false)
-
-  async function save() {
-    setSaving(true)
-    try { await onSave(val); setEditing(false) }
-    finally { setSaving(false) }
+function profileToDraft(p: Profile): Draft {
+  return {
+    firstName: p.firstName ?? '',
+    lastName: p.lastName ?? '',
+    height: p.height ?? '',
+    nationality: p.nationality ?? '',
+    ethnicity: p.ethnicity ?? '',
+    caste: p.caste ?? '',
+    civilStatus: p.civilStatus ?? '',
+    religion: p.religion ?? '',
+    country: p.country ?? '',
+    city: p.city ?? '',
+    stateDistrict: p.stateDistrict ?? '',
+    educationLevel: p.educationLevel ?? '',
+    profession: p.profession ?? '',
+    drinking: p.drinking ?? '',
+    smoking: p.smoking ?? '',
+    foodPreference: p.foodPreference ?? '',
+    kujaNumber: p.kujaNumber ?? '',
+    birthDay: p.birthDay ?? '',
+    mobileNumber: p.mobileNumber ?? '',
+    whatsappNumber: p.whatsappNumber ?? '',
+    address: p.address ?? '',
   }
+}
 
-  if (!editing) return (
-    <div>
-      <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-0.5">{label}</p>
-      <div className="flex items-center gap-2">
-        <p className="flex-1 text-sm bg-gray-50 rounded-xl px-3 py-2 text-gray-700 min-h-[36px]">{val || '-'}</p>
-        <button onClick={() => setEditing(true)} className="p-1.5 text-gray-300 hover:text-brand transition-colors"><Pencil className="w-3.5 h-3.5" /></button>
-      </div>
-    </div>
-  )
+const inputCls =
+  'w-full text-sm bg-white border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors'
 
+function ReadField({ label, value }: { label: string; value?: string | null }) {
   return (
     <div>
-      <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-0.5">{label}</p>
-      <div className="flex items-center gap-2">
-        <input
-          value={val}
-          onChange={e => setVal(e.target.value)}
-          className="flex-1 text-sm bg-white border border-brand rounded-xl px-3 py-2 focus:outline-none"
-          autoFocus
-        />
-        <button onClick={save} disabled={saving} className="p-1.5 text-green-500 hover:text-green-700"><Check className="w-4 h-4" /></button>
-        <button onClick={() => { setVal(value); setEditing(false) }} className="p-1.5 text-gray-300 hover:text-red-400"><X className="w-4 h-4" /></button>
-      </div>
+      <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">{label}</p>
+      <p className="text-sm bg-gray-50 rounded-xl px-3 py-2.5 text-gray-700 min-h-[38px]">{value || '-'}</p>
     </div>
   )
 }
 
-interface SectionProps {
-  title: string
-  icon?: React.ReactNode
-  children: React.ReactNode
+function FormField({ label, value, onChange, type = 'text', placeholder }: {
+  label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string
+}) {
+  return (
+    <div>
+      <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">{label}</p>
+      <input
+        type={type}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        className={inputCls}
+      />
+    </div>
+  )
 }
 
-function Section({ title, icon, children }: SectionProps) {
+function FormSelect({ label, value, onChange, options }: {
+  label: string; value: string; onChange: (v: string) => void; options: string[]
+}) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5 mb-4">
-      <h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2 mb-4">
+    <div>
+      <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">{label}</p>
+      <select value={value} onChange={e => onChange(e.target.value)} className={inputCls + ' appearance-none'}>
+        <option value="">— Select —</option>
+        {options.map(o => <option key={o} value={o}>{o}</option>)}
+      </select>
+    </div>
+  )
+}
+
+function FormDate({ label, value, onChange }: {
+  label: string; value: string; onChange: (v: string) => void
+}) {
+  return (
+    <div>
+      <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">{label}</p>
+      <input type="date" value={value} onChange={e => onChange(e.target.value)} className={inputCls} />
+    </div>
+  )
+}
+
+function Section({ title, icon, note, children }: {
+  title: string; icon?: React.ReactNode; note?: string; children: React.ReactNode
+}) {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5 mb-3 sm:mb-4">
+      <h3 className="font-semibold text-gray-800 text-sm flex items-center gap-2 mb-3 sm:mb-4">
         {icon}{title}
       </h3>
+      {note && (
+        <p className="text-xs text-blue-600 bg-blue-50 rounded-xl px-3 py-2 mb-3 sm:mb-4 leading-relaxed">
+          {note}
+        </p>
+      )}
       {children}
     </div>
   )
@@ -109,12 +171,15 @@ function Section({ title, icon, children }: SectionProps) {
 export default function OwnProfilePage() {
   const router = useRouter()
   const [profile, setProfile] = useState<Profile | null>(null)
+  const [draft, setDraft] = useState<Draft | null>(null)
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const [uploadingIdx, setUploadingIdx] = useState<number | null>(null)
 
   useEffect(() => {
     apiFetch<Profile>('/auth/me')
-      .then(setProfile)
+      .then(p => { setProfile(p); setDraft(profileToDraft(p)) })
       .catch((err) => {
         if (err instanceof ApiError && err.status === 401) router.replace('/login')
         else if (err instanceof ApiError && err.status === 404) router.replace('/onboarding')
@@ -122,12 +187,53 @@ export default function OwnProfilePage() {
       .finally(() => setLoading(false))
   }, [router])
 
-  async function patch(data: Record<string, unknown>) {
-    const updated = await apiFetch<Profile>('/auth/me', {
-      method: 'PATCH',
-      body: JSON.stringify(data),
-    })
-    setProfile(updated)
+  function set<K extends keyof Draft>(key: K, value: Draft[K]) {
+    setDraft(prev => prev ? { ...prev, [key]: value } : prev)
+  }
+
+  async function handleSave() {
+    if (!draft) return
+    setSaving(true)
+    setSaveError('')
+    try {
+      const updated = await apiFetch<Profile>('/auth/me', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          firstName: draft.firstName || undefined,
+          lastName: draft.lastName || undefined,
+          height: draft.height || undefined,
+          nationality: draft.nationality || undefined,
+          ethnicity: draft.ethnicity || undefined,
+          caste: draft.caste || undefined,
+          civilStatus: draft.civilStatus || undefined,
+          religion: draft.religion || undefined,
+          country: draft.country || undefined,
+          city: draft.city || undefined,
+          stateDistrict: draft.stateDistrict || undefined,
+          educationLevel: draft.educationLevel || undefined,
+          profession: draft.profession || undefined,
+          drinking: draft.drinking || undefined,
+          smoking: draft.smoking || undefined,
+          foodPreference: draft.foodPreference || undefined,
+          kujaNumber: draft.kujaNumber || undefined,
+          birthDay: draft.birthDay || undefined,
+          mobileNumber: draft.mobileNumber || undefined,
+          whatsappNumber: draft.whatsappNumber || undefined,
+          address: draft.address || undefined,
+        }),
+      })
+      setProfile(updated)
+      setDraft(profileToDraft(updated))
+    } catch {
+      setSaveError('Failed to save. Please try again.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  function handleReset() {
+    if (profile) setDraft(profileToDraft(profile))
+    setSaveError('')
   }
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -139,7 +245,11 @@ export default function OwnProfilePage() {
       const fd = new FormData()
       fd.append('file', file)
       const res = await apiFetch<{ url: string }>('/upload/image', { method: 'POST', body: fd })
-      await patch({ images: [...profile.images, res.url] })
+      const updated = await apiFetch<Profile>('/auth/me', {
+        method: 'PATCH',
+        body: JSON.stringify({ images: [...profile.images, res.url] }),
+      })
+      setProfile(updated)
     } catch {
       // noop
     } finally {
@@ -149,7 +259,11 @@ export default function OwnProfilePage() {
 
   async function removeImage(url: string) {
     if (!profile) return
-    await patch({ images: profile.images.filter(i => i !== url) })
+    const updated = await apiFetch<Profile>('/auth/me', {
+      method: 'PATCH',
+      body: JSON.stringify({ images: profile.images.filter(i => i !== url) }),
+    })
+    setProfile(updated)
   }
 
   if (loading) return (
@@ -158,137 +272,201 @@ export default function OwnProfilePage() {
     </div>
   )
 
-  if (!profile) return null
+  if (!profile || !draft) return null
 
   const cityCountry = [profile.city, profile.country].filter(Boolean).join(', ')
+  const displayAvatar = profile.images?.[0] ?? profile.avatarUrl ?? null
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="max-w-2xl mx-auto p-4 sm:p-6">
+    <div className="h-full w-full overflow-y-auto">
+      <div className="w-full max-w-3xl sm:max-w-3xl mx-auto px-3 sm:px-6 pt-4 sm:pt-6 pb-32">
 
-        {/* Profile header */}
-        <div className="bg-gray-900 text-white rounded-2xl p-5 mb-4 flex flex-col sm:flex-row items-center sm:items-start gap-4">
-          <div className="w-20 h-20 rounded-full bg-gray-700 overflow-hidden flex items-center justify-center shrink-0">
-            {profile.avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={profile.avatarUrl} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
-            ) : (
-              <User className="w-9 h-9 text-gray-500" />
-            )}
-          </div>
-          <div className="text-center sm:text-left">
-            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-              <span className="font-bold text-lg">{profile.firstName} {profile.lastName}</span>
-              {profile.kujaNumber && (
-                <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                  Kuja {profile.kujaNumber}
+        {/* ── Profile header ── */}
+        <div className="bg-gray-900 text-white rounded-2xl p-4 sm:p-6 mb-3 sm:mb-4">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-5">
+            {/* Avatar */}
+            <div className="relative shrink-0">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full bg-gray-700 overflow-hidden flex items-center justify-center ring-4 ring-gray-800">
+                {displayAvatar ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={displayAvatar} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                ) : (
+                  <User className="w-9 h-9 sm:w-11 sm:h-11 text-gray-500" />
+                )}
+              </div>
+              {/* Photo count badge */}
+              {profile.images.length > 0 && (
+                <span className="absolute -bottom-1 -right-1 bg-brand text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                  <Camera className="w-2.5 h-2.5" />
+                  {profile.images.length}
                 </span>
               )}
             </div>
-            <p className="text-sm text-gray-300 mt-1">Age {age(profile.dateOfBirth)} · Live: {cityCountry || 'Not set'}</p>
-            <div className="flex flex-wrap gap-3 mt-2 text-xs text-gray-400 justify-center sm:justify-start">
-              {profile.profession && <span>💼 {profile.profession}</span>}
-              {profile.ethnicity && <span>👤 {profile.ethnicity}</span>}
-              {profile.religion && <span>🕌 {profile.religion}</span>}
-              {profile.height && <span>📏 {profile.height}</span>}
+
+            {/* Info */}
+            <div className="flex-1 text-center sm:text-left min-w-0">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                <span className="font-bold text-lg sm:text-xl truncate">
+                  {profile.firstName} {profile.lastName}
+                </span>
+                {profile.kujaNumber && (
+                  <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
+                    Kuja {profile.kujaNumber}
+                  </span>
+                )}
+                {profile.isVerified && (
+                  <span className="bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
+                    ✓ Verified
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-gray-300 mt-1">
+                Age {age(profile.dateOfBirth)} · {cityCountry || 'Location not set'}
+              </p>
+              <div className="flex flex-wrap gap-2 sm:gap-3 mt-2 text-xs text-gray-400 justify-center sm:justify-start">
+                {profile.gender && <span className="bg-gray-800 px-2 py-0.5 rounded-full">{profile.gender}</span>}
+                {profile.profession && <span className="bg-gray-800 px-2 py-0.5 rounded-full">💼 {profile.profession}</span>}
+                {profile.religion && <span className="bg-gray-800 px-2 py-0.5 rounded-full">🕌 {profile.religion}</span>}
+                {profile.height && <span className="bg-gray-800 px-2 py-0.5 rounded-full">📏 {profile.height}</span>}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Contact Details */}
-        <Section title="Contact Details" icon={<Lock className="w-4 h-4 text-gray-400" />}>
-          <p className="text-xs text-blue-600 bg-blue-50 rounded-xl px-3 py-2 mb-4">
-            Your private details (photos, contact info, and horoscope) are only visible to profiles you grant permission to view.
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <EditableField label="Mobile Number" value={profile.mobileNumber ?? ''} onSave={v => patch({ mobileNumber: v })} />
-            <EditableField label="WhatsApp Number" value={profile.whatsappNumber ?? ''} onSave={v => patch({ whatsappNumber: v })} />
-            <EditableField label="Address" value={profile.address ?? ''} onSave={v => patch({ address: v })} />
-          </div>
-        </Section>
-
-        {/* My Images */}
-        <Section title="My Images" icon={<Lock className="w-4 h-4 text-gray-400" />}>
-          <p className="text-xs text-blue-600 bg-blue-50 rounded-xl px-3 py-2 mb-4">
-            Your private details (photos, contact info, and horoscope) are only visible to profiles you grant permission to view.
-          </p>
-          <div className="flex flex-wrap gap-3">
+        {/* ── My Photos ── */}
+        <Section
+          title="My Photos"
+          icon={<Lock className="w-4 h-4 text-gray-400" />}
+          note="Photos are only visible to profiles you grant permission to view."
+        >
+          <div className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2 sm:gap-3">
             {profile.images.map((url, i) => (
-              <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden border border-gray-200">
+              <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 group">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                {i === 0 && (
+                  <span className="absolute bottom-1 left-1 bg-brand text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                    Main
+                  </span>
+                )}
                 <button
                   onClick={() => removeImage(url)}
-                  className="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center"
+                  className="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                 >×</button>
               </div>
             ))}
             {profile.images.length < 6 && (
-              <label className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer hover:border-brand transition-colors">
+              <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-brand hover:bg-brand/5 transition-colors gap-1">
                 {uploadingIdx !== null ? (
                   <div className="w-5 h-5 border-2 border-brand border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  <span className="text-2xl text-gray-300">+</span>
+                  <>
+                    <Camera className="w-5 h-5 text-gray-300" />
+                    <span className="text-[10px] text-gray-300">Add</span>
+                  </>
                 )}
                 <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploadingIdx !== null} />
               </label>
             )}
           </div>
+          <p className="text-[10px] text-gray-400 mt-2">{profile.images.length}/6 photos · First photo is used as your main profile picture</p>
         </Section>
 
-        {/* Personal Info */}
-        <Section title="Personal Info">
+        {/* ── Contact Details ── */}
+        <Section
+          title="Contact Details"
+          icon={<Lock className="w-4 h-4 text-gray-400" />}
+          note="Contact info is only visible to profiles you grant permission to view."
+        >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <EditableField label="First Name" value={profile.firstName} onSave={v => patch({ firstName: v })} />
-            <EditableField label="Last Name" value={profile.lastName} onSave={v => patch({ lastName: v })} />
-            <Field label="Age" value={String(age(profile.dateOfBirth))} />
-            <Field label="Birthday" value={profile.dateOfBirth} />
-            <Field label="Gender" value={profile.gender} />
-            <EditableField label="Height" value={profile.height ?? ''} onSave={v => patch({ height: v })} />
-            <EditableField label="Nationality" value={profile.nationality ?? ''} onSave={v => patch({ nationality: v })} />
-            <EditableField label="Ethnicity" value={profile.ethnicity ?? ''} onSave={v => patch({ ethnicity: v })} />
-            <EditableField label="Caste" value={profile.caste ?? ''} onSave={v => patch({ caste: v })} />
-            <EditableField label="Civil Status" value={profile.civilStatus ?? ''} onSave={v => patch({ civilStatus: v })} />
-            <EditableField label="Religion" value={profile.religion ?? ''} onSave={v => patch({ religion: v })} />
+            <FormField label="Mobile Number" value={draft.mobileNumber} onChange={v => set('mobileNumber', v)} placeholder="+94 77 000 0000" />
+            <FormField label="WhatsApp Number" value={draft.whatsappNumber} onChange={v => set('whatsappNumber', v)} placeholder="+94 77 000 0000" />
+            <div className="sm:col-span-2">
+              <FormField label="Address" value={draft.address} onChange={v => set('address', v)} placeholder="Street, City, Country" />
+            </div>
           </div>
         </Section>
 
-        {/* Residency */}
+        {/* ── Personal Info ── */}
+        <Section title="Personal Info">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <FormField label="First Name" value={draft.firstName} onChange={v => set('firstName', v)} />
+            <FormField label="Last Name" value={draft.lastName} onChange={v => set('lastName', v)} />
+            <ReadField label="Age" value={String(age(profile.dateOfBirth))} />
+            <ReadField label="Gender" value={profile.gender} />
+            <FormField label="Height" value={draft.height} onChange={v => set('height', v)} placeholder="e.g. 5ft 8in" />
+            <FormField label="Nationality" value={draft.nationality} onChange={v => set('nationality', v)} />
+            <FormField label="Ethnicity" value={draft.ethnicity} onChange={v => set('ethnicity', v)} />
+            <FormField label="Caste" value={draft.caste} onChange={v => set('caste', v)} />
+            <FormSelect label="Civil Status" value={draft.civilStatus} options={CIVIL_STATUSES} onChange={v => set('civilStatus', v)} />
+            <FormField label="Religion" value={draft.religion} onChange={v => set('religion', v)} />
+          </div>
+        </Section>
+
+        {/* ── Residency ── */}
         <Section title="Residency">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <EditableField label="Country" value={profile.country ?? ''} onSave={v => patch({ country: v })} />
-            <EditableField label="City" value={profile.city ?? ''} onSave={v => patch({ city: v })} />
-            <EditableField label="State / District" value={profile.stateDistrict ?? ''} onSave={v => patch({ stateDistrict: v })} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <FormField label="Country" value={draft.country} onChange={v => set('country', v)} />
+            <FormField label="City" value={draft.city} onChange={v => set('city', v)} />
+            <FormField label="State / District" value={draft.stateDistrict} onChange={v => set('stateDistrict', v)} />
           </div>
         </Section>
 
-        {/* Education & Profession */}
+        {/* ── Education & Profession ── */}
         <Section title="Education & Profession">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <EditableField label="Education" value={profile.educationLevel ?? ''} onSave={v => patch({ educationLevel: v })} />
-            <EditableField label="Profession" value={profile.profession ?? ''} onSave={v => patch({ profession: v })} />
+            <FormField label="Education Level" value={draft.educationLevel} onChange={v => set('educationLevel', v)} placeholder="e.g. Bachelor's" />
+            <FormField label="Profession" value={draft.profession} onChange={v => set('profession', v)} placeholder="e.g. Software Engineer" />
           </div>
         </Section>
 
-        {/* Habits */}
+        {/* ── Habits ── */}
         <Section title="Habits">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <EditableField label="Drinking" value={profile.drinking ?? ''} onSave={v => patch({ drinking: v })} />
-            <EditableField label="Smoking" value={profile.smoking ?? ''} onSave={v => patch({ smoking: v })} />
-            <EditableField label="Food Preference" value={profile.foodPreference ?? ''} onSave={v => patch({ foodPreference: v })} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <FormSelect label="Drinking" value={draft.drinking} options={DRINKING_OPTS} onChange={v => set('drinking', v)} />
+            <FormSelect label="Smoking" value={draft.smoking} options={SMOKING_OPTS} onChange={v => set('smoking', v)} />
+            <FormSelect label="Food Preference" value={draft.foodPreference} options={FOOD_PREFS} onChange={v => set('foodPreference', v)} />
           </div>
         </Section>
 
-        {/* Horoscope */}
-        <Section title="Horoscope Info" icon={<Lock className="w-4 h-4 text-gray-400" />}>
-          <p className="text-xs text-blue-600 bg-blue-50 rounded-xl px-3 py-2 mb-4">
-            Your private details (photos, contact info, and horoscope) are only visible to profiles you grant permission to view.
-          </p>
+        {/* ── Horoscope ── */}
+        <Section
+          title="Horoscope Info"
+          icon={<Lock className="w-4 h-4 text-gray-400" />}
+          note="Horoscope details are only visible to profiles you grant permission to view."
+        >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <EditableField label="Kuja Number" value={profile.kujaNumber ?? ''} onSave={v => patch({ kujaNumber: v })} />
-            <EditableField label="Birth Day" value={profile.birthDay ?? ''} onSave={v => patch({ birthDay: v })} />
+            <FormSelect label="Kuja Number" value={draft.kujaNumber} options={KUJA_NUMBERS} onChange={v => set('kujaNumber', v)} />
+            <FormDate label="Birth Day" value={draft.birthDay} onChange={v => set('birthDay', v)} />
           </div>
         </Section>
+
+      </div>
+
+      {/* ── Sticky action bar ── */}
+      <div className="fixed bottom-0 left-0 right-0 z-20 bg-white/95 backdrop-blur border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className="max-w-3xl mx-auto px-3 sm:px-6 py-3 flex items-center gap-3">
+          {saveError
+            ? <p className="flex-1 text-xs text-red-500">{saveError}</p>
+            : <p className="flex-1 text-xs text-gray-400 hidden sm:block">Changes are saved to your profile</p>
+          }
+          <button
+            onClick={handleReset}
+            disabled={saving}
+            className="px-4 sm:px-6 py-2 rounded-full border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            Reset
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="px-5 sm:px-7 py-2 rounded-full bg-brand text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
+          >
+            {saving && <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+            Save Changes
+          </button>
+        </div>
       </div>
     </div>
   )
