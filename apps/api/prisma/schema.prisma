@@ -78,6 +78,9 @@ model Profile {
   address        String?
   images         String[]
 
+  // True once all mandatory profile fields are filled in
+  profileCompleted Boolean @default(false)
+
   sentInterests     Interest[]     @relation("SentInterests")
   receivedInterests Interest[]     @relation("ReceivedInterests")
   shortlisted       Shortlist[]    @relation("ShortlistedBy")
