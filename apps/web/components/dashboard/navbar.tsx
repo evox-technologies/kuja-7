@@ -1,16 +1,34 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
-import { Bell, Crown, LogOut, Users, UserCircle } from 'lucide-react'
+import { Bell, Crown, LogOut, Users, UserCircle, User } from 'lucide-react'
 import LanguageToggle from '@/components/layout/language-toggle'
 import { createClient } from '@/lib/supabase/client'
+import { apiFetch } from '@/lib/api'
+
+interface ProfileSummary {
+  avatarUrl?: string | null
+  images: string[]
+}
 
 export default function DashboardNavbar() {
   const router = useRouter()
+  const pathname = usePathname()
   const [open, setOpen] = useState(false)
+  const [avatar, setAvatar] = useState<string | null>(null)
   const ref = useRef<HTMLDivElement>(null)
+
+  // Re-fetch avatar whenever the user navigates (catches post-upload nav back from profile)
+  useEffect(() => {
+    apiFetch<ProfileSummary>('/auth/me')
+      .then(p => {
+        const src = p.images?.[0] ?? p.avatarUrl ?? null
+        setAvatar(src)
+      })
+      .catch(() => setAvatar(null))
+  }, [pathname])
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -51,10 +69,18 @@ export default function DashboardNavbar() {
 
           {/* Avatar + dropdown */}
           <div ref={ref} className="relative">
-            <div
+            <button
               onClick={() => setOpen(v => !v)}
-              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gray-200 ring-2 ring-gray-100 overflow-hidden cursor-pointer"
-            />
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gray-100 ring-2 ring-gray-200 overflow-hidden cursor-pointer flex items-center justify-center hover:ring-brand/40 transition-all"
+            >
+              {avatar ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={avatar} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <User className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+              )}
+            </button>
+
             {open && (
               <div className="absolute right-0 mt-2 w-44 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
                 <Link
