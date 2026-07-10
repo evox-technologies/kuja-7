@@ -154,13 +154,13 @@ export default function ProfileCard({ profile, badge, actions, note }: Props) {
           )}
 
           {/* Actions row */}
-          <div className="mt-3 flex items-center gap-2">
+          <div className="mt-3 flex flex-wrap items-center gap-2 gap-y-2">
             <button
               onClick={handleInterestToggle}
               disabled={toggling || interestStatus === 'ACCEPTED'}
               title={interested ? (interestStatus === 'ACCEPTED' ? 'Mutual interest' : 'Remove interest') : 'Send interest'}
               className={cn(
-                'p-1.5 rounded-full border transition-colors',
+                'p-1.5 rounded-full border transition-colors shrink-0',
                 interested
                   ? 'border-brand bg-brand/5 text-brand'
                   : 'border-gray-200 text-gray-300 hover:border-brand hover:text-brand'
@@ -169,13 +169,13 @@ export default function ProfileCard({ profile, badge, actions, note }: Props) {
               <Heart className={cn('w-4 h-4', interested && 'fill-brand')} />
             </button>
 
-            <div className="flex-1" />
+            <div className="flex-1 min-w-0" />
 
             {actions}
 
             <Link
               href={`/dashboard/user?id=${profile.id}`}
-              className="flex items-center gap-1 px-4 py-1.5 rounded-full border border-gray-200 text-xs font-medium text-gray-600 hover:border-brand hover:text-brand transition-colors"
+              className="flex items-center gap-1 px-4 py-1.5 rounded-full border border-gray-200 text-xs font-medium text-gray-600 hover:border-brand hover:text-brand transition-colors min-w-0 shrink-0"
             >
               View →
             </Link>

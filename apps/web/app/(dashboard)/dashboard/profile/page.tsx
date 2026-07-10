@@ -317,7 +317,7 @@ export default function OwnProfilePage() {
 
   return (
     <div className="h-full w-full overflow-y-auto">
-      <div className="w-full max-w-3xl sm:max-w-3xl mx-auto px-3 sm:px-6 pt-4 sm:pt-6 pb-32">
+      <div className="w-full max-w-3xl mx-auto px-3 sm:px-6 pt-4 sm:pt-6 pb-32">
 
         {/* ── Profile header ── */}
         <div className="bg-gray-900 text-white rounded-2xl p-4 sm:p-6 mb-3 sm:mb-4">
@@ -377,7 +377,7 @@ export default function OwnProfilePage() {
           icon={<Lock className="w-4 h-4 text-gray-400" />}
           note="Photos are only visible to profiles you grant permission to view."
         >
-          <div className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2 sm:gap-3">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3">
             {profile.images.map((url, i) => (
               <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 group">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -389,7 +389,7 @@ export default function OwnProfilePage() {
                 )}
                 <button
                   onClick={() => removeImage(url)}
-                  className="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                 >×</button>
               </div>
             ))}
@@ -484,9 +484,9 @@ export default function OwnProfilePage() {
       {/* ── Sticky action bar ── */}
       <div className="fixed bottom-0 left-0 right-0 z-20 bg-white/95 backdrop-blur border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-        <div className="max-w-3xl mx-auto px-3 sm:px-6 py-3 flex items-center gap-3">
+        <div className="max-w-3xl mx-auto px-3 sm:px-6 py-3 flex flex-wrap items-center gap-3">
           {saveError
-            ? <p className="flex-1 text-xs text-red-500">{saveError}</p>
+            ? <p className="flex-1 min-w-0 text-xs text-red-500">{saveError}</p>
             : <p className="flex-1 text-xs text-gray-400 hidden sm:block">Changes are saved to your profile</p>
           }
           <button

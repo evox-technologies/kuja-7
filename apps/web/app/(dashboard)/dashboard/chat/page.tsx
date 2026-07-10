@@ -53,7 +53,7 @@ function ChatPageInner() {
 
   return (
     <div data-scale-component="chat" className="h-full flex overflow-hidden">
-      <div className={`${showList ? 'flex' : 'hidden'} md:flex shrink-0`}>
+      <div className={`${showList ? 'flex' : 'hidden'} lg:flex shrink-0`}>
         <ConversationList
           selectedId={selectedId}
           onSelect={handleSelect}
@@ -62,7 +62,7 @@ function ChatPageInner() {
         />
       </div>
 
-      <div className={`${!showList ? 'flex' : 'hidden'} md:flex flex-1`}>
+      <div className={`${!showList ? 'flex' : 'hidden'} lg:flex flex-1`}>
         <ChatWindow
           conversationId={selectedId}
           other={selectedOther}

@@ -48,7 +48,7 @@ export default function DashboardNavbar() {
 
   return (
     <nav className="bg-white border-b border-gray-100 shrink-0">
-      <div className="px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
+      <div className="px-4 lg:px-6 h-14 sm:h-16 flex items-center justify-between">
         <Link href="/" className="text-lg sm:text-xl font-bold tracking-widest text-gray-900">
           LOGO
         </Link>

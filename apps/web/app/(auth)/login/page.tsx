@@ -38,8 +38,8 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="mx-auto max-w-md">
-      <div className="bg-white rounded-3xl shadow-xl px-8 py-10 animate-fade-up">
+    <div className="mx-auto max-w-md min-w-0">
+      <div className="bg-white rounded-3xl shadow-xl px-5 sm:px-8 py-10 animate-fade-up">
         <h1 className="text-2xl font-bold text-gray-900 mb-1">{t('auth.login.title')}</h1>
         <p className="text-sm text-gray-400 mb-6">{t('auth.login.subtitle')}</p>
         <hr className="mb-6 border-gray-100" />

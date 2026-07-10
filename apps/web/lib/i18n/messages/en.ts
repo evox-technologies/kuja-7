@@ -6,7 +6,7 @@ export const en = {
   nav: {
     brand: 'LOGO',
     links: [
-      { href: '/', label: 'Home' },
+      { href: '/dashboard/home/', label: 'Homekkk' },
       { href: '/about', label: 'About' },
       { href: '/pricing', label: 'Pricing' },
     ],
@@ -95,6 +95,81 @@ export const en = {
       },
     ],
     cta: "Let's Start",
+  },
+  about: {
+    heroEyebrow: 'About Kuja7.lk',
+    heroTitle: 'Bringing Sri Lankan hearts together',
+    heroSubtitle:
+      'A trusted matrimonial platform for people in Sri Lanka and abroad — built on privacy, culture, and meaningful matches.',
+    createAccount: 'Create Account',
+    findMatches: 'Find Matches',
+    trustLine: 'Privacy-first · Cultural matching · Built for Sri Lankans',
+    storyEyebrow: 'Our Story',
+    storyTitle: 'Why Kuja7.lk exists',
+    storyP1:
+      'Kuja7.lk was created to make finding a life partner simpler, safer, and more culturally aligned — for Sri Lankans at home and across the diaspora.',
+    storyP2:
+      'Traditional matchmaking can be hard when families and singles are spread across cities and countries. People need privacy, trust, and compatibility beyond photos alone.',
+    storyP3:
+      'We combine modern matching with Sri Lankan cultural values — including Kuja number awareness — so meaningful connections can begin with respect and shared understanding.',
+    storyImageAlt: 'Couples finding meaningful connections',
+    purposeEyebrow: 'Purpose',
+    purposeTitle: 'Mission & Vision',
+    purposeSubtitle: 'What guides every profile, match, and conversation on Kuja7.lk.',
+    missionTitle: 'Our Mission',
+    missionText:
+      'Help people find compatible life partners through trusted profiles, cultural understanding, and privacy-first matching.',
+    visionTitle: 'Our Vision',
+    visionText:
+      "Become Sri Lanka's most trusted matrimonial platform — where meaningful connections begin with respect, safety, and shared values.",
+    whyEyebrow: 'Why Kuja7',
+    whyTitle: 'What makes us different',
+    whySubtitle: 'Designed for real Sri Lankan matching — not just another dating app.',
+    differentiators: [
+      {
+        title: 'Kuja Number Matching',
+        description:
+          'Filter and discover profiles with Kuja compatibility in mind — a culturally meaningful way to find your match.',
+      },
+      {
+        title: 'Privacy-First Profiles',
+        description:
+          'Photos, contact details, and horoscope info stay private until mutual interest or permission is granted.',
+      },
+      {
+        title: 'Built for Sri Lankans',
+        description:
+          'Local culture, religion, ethnicity, and family values are respected throughout the matching journey.',
+      },
+      {
+        title: 'Simple & Modern Experience',
+        description:
+          'Easy onboarding, clear profile setup, and smooth chat after mutual interest — without the clutter.',
+      },
+    ],
+    trustEyebrow: 'Trust & Privacy',
+    trustTitle: 'How we protect you',
+    trustSubtitle: 'Your personal details deserve care and control.',
+    trustPoints: [
+      {
+        title: 'Private by default',
+        description: 'Sensitive details are not publicly exposed on your profile.',
+      },
+      {
+        title: 'Match-based visibility',
+        description:
+          'Contact, photos, and horoscope become visible only with proper permission or mutual interest.',
+      },
+      {
+        title: 'Secure account access',
+        description: 'Protected login and profile controls so you manage what you share.',
+      },
+    ],
+    neverSell: 'We never sell your personal data.',
+    ctaTitle: 'Ready to find your life partner?',
+    ctaSubtitle: 'Create your profile and start meaningful connections on Kuja7.lk.',
+    getStarted: 'Get Started',
+    alreadyHaveAccount: 'Already have an account? Log in',
   },
   auth: {
     layoutTitle: 'Log In',

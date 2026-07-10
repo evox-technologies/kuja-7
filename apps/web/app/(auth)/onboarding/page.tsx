@@ -246,8 +246,7 @@ export default function OnboardingPage() {
   if (step === 1) {
     const err = error
     return (
-      <div className="min-h-screen bg-gray-50 px-4 py-8">
-        <div className="max-w-2xl mx-auto">
+      <div className="max-w-2xl mx-auto px-4 py-8">
           {header}
           <StepIndicator current={1} />
           <div className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-8 space-y-6">
@@ -350,14 +349,12 @@ export default function OnboardingPage() {
               Save &amp; Continue →
             </button>
           </div>
-        </div>
       </div>
     )
   }
 
   if (step === 2) return (
-    <div className="min-h-screen bg-gray-50 px-4 py-8">
-      <div className="max-w-xl mx-auto">
+    <div className="max-w-xl mx-auto px-4 py-8">
         {header}
         <StepIndicator current={2} />
         <div className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-8">
@@ -382,8 +379,8 @@ export default function OnboardingPage() {
               <TextInput type="date" value={form.birthDay} onChange={v => set('birthDay', v)} />
             </FieldGroup>
           </div>
-          <div className="flex gap-3 mt-6">
-            <button onClick={() => setStep(1)} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
+          <div className="flex flex-col-reverse sm:flex-row gap-3 mt-6">
+            <button onClick={() => setStep(1)} className="flex items-center justify-center gap-1 text-sm text-gray-500 hover:text-gray-700 sm:mr-auto">
               <ChevronLeft className="w-4 h-4" /> Back
             </button>
             <button onClick={() => setStep(3)} className="px-5 py-2 rounded-full border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
@@ -394,13 +391,11 @@ export default function OnboardingPage() {
             </button>
           </div>
         </div>
-      </div>
     </div>
   )
 
   if (step === 3) return (
-    <div className="min-h-screen bg-gray-50 px-4 py-8">
-      <div className="max-w-xl mx-auto">
+    <div className="max-w-xl mx-auto px-4 py-8">
         {header}
         <StepIndicator current={3} />
         <div className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-8 space-y-6">
@@ -456,8 +451,8 @@ export default function OnboardingPage() {
 
           {error && <p className="text-xs text-red-500">{error}</p>}
 
-          <div className="flex gap-3">
-            <button onClick={() => setStep(2)} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
+          <div className="flex flex-col-reverse sm:flex-row gap-3">
+            <button onClick={() => setStep(2)} className="flex items-center justify-center gap-1 text-sm text-gray-500 hover:text-gray-700 sm:mr-auto">
               <ChevronLeft className="w-4 h-4" /> Back
             </button>
             <button onClick={() => { setError(''); setStep('preview') }} className="px-5 py-2 rounded-full border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
@@ -468,14 +463,12 @@ export default function OnboardingPage() {
             </button>
           </div>
         </div>
-      </div>
     </div>
   )
 
   // Preview step
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-8">
-      <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto px-4 py-8">
         {header}
         <h2 className="text-lg font-bold text-gray-800 mb-4">Review &amp; Confirm Your Profile</h2>
 
@@ -502,7 +495,7 @@ export default function OnboardingPage() {
         </SectionCard>
 
         <SectionCard title="Personal Info" onEdit={() => setStep(1)}>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <PreviewField label="First Name" value={form.firstName} />
             <PreviewField label="Last Name" value={form.lastName} />
             <PreviewField label="Date of Birth" value={form.dateOfBirth} />
@@ -516,7 +509,7 @@ export default function OnboardingPage() {
         </SectionCard>
 
         <SectionCard title="Residency" onEdit={() => setStep(1)}>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <PreviewField label="Country" value={form.country} />
             <PreviewField label="City" value={form.city} />
             <PreviewField label="State / District" value={form.stateDistrict} />
@@ -531,7 +524,7 @@ export default function OnboardingPage() {
         </SectionCard>
 
         <SectionCard title="Habits" onEdit={() => setStep(1)}>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <PreviewField label="Drinking" value={form.drinking} />
             <PreviewField label="Smoking" value={form.smoking} />
             <PreviewField label="Food Preference" value={form.foodPreference} />
@@ -548,8 +541,8 @@ export default function OnboardingPage() {
 
         {error && <p className="text-xs text-red-500 mb-3">{error}</p>}
 
-        <div className="flex gap-3 mt-2 mb-8">
-          <button onClick={() => setStep(3)} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
+        <div className="flex flex-col-reverse sm:flex-row gap-3 mt-2 mb-8">
+          <button onClick={() => setStep(3)} className="flex items-center justify-center gap-1 text-sm text-gray-500 hover:text-gray-700 sm:mr-auto">
             <ChevronLeft className="w-4 h-4" /> Back
           </button>
           <button
@@ -560,7 +553,6 @@ export default function OnboardingPage() {
             {loading ? 'Creating Account…' : 'Confirm & Create Account'}
           </button>
         </div>
-      </div>
     </div>
   )
 }
