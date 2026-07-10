@@ -175,7 +175,7 @@ export default function ChatWindow({ conversationId, other, currentUserId, onBac
       <div className="bg-gray-900 px-4 sm:px-5 py-3.5 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2 sm:gap-3">
           {onBack && (
-            <button onClick={onBack} className="text-gray-400 hover:text-white transition-colors mr-1 md:hidden">
+            <button onClick={onBack} className="text-gray-400 hover:text-white transition-colors mr-1 lg:hidden">
               ←
             </button>
           )}
@@ -207,7 +207,7 @@ export default function ChatWindow({ conversationId, other, currentUserId, onBac
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-6 py-5 bg-white">
+      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5 bg-white">
         {hasMore && (
           <div className="flex justify-center mb-4">
             <button
@@ -238,7 +238,7 @@ export default function ChatWindow({ conversationId, other, currentUserId, onBac
                 >
                   <div
                     className={cn(
-                      'max-w-xs px-4 py-2.5 rounded-2xl text-sm',
+                      'max-w-[85%] sm:max-w-xs px-4 py-2.5 rounded-2xl text-sm break-words',
                       isMe
                         ? 'bg-brand text-white rounded-br-sm'
                         : 'bg-rose-50 text-gray-800 rounded-bl-sm'

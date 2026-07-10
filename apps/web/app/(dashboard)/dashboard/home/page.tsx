@@ -267,7 +267,7 @@ function HomePageInner() {
       {sidebarOpen && (
         <div className="lg:hidden fixed inset-0 z-40 flex">
           <div className="absolute inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
-          <aside className="relative z-10 w-72 bg-white h-full overflow-y-auto p-4 shadow-xl">
+          <aside className="relative z-10 w-72 max-w-[85vw] bg-white h-full overflow-y-auto p-4 shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <span className="font-semibold text-gray-800">Filters</span>
               <button onClick={() => setSidebarOpen(false)}><X className="w-5 h-5 text-gray-400" /></button>
@@ -298,7 +298,7 @@ function HomePageInner() {
           )}
 
           {/* Top bar */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
             <button
               onClick={() => setSidebarOpen(true)}
               className="lg:hidden flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50"
@@ -306,7 +306,7 @@ function HomePageInner() {
               <SlidersHorizontal className="w-4 h-4" />
               Filters
             </button>
-            <div className="flex items-center gap-2 ml-auto">
+            <div className="flex flex-wrap items-center gap-2 ml-auto">
               <span className="text-xs text-gray-400">Sort By:</span>
               <select className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none">
                 <option>Newest First</option>
