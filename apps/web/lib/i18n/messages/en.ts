@@ -6,7 +6,7 @@ export const en = {
   nav: {
     brand: 'LOGO',
     links: [
-      { href: '/dashboard/home/', label: 'Homekkk' },
+      { href: '/dashboard/home/', label: 'Home' },
       { href: '/about', label: 'About' },
       { href: '/pricing', label: 'Pricing' },
     ],
