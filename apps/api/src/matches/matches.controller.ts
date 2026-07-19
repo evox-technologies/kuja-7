@@ -99,7 +99,11 @@ export class MatchesController {
     @Body() dto: RespondContactRequestDto,
     @CurrentUser() user: Profile,
   ) {
-    return this.matchesService.respondContactRequest(requesterId, user.id, dto.action);
+    return this.matchesService.respondContactRequest(
+      requesterId,
+      user.id,
+      dto.action,
+    );
   }
 
   @Get('contact-request/status/:targetId')

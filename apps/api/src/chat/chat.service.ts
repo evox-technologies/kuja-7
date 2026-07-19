@@ -22,10 +22,20 @@ export class ChatService {
       },
       include: {
         participant1: {
-          select: { id: true, firstName: true, lastName: true, avatarUrl: true },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+          },
         },
         participant2: {
-          select: { id: true, firstName: true, lastName: true, avatarUrl: true },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+          },
         },
         messages: {
           orderBy: { createdAt: 'desc' },
@@ -43,7 +53,9 @@ export class ChatService {
     return convs.map((conv) => ({
       id: conv.id,
       other:
-        conv.participant1Id === profileId ? conv.participant2 : conv.participant1,
+        conv.participant1Id === profileId
+          ? conv.participant2
+          : conv.participant1,
       lastMessage: conv.messages[0] ?? null,
       createdAt: conv.createdAt,
     }));
@@ -63,10 +75,20 @@ export class ChatService {
       },
       include: {
         participant1: {
-          select: { id: true, firstName: true, lastName: true, avatarUrl: true },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+          },
         },
         participant2: {
-          select: { id: true, firstName: true, lastName: true, avatarUrl: true },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+          },
         },
       },
     });
@@ -88,10 +110,20 @@ export class ChatService {
       data: { participant1Id: profileId, participant2Id: targetId },
       include: {
         participant1: {
-          select: { id: true, firstName: true, lastName: true, avatarUrl: true },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+          },
         },
         participant2: {
-          select: { id: true, firstName: true, lastName: true, avatarUrl: true },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+          },
         },
       },
     });
@@ -140,7 +172,12 @@ export class ChatService {
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       include: {
         sender: {
-          select: { id: true, firstName: true, lastName: true, avatarUrl: true },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+          },
         },
       },
     });

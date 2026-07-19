@@ -53,7 +53,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         client.handshake.headers.authorization?.replace('Bearer ', '');
 
       if (!token) {
-        this.logger.warn(`handleConnection – missing token, disconnecting client=${client.id}`);
+        this.logger.warn(
+          `handleConnection – missing token, disconnecting client=${client.id}`,
+        );
         client.disconnect();
         return;
       }
@@ -98,8 +100,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   handleDisconnect(client: Socket) {
-    const profileId = (client as unknown as Partial<AuthenticatedSocket>).profile?.id ?? 'unauthenticated';
-    this.logger.log(`handleDisconnect – client=${client.id} profileId=${profileId}`);
+    const profileId =
+      (client as unknown as Partial<AuthenticatedSocket>).profile?.id ??
+      'unauthenticated';
+    this.logger.log(
+      `handleDisconnect – client=${client.id} profileId=${profileId}`,
+    );
     delete (client as unknown as Partial<AuthenticatedSocket>).profile;
   }
 
@@ -167,7 +173,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       },
       include: {
         sender: {
-          select: { id: true, firstName: true, lastName: true, avatarUrl: true },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+          },
         },
       },
     });

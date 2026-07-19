@@ -109,7 +109,9 @@ export class UsersService {
   constructor(private prisma: PrismaService) {}
 
   async search(dto: SearchProfilesDto, requesterId: string) {
-    this.logger.log(`search – requesterId=${requesterId} page=${dto.page ?? 1}`);
+    this.logger.log(
+      `search – requesterId=${requesterId} page=${dto.page ?? 1}`,
+    );
 
     const page = dto.page ?? 1;
     const take = 20;
@@ -123,11 +125,15 @@ export class UsersService {
     };
 
     if (dto.gender) where.gender = dto.gender;
-    if (dto.religion) where.religion = { contains: dto.religion, mode: 'insensitive' };
-    if (dto.location) where.location = { contains: dto.location, mode: 'insensitive' };
-    if (dto.country) where.country = { contains: dto.country, mode: 'insensitive' };
+    if (dto.religion)
+      where.religion = { contains: dto.religion, mode: 'insensitive' };
+    if (dto.location)
+      where.location = { contains: dto.location, mode: 'insensitive' };
+    if (dto.country)
+      where.country = { contains: dto.country, mode: 'insensitive' };
     if (dto.city) where.city = { contains: dto.city, mode: 'insensitive' };
-    if (dto.ethnicity) where.ethnicity = { contains: dto.ethnicity, mode: 'insensitive' };
+    if (dto.ethnicity)
+      where.ethnicity = { contains: dto.ethnicity, mode: 'insensitive' };
     if (dto.civilStatus) where.civilStatus = dto.civilStatus;
     if (dto.educationLevel) where.educationLevel = dto.educationLevel;
     if (dto.drinking) where.drinking = dto.drinking;
@@ -138,10 +144,18 @@ export class UsersService {
     if (dto.ageMin || dto.ageMax) {
       where.dateOfBirth = {
         ...(dto.ageMax && {
-          gte: new Date(now.getFullYear() - dto.ageMax, now.getMonth(), now.getDate()),
+          gte: new Date(
+            now.getFullYear() - dto.ageMax,
+            now.getMonth(),
+            now.getDate(),
+          ),
         }),
         ...(dto.ageMin && {
-          lte: new Date(now.getFullYear() - dto.ageMin, now.getMonth(), now.getDate()),
+          lte: new Date(
+            now.getFullYear() - dto.ageMin,
+            now.getMonth(),
+            now.getDate(),
+          ),
         }),
       };
     }
@@ -158,7 +172,10 @@ export class UsersService {
     ]);
 
     const interests = await this.prisma.interest.findMany({
-      where: { senderId: requesterId, receiverId: { in: profiles.map((p) => p.id) } },
+      where: {
+        senderId: requesterId,
+        receiverId: { in: profiles.map((p) => p.id) },
+      },
       select: { receiverId: true, status: true },
     });
     const interestMap = new Map(interests.map((i) => [i.receiverId, i.status]));
@@ -168,7 +185,10 @@ export class UsersService {
     );
 
     return {
-      profiles: profiles.map((p) => ({ ...p, myInterestStatus: interestMap.get(p.id) ?? null })),
+      profiles: profiles.map((p) => ({
+        ...p,
+        myInterestStatus: interestMap.get(p.id) ?? null,
+      })),
       total,
       page,
       totalPages: Math.ceil(total / take),
@@ -191,7 +211,9 @@ export class UsersService {
       take: 10,
     });
 
-    this.logger.log(`chatSearch – returned ${results.length} result(s) for query="${q}"`);
+    this.logger.log(
+      `chatSearch – returned ${results.length} result(s) for query="${q}"`,
+    );
     return results;
   }
 
@@ -214,24 +236,27 @@ export class UsersService {
     }
 
     // Fetch all relationship data in one round-trip
-    const [myInterest, theirInterest, contactRequest, incomingContactRequest] = await Promise.all([
-      this.prisma.interest.findFirst({
-        where: { senderId: requesterId, receiverId: id },
-        select: { id: true, status: true },
-      }),
-      this.prisma.interest.findFirst({
-        where: { senderId: id, receiverId: requesterId },
-        select: { id: true, status: true },
-      }),
-      this.prisma.contactRequest.findUnique({
-        where: { requesterId_targetId: { requesterId, targetId: id } },
-        select: { status: true },
-      }),
-      this.prisma.contactRequest.findUnique({
-        where: { requesterId_targetId: { requesterId: id, targetId: requesterId } },
-        select: { status: true },
-      }),
-    ]);
+    const [myInterest, theirInterest, contactRequest, incomingContactRequest] =
+      await Promise.all([
+        this.prisma.interest.findFirst({
+          where: { senderId: requesterId, receiverId: id },
+          select: { id: true, status: true },
+        }),
+        this.prisma.interest.findFirst({
+          where: { senderId: id, receiverId: requesterId },
+          select: { id: true, status: true },
+        }),
+        this.prisma.contactRequest.findUnique({
+          where: { requesterId_targetId: { requesterId, targetId: id } },
+          select: { status: true },
+        }),
+        this.prisma.contactRequest.findUnique({
+          where: {
+            requesterId_targetId: { requesterId: id, targetId: requesterId },
+          },
+          select: { status: true },
+        }),
+      ]);
 
     const isMutual =
       myInterest?.status === 'ACCEPTED' && theirInterest?.status === 'ACCEPTED';

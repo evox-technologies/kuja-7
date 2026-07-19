@@ -86,7 +86,9 @@ export class AuthService {
   }
 
   async updateProfile(supabaseId: string, dto: UpdateProfileDto) {
-    this.logger.log(`updateProfile – updating profile for supabaseId=${supabaseId}`);
+    this.logger.log(
+      `updateProfile – updating profile for supabaseId=${supabaseId}`,
+    );
 
     // Fetch current values so we can compute profileCompleted across the full merged state
     const current = await this.prisma.profile.findUniqueOrThrow({
@@ -126,15 +128,25 @@ export class AuthService {
         ...(dto.civilStatus !== undefined && { civilStatus: dto.civilStatus }),
         ...(dto.country !== undefined && { country: dto.country }),
         ...(dto.city !== undefined && { city: dto.city }),
-        ...(dto.stateDistrict !== undefined && { stateDistrict: dto.stateDistrict }),
-        ...(dto.educationLevel !== undefined && { educationLevel: dto.educationLevel }),
+        ...(dto.stateDistrict !== undefined && {
+          stateDistrict: dto.stateDistrict,
+        }),
+        ...(dto.educationLevel !== undefined && {
+          educationLevel: dto.educationLevel,
+        }),
         ...(dto.drinking !== undefined && { drinking: dto.drinking }),
         ...(dto.smoking !== undefined && { smoking: dto.smoking }),
-        ...(dto.foodPreference !== undefined && { foodPreference: dto.foodPreference }),
+        ...(dto.foodPreference !== undefined && {
+          foodPreference: dto.foodPreference,
+        }),
         ...(dto.kujaNumber !== undefined && { kujaNumber: dto.kujaNumber }),
         ...(dto.birthDay !== undefined && { birthDay: dto.birthDay }),
-        ...(dto.mobileNumber !== undefined && { mobileNumber: dto.mobileNumber }),
-        ...(dto.whatsappNumber !== undefined && { whatsappNumber: dto.whatsappNumber }),
+        ...(dto.mobileNumber !== undefined && {
+          mobileNumber: dto.mobileNumber,
+        }),
+        ...(dto.whatsappNumber !== undefined && {
+          whatsappNumber: dto.whatsappNumber,
+        }),
         ...(dto.address !== undefined && { address: dto.address }),
         ...(dto.images !== undefined && { images: dto.images }),
         profileCompleted: computeProfileCompleted(merged),
@@ -153,7 +165,9 @@ export class AuthService {
     });
 
     if (!profile) {
-      this.logger.warn(`getProfile – no profile found for supabaseId=${supabaseId}`);
+      this.logger.warn(
+        `getProfile – no profile found for supabaseId=${supabaseId}`,
+      );
     }
 
     return profile;

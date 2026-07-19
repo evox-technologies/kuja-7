@@ -17,7 +17,10 @@ export class WsExceptionFilter extends BaseWsExceptionFilter {
 
     if (exception instanceof WsException) {
       const error = exception.getError();
-      const message = typeof error === 'string' ? error : (error as { message?: string }).message ?? 'WebSocket error';
+      const message =
+        typeof error === 'string'
+          ? error
+          : ((error as { message?: string }).message ?? 'WebSocket error');
       this.logger.warn(`WsException for client=${client.id}: ${message}`);
       client.emit('error', { message });
       return;
@@ -42,7 +45,8 @@ export class WsExceptionFilter extends BaseWsExceptionFilter {
       return;
     }
 
-    const message = exception instanceof Error ? exception.message : String(exception);
+    const message =
+      exception instanceof Error ? exception.message : String(exception);
     const stack = exception instanceof Error ? exception.stack : undefined;
     this.logger.error(
       `Unhandled WS exception for client=${client.id}: ${message}`,
@@ -53,10 +57,14 @@ export class WsExceptionFilter extends BaseWsExceptionFilter {
 
   private mapPrismaCode(code: string): string {
     switch (code) {
-      case 'P2002': return 'A record with this value already exists';
-      case 'P2025': return 'Record not found';
-      case 'P2003': return 'Related record not found';
-      default:      return 'A database error occurred';
+      case 'P2002':
+        return 'A record with this value already exists';
+      case 'P2025':
+        return 'Record not found';
+      case 'P2003':
+        return 'Related record not found';
+      default:
+        return 'A database error occurred';
     }
   }
 }

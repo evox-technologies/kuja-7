@@ -13,6 +13,12 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { createClient } from '@supabase/supabase-js';
 import type { Profile } from '@prisma/client';
+import WebSocket from 'ws';
+
+// `ws`'s types (Event, onopen, etc.) don't structurally match the DOM lib
+// types Supabase's realtime-js expects, though it's functionally compatible
+// at runtime — this is Supabase's own documented transport for Node < 22.
+const wsTransport: any = WebSocket;
 
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
@@ -37,7 +43,9 @@ export class UploadController {
       this.logger.warn(
         `uploadImage – rejected mimetype "${file.mimetype}": userId=${user.id}`,
       );
-      throw new BadRequestException('Only JPEG, PNG, and WebP images are allowed');
+      throw new BadRequestException(
+        'Only JPEG, PNG, and WebP images are allowed',
+      );
     }
 
     if (file.size > MAX_SIZE_BYTES) {
@@ -54,10 +62,15 @@ export class UploadController {
       this.logger.error(
         'uploadImage – SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not configured',
       );
-      throw new InternalServerErrorException('Storage service is not configured');
+      throw new InternalServerErrorException(
+        'Storage service is not configured',
+      );
     }
 
-    const supabase = createClient(supabaseUrl, serviceRoleKey);
+    const supabase = createClient(supabaseUrl, serviceRoleKey, {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- see wsTransport comment above
+      realtime: { transport: wsTransport },
+    });
 
     const ext = file.originalname.split('.').pop() ?? 'jpg';
     const path = `${user.id}/${Date.now()}.${ext}`;
@@ -74,7 +87,9 @@ export class UploadController {
       this.logger.error(
         `uploadImage – Supabase upload failed for path="${path}" userId=${user.id}: ${error.message}`,
       );
-      throw new InternalServerErrorException('Image upload failed. Please try again.');
+      throw new InternalServerErrorException(
+        'Image upload failed. Please try again.',
+      );
     }
 
     const { data } = supabase.storage.from('profile-images').getPublicUrl(path);

@@ -29,13 +29,18 @@ export class AllExceptionsFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       const status = exception.getStatus();
       const body = exception.getResponse();
-      return response.status(status).json(
-        typeof body === 'string' ? { statusCode: status, message: body } : body,
-      );
+      return response
+        .status(status)
+        .json(
+          typeof body === 'string'
+            ? { statusCode: status, message: body }
+            : body,
+        );
     }
 
     // Anything reaching here is a genuine unexpected error
-    const message = exception instanceof Error ? exception.message : String(exception);
+    const message =
+      exception instanceof Error ? exception.message : String(exception);
     const stack = exception instanceof Error ? exception.stack : undefined;
 
     this.logger.error(

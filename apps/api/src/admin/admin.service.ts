@@ -21,7 +21,9 @@ export class AdminService {
       this.prisma.profile.count(),
     ]);
 
-    this.logger.log(`listUsers – returned ${profiles.length}/${total} profile(s)`);
+    this.logger.log(
+      `listUsers – returned ${profiles.length}/${total} profile(s)`,
+    );
     return { profiles, total, page, totalPages: Math.ceil(total / take) };
   }
 
@@ -67,7 +69,9 @@ export class AdminService {
     const [totalUsers, verified, pending] = await Promise.all([
       this.prisma.profile.count(),
       this.prisma.profile.count({ where: { isVerified: true } }),
-      this.prisma.profile.count({ where: { isVerified: false, isActive: true } }),
+      this.prisma.profile.count({
+        where: { isVerified: false, isActive: true },
+      }),
     ]);
 
     this.logger.log(

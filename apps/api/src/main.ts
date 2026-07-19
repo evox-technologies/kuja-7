@@ -32,7 +32,9 @@ async function bootstrap() {
   const port = process.env.PORT ?? 3001;
   await app.listen(port);
   logger.log(`Application listening on port ${port}`);
-  logger.log(`CORS origin: ${process.env.FRONTEND_URL ?? 'http://localhost:3000'}`);
+  logger.log(
+    `CORS origin: ${process.env.FRONTEND_URL ?? 'http://localhost:3000'}`,
+  );
 }
 
 void bootstrap();

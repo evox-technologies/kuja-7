@@ -49,7 +49,11 @@ export class JwtAuthGuard implements CanActivate {
       req.user = profile;
       return true;
     } catch (err: unknown) {
-      if (err instanceof UnauthorizedException || err instanceof NotFoundException) throw err;
+      if (
+        err instanceof UnauthorizedException ||
+        err instanceof NotFoundException
+      )
+        throw err;
       const message = err instanceof Error ? err.message : String(err);
       const stack = err instanceof Error ? err.stack : undefined;
       this.logger.error(`Auth error: ${message}`, stack);

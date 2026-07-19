@@ -48,7 +48,9 @@ export class MatchesService {
       this.logger.warn(
         `sendInterest – blocked: profile incomplete for senderId=${senderId}`,
       );
-      throw new ForbiddenException('Complete your profile before sending interests');
+      throw new ForbiddenException(
+        'Complete your profile before sending interests',
+      );
     }
 
     this.logger.log(
@@ -151,9 +153,7 @@ export class MatchesService {
         `respondToInterest – accepted, conversation ensured: senderId=${interest.senderId} receiverId=${interest.receiverId}`,
       );
     } else {
-      this.logger.log(
-        `respondToInterest – rejected: interestId=${interestId}`,
-      );
+      this.logger.log(`respondToInterest – rejected: interestId=${interestId}`);
     }
 
     return updated;
@@ -199,7 +199,9 @@ export class MatchesService {
 
     const mutualPartnerIds = myAccepted.map((i) => i.receiverId);
     if (mutualPartnerIds.length === 0) {
-      this.logger.log(`getMutualInterests – no mutual partners for userId=${userId}`);
+      this.logger.log(
+        `getMutualInterests – no mutual partners for userId=${userId}`,
+      );
       return [];
     }
 
@@ -351,7 +353,9 @@ export class MatchesService {
       this.logger.warn(
         `respondContactRequest – already resolved (${req.status}): requesterId=${requesterId} targetId=${targetId}`,
       );
-      throw new BadRequestException(`Contact request is already ${req.status.toLowerCase()}`);
+      throw new BadRequestException(
+        `Contact request is already ${req.status.toLowerCase()}`,
+      );
     }
 
     const updated = await this.prisma.contactRequest.update({
@@ -382,7 +386,10 @@ export class MatchesService {
       }),
       this.prisma.contactRequest.findUnique({
         where: {
-          requesterId_targetId: { requesterId: targetId, targetId: requesterId },
+          requesterId_targetId: {
+            requesterId: targetId,
+            targetId: requesterId,
+          },
         },
         select: { status: true },
       }),
