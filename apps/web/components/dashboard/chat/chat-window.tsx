@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils'
 import { apiFetch } from '@/lib/api'
 import { getSocket } from '@/lib/socket'
 import type { Socket } from 'socket.io-client'
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
+import ChatInfoPanel from './chat-info-panel'
 
 interface ChatUser {
   id: string
@@ -57,6 +59,7 @@ export default function ChatWindow({ conversationId, other, currentUserId, onBac
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState('')
+  const [infoOpen, setInfoOpen] = useState(false)
 
   const bottomRef = useRef<HTMLDivElement>(null)
   const socketRef = useRef<Socket | null>(null)
@@ -170,128 +173,144 @@ export default function ChatWindow({ conversationId, other, currentUserId, onBac
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full">
-      {/* Header */}
-      <div className="bg-gray-900 px-4 sm:px-5 py-3.5 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-2 sm:gap-3">
-          {onBack && (
-            <button onClick={onBack} className="text-gray-400 hover:text-white transition-colors mr-1 lg:hidden">
-              ←
-            </button>
-          )}
-          {other.avatarUrl ? (
-            <Image
-              src={other.avatarUrl}
-              alt=""
-              width={36}
-              height={36}
-              className="w-9 h-9 rounded-full object-cover"
-            />
-          ) : (
-            <div
-              className={cn(
-                'w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold text-gray-600',
-                avatarColor(other.id)
-              )}
-            >
-              {other.firstName[0]}{other.lastName[0]}
+    <div className="flex-1 flex h-full min-w-0">
+      <div className="flex-1 flex flex-col h-full min-w-0">
+        {/* Header */}
+        <div className="bg-gray-900 px-4 sm:px-5 py-3.5 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {onBack && (
+              <button onClick={onBack} className="text-gray-400 hover:text-white transition-colors mr-1 lg:hidden">
+                ←
+              </button>
+            )}
+            {other.avatarUrl ? (
+              <Image
+                src={other.avatarUrl}
+                alt=""
+                width={36}
+                height={36}
+                className="w-9 h-9 rounded-full object-cover"
+              />
+            ) : (
+              <div
+                className={cn(
+                  'w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold text-gray-600',
+                  avatarColor(other.id)
+                )}
+              >
+                {other.firstName[0]}{other.lastName[0]}
+              </div>
+            )}
+            <span className="text-white font-semibold text-sm sm:text-base">
+              {other.firstName} {other.lastName}
+            </span>
+          </div>
+          <button
+            onClick={() => setInfoOpen(true)}
+            className="text-gray-400 hover:text-white transition-colors lg:hidden"
+          >
+            <Info className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5 bg-white">
+          {hasMore && (
+            <div className="flex justify-center mb-4">
+              <button
+                onClick={loadMore}
+                className="text-xs text-brand hover:underline"
+              >
+                Load earlier messages
+              </button>
             </div>
           )}
-          <span className="text-white font-semibold text-sm sm:text-base">
-            {other.firstName} {other.lastName}
-          </span>
-        </div>
-        <button className="text-gray-400 hover:text-white transition-colors">
-          <Info className="w-5 h-5" />
-        </button>
-      </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5 bg-white">
-        {hasMore && (
-          <div className="flex justify-center mb-4">
-            <button
-              onClick={loadMore}
-              className="text-xs text-brand hover:underline"
-            >
-              Load earlier messages
-            </button>
-          </div>
-        )}
-
-        {loading ? (
-          <div className="flex justify-center py-10">
-            <Loader2 className="w-5 h-5 text-gray-300 animate-spin" />
-          </div>
-        ) : messages.length === 0 ? (
-          <p className="text-xs text-gray-400 text-center py-10">
-            No messages yet. Say hello!
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {messages.map((msg) => {
-              const isMe = msg.senderId === currentUserId
-              return (
-                <div
-                  key={msg.id}
-                  className={cn('flex', isMe ? 'justify-end' : 'justify-start')}
-                >
+          {loading ? (
+            <div className="flex justify-center py-10">
+              <Loader2 className="w-5 h-5 text-gray-300 animate-spin" />
+            </div>
+          ) : messages.length === 0 ? (
+            <p className="text-xs text-gray-400 text-center py-10">
+              No messages yet. Say hello!
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {messages.map((msg) => {
+                const isMe = msg.senderId === currentUserId
+                return (
                   <div
-                    className={cn(
-                      'max-w-[85%] sm:max-w-xs px-4 py-2.5 rounded-2xl text-sm break-words',
-                      isMe
-                        ? 'bg-brand text-white rounded-br-sm'
-                        : 'bg-rose-50 text-gray-800 rounded-bl-sm'
-                    )}
+                    key={msg.id}
+                    className={cn('flex', isMe ? 'justify-end' : 'justify-start')}
                   >
-                    <p>{msg.content}</p>
-                    <p
+                    <div
                       className={cn(
-                        'text-[10px] mt-1',
-                        isMe ? 'text-white/60 text-right' : 'text-gray-400'
+                        'max-w-[85%] sm:max-w-xs px-4 py-2.5 rounded-2xl text-sm break-words',
+                        isMe
+                          ? 'bg-brand text-white rounded-br-sm'
+                          : 'bg-rose-50 text-gray-800 rounded-bl-sm'
                       )}
                     >
-                      {timeLabel(msg.createdAt)}
-                    </p>
+                      <p>{msg.content}</p>
+                      <p
+                        className={cn(
+                          'text-[10px] mt-1',
+                          isMe ? 'text-white/60 text-right' : 'text-gray-400'
+                        )}
+                      >
+                        {timeLabel(msg.createdAt)}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              )
-            })}
-          </div>
+                )
+              })}
+            </div>
+          )}
+          <div ref={bottomRef} />
+        </div>
+
+        {/* Input */}
+        {sendError && (
+          <p className="text-xs text-red-500 text-center px-4 py-1 bg-white border-t border-gray-100">
+            {sendError}
+          </p>
         )}
-        <div ref={bottomRef} />
+        <div className="bg-white border-t border-gray-100 px-4 py-3 flex items-center gap-3 shrink-0">
+          <button className="text-gray-400 hover:text-gray-600 transition-colors shrink-0">
+            <Smile className="w-5 h-5" />
+          </button>
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && send()}
+            placeholder="Write a message"
+            className="flex-1 text-sm bg-transparent focus:outline-none placeholder:text-gray-300"
+            disabled={sending}
+          />
+          <button
+            onClick={send}
+            disabled={!input.trim() || sending}
+            className="w-9 h-9 rounded-full bg-gradient-to-r from-orange-500 to-pink-600 flex items-center justify-center shrink-0 hover:opacity-90 transition-opacity disabled:opacity-40"
+          >
+            {sending ? (
+              <Loader2 className="w-4 h-4 text-white animate-spin" />
+            ) : (
+              <Send className="w-4 h-4 text-white" />
+            )}
+          </button>
+        </div>
       </div>
 
-      {/* Input */}
-      {sendError && (
-        <p className="text-xs text-red-500 text-center px-4 py-1 bg-white border-t border-gray-100">
-          {sendError}
-        </p>
-      )}
-      <div className="bg-white border-t border-gray-100 px-4 py-3 flex items-center gap-3 shrink-0">
-        <button className="text-gray-400 hover:text-gray-600 transition-colors shrink-0">
-          <Smile className="w-5 h-5" />
-        </button>
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && send()}
-          placeholder="Write a message"
-          className="flex-1 text-sm bg-transparent focus:outline-none placeholder:text-gray-300"
-          disabled={sending}
-        />
-        <button
-          onClick={send}
-          disabled={!input.trim() || sending}
-          className="w-9 h-9 rounded-full bg-gradient-to-r from-orange-500 to-pink-600 flex items-center justify-center shrink-0 hover:opacity-90 transition-opacity disabled:opacity-40"
-        >
-          {sending ? (
-            <Loader2 className="w-4 h-4 text-white animate-spin" />
-          ) : (
-            <Send className="w-4 h-4 text-white" />
-          )}
-        </button>
+      <div className="hidden lg:flex lg:w-80 shrink-0 border-l border-gray-100 flex-col">
+        <ChatInfoPanel otherId={other.id} />
       </div>
+
+      <Sheet open={infoOpen} onOpenChange={setInfoOpen}>
+        <SheetContent>
+          <SheetTitle>{other.firstName} {other.lastName}&apos;s profile</SheetTitle>
+          <ChatInfoPanel otherId={other.id} />
+        </SheetContent>
+      </Sheet>
     </div>
   )
 }
