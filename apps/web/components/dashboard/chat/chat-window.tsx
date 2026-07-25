@@ -303,7 +303,7 @@ export default function ChatWindow({ conversationId, other, currentUserId, onBac
         </div>
       </div>
 
-      <div className="hidden lg:flex lg:w-80 shrink-0 border-l border-gray-100 flex-col">
+      <div className="hidden lg:flex lg:w-[28rem] shrink-0 border-l border-gray-100 flex-col">
         <ChatInfoPanel otherId={other.id} />
       </div>
 
