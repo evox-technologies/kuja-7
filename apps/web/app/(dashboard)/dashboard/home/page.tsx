@@ -43,7 +43,7 @@ const EMPTY_FILTERS: Filters = {
   foodPreference: '', kujaNumber: '',
 }
 
-const AGE_QUICK = [21, 22, 23, 24, 25, 26]
+// const AGE_QUICK = [21, 22, 23, 24, 25, 26]
 const CIVIL_STATUSES = ['Never Married', 'Divorced', 'Widowed', 'Separated']
 const EDUCATION_LEVELS = ["Below O/L", "O/L", "A/L", "Diploma", "Bachelor's", "Master's", "PhD"]
 const FOOD_PREFS = ['Vegetarian', 'Non-Vegetarian', 'Vegan', 'Halal']
@@ -189,7 +189,7 @@ function HomePageInner() {
         </div>
       </div>
 
-      {/* Quick filter age tags */}
+      {/* Quick filter age tags
       <div className="mb-4">
         <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Quick Filter</p>
         <div className="flex flex-wrap gap-1.5">
@@ -207,7 +207,7 @@ function HomePageInner() {
             </button>
           ))}
         </div>
-      </div>
+      </div> */}
 
       {/* Looking for */}
       <div className="mb-4">
