@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { User, Loader2 } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
+import { defaultAvatarSrc } from '@/lib/avatar'
 
 interface OtherProfileSummary {
   id: string
@@ -11,6 +12,7 @@ interface OtherProfileSummary {
   lastName: string
   dateOfBirth: string
   avatarUrl?: string | null
+  gender?: string | null
   kujaNumber?: string | null
   city?: string | null
   country?: string | null
@@ -72,14 +74,15 @@ export default function ChatInfoPanel({ otherId }: Props) {
   }
 
   const cityCountry = [profile.city, profile.country].filter(Boolean).join(', ')
+  const avatarSrc = profile.avatarUrl ?? defaultAvatarSrc(profile.gender)
 
   return (
     <div className="flex-1 overflow-y-auto px-5 py-6">
       <div className="flex flex-col items-center text-center">
         <div className="w-20 h-20 rounded-full bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center shrink-0">
-          {profile.avatarUrl ? (
+          {avatarSrc ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={profile.avatarUrl} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
+            <img src={avatarSrc} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
           ) : (
             <User className="w-9 h-9 text-gray-300" />
           )}

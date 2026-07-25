@@ -7,12 +7,14 @@ import { cn } from '@/lib/utils'
 import { apiFetch } from '@/lib/api'
 import { getSocket } from '@/lib/socket'
 import type { Socket } from 'socket.io-client'
+import { defaultAvatarSrc } from '@/lib/avatar'
 
 interface ChatUser {
   id: string
   firstName: string
   lastName: string
   avatarUrl: string | null
+  gender?: string | null
 }
 
 interface ConversationItem {
@@ -245,9 +247,9 @@ export default function ConversationList({ selectedId, onSelect, currentUserId, 
                   onClick={() => startChat(user)}
                   className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-gray-50 transition-colors"
                 >
-                  {user.avatarUrl ? (
+                  {user.avatarUrl || defaultAvatarSrc(user.gender) ? (
                     <Image
-                      src={user.avatarUrl}
+                      src={user.avatarUrl ?? defaultAvatarSrc(user.gender)!}
                       alt=""
                       width={40}
                       height={40}
@@ -297,9 +299,9 @@ export default function ConversationList({ selectedId, onSelect, currentUserId, 
                     selectedId === c.id ? 'bg-brand/5' : 'hover:bg-gray-50'
                   )}
                 >
-                  {c.other.avatarUrl ? (
+                  {c.other.avatarUrl || defaultAvatarSrc(c.other.gender) ? (
                     <Image
-                      src={c.other.avatarUrl}
+                      src={c.other.avatarUrl ?? defaultAvatarSrc(c.other.gender)!}
                       alt=""
                       width={40}
                       height={40}

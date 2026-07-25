@@ -9,12 +9,14 @@ import { getSocket } from '@/lib/socket'
 import type { Socket } from 'socket.io-client'
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import ChatInfoPanel from './chat-info-panel'
+import { defaultAvatarSrc } from '@/lib/avatar'
 
 interface ChatUser {
   id: string
   firstName: string
   lastName: string
   avatarUrl: string | null
+  gender?: string | null
 }
 
 interface ChatMessage {
@@ -183,9 +185,9 @@ export default function ChatWindow({ conversationId, other, currentUserId, onBac
                 ←
               </button>
             )}
-            {other.avatarUrl ? (
+            {other.avatarUrl || defaultAvatarSrc(other.gender) ? (
               <Image
-                src={other.avatarUrl}
+                src={other.avatarUrl ?? defaultAvatarSrc(other.gender)!}
                 alt=""
                 width={36}
                 height={36}

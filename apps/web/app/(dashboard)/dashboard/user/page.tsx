@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Heart, MessageCircle, Phone, ChevronLeft, User, Lock, Bell } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import { useProfileGuard } from '@/contexts/profile-guard'
+import { defaultAvatarSrc } from '@/lib/avatar'
 
 interface Relationship {
   isMutual: boolean
@@ -225,9 +226,9 @@ function OtherProfileInner() {
         <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5 mb-4">
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
             <div className="w-20 h-20 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center shrink-0">
-              {profile.avatarUrl ? (
+              {profile.avatarUrl ?? defaultAvatarSrc(profile.gender) ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={profile.avatarUrl} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                <img src={profile.avatarUrl ?? defaultAvatarSrc(profile.gender)!} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
               ) : (
                 <User className="w-9 h-9 text-gray-300" />
               )}

@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import { apiFetch } from '@/lib/api'
 import { useState } from 'react'
 import { useProfileGuard } from '@/contexts/profile-guard'
+import { defaultAvatarSrc } from '@/lib/avatar'
 
 export interface ProfileCardData {
   id: string
@@ -13,6 +14,7 @@ export interface ProfileCardData {
   lastName: string
   dateOfBirth: string
   avatarUrl?: string | null
+  gender?: string | null
   kujaNumber?: string | null
   city?: string | null
   country?: string | null
@@ -47,11 +49,12 @@ function timeAgo(iso?: string) {
 }
 
 function Avatar({ profile }: { profile: ProfileCardData }) {
+  const src = profile.avatarUrl ?? defaultAvatarSrc(profile.gender)
   return (
     <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gray-100 border border-gray-200 overflow-hidden shrink-0 flex items-center justify-center">
-      {profile.avatarUrl ? (
+      {src ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={profile.avatarUrl} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
+        <img src={src} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
       ) : (
         <User className="w-7 h-7 text-gray-300" />
       )}

@@ -7,10 +7,12 @@ import { Bell, Crown, LogOut, Users, UserCircle, User } from 'lucide-react'
 import LanguageToggle from '@/components/layout/language-toggle'
 import { createClient } from '@/lib/supabase/client'
 import { apiFetch } from '@/lib/api'
+import { defaultAvatarSrc } from '@/lib/avatar'
 
 interface ProfileSummary {
   avatarUrl?: string | null
   images: string[]
+  gender?: string | null
 }
 
 export default function DashboardNavbar() {
@@ -18,6 +20,7 @@ export default function DashboardNavbar() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const [avatar, setAvatar] = useState<string | null>(null)
+  const [gender, setGender] = useState<string | null>(null)
   const ref = useRef<HTMLDivElement>(null)
 
   // Re-fetch avatar whenever the user navigates (catches post-upload nav back from profile)
@@ -26,9 +29,15 @@ export default function DashboardNavbar() {
       .then(p => {
         const src = p.images?.[0] ?? p.avatarUrl ?? null
         setAvatar(src)
+        setGender(p.gender ?? null)
       })
-      .catch(() => setAvatar(null))
+      .catch(() => {
+        setAvatar(null)
+        setGender(null)
+      })
   }, [pathname])
+
+  const fallbackAvatar = defaultAvatarSrc(gender)
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -73,9 +82,9 @@ export default function DashboardNavbar() {
               onClick={() => setOpen(v => !v)}
               className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gray-100 ring-2 ring-gray-200 overflow-hidden cursor-pointer flex items-center justify-center hover:ring-brand/40 transition-all"
             >
-              {avatar ? (
+              {avatar || fallbackAvatar ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={avatar} alt="Profile" className="w-full h-full object-cover" />
+                <img src={avatar ?? fallbackAvatar!} alt="Profile" className="w-full h-full object-cover" />
               ) : (
                 <User className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
               )}

@@ -207,7 +207,13 @@ export class UsersService {
           { lastName: { contains: q, mode: 'insensitive' } },
         ],
       },
-      select: { id: true, firstName: true, lastName: true, avatarUrl: true },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        gender: true,
+        avatarUrl: true,
+      },
       take: 10,
     });
 
