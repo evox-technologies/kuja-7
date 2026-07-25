@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Heart, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { apiFetch } from '@/lib/api'
@@ -51,18 +52,19 @@ function timeAgo(iso?: string) {
 function Avatar({ profile }: { profile: ProfileCardData }) {
   const src = profile.avatarUrl ?? defaultAvatarSrc(profile.gender)
   return (
-    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gray-100 border border-gray-200 overflow-hidden shrink-0 flex items-center justify-center">
+    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gray-100 border border-gray-200 overflow-hidden shrink-0 flex items-center justify-center">
       {src ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={src} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
       ) : (
-        <User className="w-7 h-7 text-gray-300" />
+        <User className="w-9 h-9 text-gray-300" />
       )}
     </div>
   )
 }
 
 export default function ProfileCard({ profile, badge, actions, note }: Props) {
+  const router = useRouter()
   const { guardAction } = useProfileGuard()
   const [interestStatus, setInterestStatus] = useState<'PENDING' | 'ACCEPTED' | null>(
     profile.myInterestStatus ?? null
@@ -72,6 +74,7 @@ export default function ProfileCard({ profile, badge, actions, note }: Props) {
 
   async function handleInterestToggle(e: React.MouseEvent) {
     e.preventDefault()
+    e.stopPropagation()
     if (toggling) return
     if (interestStatus === 'ACCEPTED') return
 
@@ -113,9 +116,24 @@ export default function ProfileCard({ profile, badge, actions, note }: Props) {
 
   const interested = interestStatus === 'PENDING' || interestStatus === 'ACCEPTED'
 
+  function openProfile() {
+    router.push(`/dashboard/user?id=${profile.id}`)
+  }
+
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-4 hover:shadow-sm transition-shadow">
-      <div className="flex items-start gap-3">
+    <div
+      onClick={openProfile}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          openProfile()
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-sm transition-shadow cursor-pointer"
+    >
+      <div className="flex items-start gap-4">
         <Avatar profile={profile} />
 
         <div className="flex-1 min-w-0">
@@ -123,26 +141,26 @@ export default function ProfileCard({ profile, badge, actions, note }: Props) {
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-1.5">
-                <span className="font-semibold text-gray-900 text-sm truncate">
+                <span className="font-semibold text-gray-900 text-base truncate">
                   {profile.firstName} {profile.lastName}
                 </span>
                 {profile.kujaNumber && (
-                  <span className="bg-red-100 text-red-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0">
+                  <span className="bg-red-100 text-red-600 text-xs font-bold px-1.5 py-0.5 rounded-full shrink-0">
                     Kuja {profile.kujaNumber}
                   </span>
                 )}
                 {badge}
               </div>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className="text-sm text-gray-400 mt-0.5">
                 Age: {age(profile.dateOfBirth)}
                 {cityCountry && <> &nbsp;|&nbsp; <span>Live: {cityCountry}</span></>}
               </p>
             </div>
-            <span className="text-[10px] text-gray-300 shrink-0">{timeAgo(profile.createdAt)}</span>
+            <span className="text-xs text-gray-300 shrink-0">{timeAgo(profile.createdAt)}</span>
           </div>
 
           {/* Detail row */}
-          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500">
+          <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1 text-sm text-gray-500">
             {profile.ethnicity && <span>👤 {profile.ethnicity}</span>}
             {profile.profession && <span>💼 {profile.profession}</span>}
             {profile.religion && <span>🕌 {profile.religion}</span>}
@@ -150,35 +168,40 @@ export default function ProfileCard({ profile, badge, actions, note }: Props) {
           </div>
 
           {note && (
-            <div className="mt-2 flex items-center gap-1 text-xs text-brand font-medium">
-              <Heart className="w-3 h-3 fill-brand" />
+            <div className="mt-2 flex items-center gap-1 text-sm text-brand font-medium">
+              <Heart className="w-3.5 h-3.5 fill-brand" />
               {note}
             </div>
           )}
 
           {/* Actions row */}
-          <div className="mt-3 flex flex-wrap items-center gap-2 gap-y-2">
+          <div className="mt-3.5 flex flex-wrap items-center gap-2 gap-y-2">
             <button
               onClick={handleInterestToggle}
               disabled={toggling || interestStatus === 'ACCEPTED'}
               title={interested ? (interestStatus === 'ACCEPTED' ? 'Mutual interest' : 'Remove interest') : 'Send interest'}
               className={cn(
-                'p-1.5 rounded-full border transition-colors shrink-0',
+                'p-2 rounded-full border transition-colors shrink-0',
                 interested
                   ? 'border-brand bg-brand/5 text-brand'
                   : 'border-gray-200 text-gray-300 hover:border-brand hover:text-brand'
               )}
             >
-              <Heart className={cn('w-4 h-4', interested && 'fill-brand')} />
+              <Heart className={cn('w-5 h-5', interested && 'fill-brand')} />
             </button>
 
             <div className="flex-1 min-w-0" />
 
-            {actions}
+            {actions && (
+              <div onClick={(e) => e.stopPropagation()} className="flex items-center gap-2">
+                {actions}
+              </div>
+            )}
 
             <Link
               href={`/dashboard/user?id=${profile.id}`}
-              className="flex items-center gap-1 px-4 py-1.5 rounded-full border border-gray-200 text-xs font-medium text-gray-600 hover:border-brand hover:text-brand transition-colors min-w-0 shrink-0"
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-1 px-5 py-2 rounded-full border border-gray-200 text-sm font-medium text-gray-600 hover:border-brand hover:text-brand transition-colors min-w-0 shrink-0"
             >
               View →
             </Link>
