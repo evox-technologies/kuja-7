@@ -52,6 +52,19 @@ export class ChatService {
       `getConversations – returned ${convs.length} conversation(s) for profileId=${profileId}`,
     );
 
+    const unreadByConversation = await this.prisma.message.groupBy({
+      by: ['conversationId'],
+      where: {
+        conversationId: { in: convs.map((c) => c.id) },
+        senderId: { not: profileId },
+        readAt: null,
+      },
+      _count: { _all: true },
+    });
+    const unreadMap = new Map(
+      unreadByConversation.map((u) => [u.conversationId, u._count._all]),
+    );
+
     return convs.map((conv) => ({
       id: conv.id,
       other:
@@ -60,7 +73,31 @@ export class ChatService {
           : conv.participant1,
       lastMessage: conv.messages[0] ?? null,
       createdAt: conv.createdAt,
+      unreadCount: unreadMap.get(conv.id) ?? 0,
     }));
+  }
+
+  async getUnreadCount(profileId: string) {
+    this.logger.log(`getUnreadCount – profileId=${profileId}`);
+
+    const conversations = await this.prisma.conversation.findMany({
+      where: {
+        OR: [{ participant1Id: profileId }, { participant2Id: profileId }],
+      },
+      select: { id: true },
+    });
+
+    if (conversations.length === 0) return { count: 0 };
+
+    const count = await this.prisma.message.count({
+      where: {
+        conversationId: { in: conversations.map((c) => c.id) },
+        senderId: { not: profileId },
+        readAt: null,
+      },
+    });
+
+    return { count };
   }
 
   async getOrCreateConversation(profileId: string, targetId: string) {

@@ -3,11 +3,13 @@
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
-import { Bell, Crown, LogOut, Users, UserCircle, User } from 'lucide-react'
+import { Crown, LogOut, UserCircle, User } from 'lucide-react'
 import LanguageToggle from '@/components/layout/language-toggle'
 import { createClient } from '@/lib/supabase/client'
 import { apiFetch } from '@/lib/api'
 import { defaultAvatarSrc } from '@/lib/avatar'
+import NotificationBell from './notification-bell'
+import NotificationInterests from './notification-interests'
 
 interface ProfileSummary {
   avatarUrl?: string | null
@@ -63,18 +65,11 @@ export default function DashboardNavbar() {
         </Link>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          <button className="relative p-2 rounded-full hover:bg-gray-50 transition-colors hidden sm:block">
-            <Users className="w-5 h-5 text-gray-400" />
-            <span className="absolute top-1.5 right-1.5 w-3.5 h-3.5 bg-gray-200 rounded-full text-[9px] font-semibold flex items-center justify-center text-gray-500">
-              0
-            </span>
-          </button>
+          <NotificationInterests />
 
           <LanguageToggle />
 
-          <button className="p-2 rounded-full hover:bg-gray-50 transition-colors">
-            <Bell className="w-5 h-5 text-gray-400" />
-          </button>
+          <NotificationBell />
 
           {/* Avatar + dropdown */}
           <div ref={ref} className="relative">

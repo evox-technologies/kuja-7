@@ -31,6 +31,11 @@ enum ContactRequestStatus {
   DECLINED
 }
 
+enum NotificationType {
+  INTEREST_RECEIVED
+  INTEREST_ACCEPTED
+}
+
 model Profile {
   id          String   @id @default(uuid())
   supabaseId  String   @unique
@@ -92,6 +97,9 @@ model Profile {
   contactRequestsSent     ContactRequest[] @relation("ContactRequestsSent")
   contactRequestsReceived ContactRequest[] @relation("ContactRequestsReceived")
 
+  notificationsReceived Notification[] @relation("NotificationRecipient")
+  notificationsCaused   Notification[] @relation("NotificationActor")
+
   @@map("profiles")
 }
 
@@ -105,6 +113,8 @@ model Interest {
 
   sender   Profile @relation("SentInterests", fields: [senderId], references: [id])
   receiver Profile @relation("ReceivedInterests", fields: [receiverId], references: [id])
+
+  notifications Notification[]
 
   @@unique([senderId, receiverId])
   @@map("interests")
@@ -165,4 +175,23 @@ model ContactRequest {
 
   @@unique([requesterId, targetId])
   @@map("contact_requests")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  type      NotificationType
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  recipientId String
+  recipient   Profile @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  actorId String
+  actor   Profile @relation("NotificationActor", fields: [actorId], references: [id], onDelete: Cascade)
+
+  interestId String?
+  interest   Interest? @relation(fields: [interestId], references: [id], onDelete: SetNull)
+
+  @@index([recipientId, read])
+  @@map("notifications")
 }

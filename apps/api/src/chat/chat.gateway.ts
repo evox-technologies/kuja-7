@@ -86,6 +86,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         await client.join(id);
       }
 
+      await client.join(`user:${profile.id}`);
+
       this.logger.log(
         `handleConnection – authenticated profileId=${profile.id}, joined ${conversations.length} room(s)`,
       );

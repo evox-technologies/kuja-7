@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { InterestStatus, ContactRequestStatus } from '@prisma/client';
+import { NotificationsService } from '../notifications/notifications.service';
 
 const INTEREST_PROFILE_SELECT = {
   id: true,
@@ -29,7 +30,10 @@ const INTEREST_PROFILE_SELECT = {
 export class MatchesService {
   private readonly logger = new Logger(MatchesService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notifications: NotificationsService,
+  ) {}
 
   async sendInterest(senderId: string, receiverId: string) {
     if (senderId === receiverId) {
@@ -95,6 +99,11 @@ export class MatchesService {
       this.logger.log(
         `sendInterest – auto-mutual complete, conversation created: senderId=${senderId} receiverId=${receiverId}`,
       );
+      await this.notifications.notifyInterestAccepted(
+        receiverId,
+        senderId,
+        theirPending.id,
+      );
       return myInterest;
     }
 
@@ -106,6 +115,11 @@ export class MatchesService {
 
     this.logger.log(
       `sendInterest – interest upserted as PENDING: id=${interest.id}`,
+    );
+    await this.notifications.notifyInterestReceived(
+      receiverId,
+      senderId,
+      interest.id,
     );
     return interest;
   }
@@ -151,6 +165,11 @@ export class MatchesService {
       });
       this.logger.log(
         `respondToInterest – accepted, conversation ensured: senderId=${interest.senderId} receiverId=${interest.receiverId}`,
+      );
+      await this.notifications.notifyInterestAccepted(
+        interest.senderId,
+        userId,
+        interestId,
       );
     } else {
       this.logger.log(`respondToInterest – rejected: interestId=${interestId}`);

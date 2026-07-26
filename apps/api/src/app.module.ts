@@ -8,6 +8,7 @@ import { MatchesModule } from './matches/matches.module';
 import { AdminModule } from './admin/admin.module';
 import { UploadModule } from './upload/upload.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { PrismaModule } from './prisma/prisma.module';
     UsersModule,
     ChatModule,
     MatchesModule,
+    NotificationsModule,
     AdminModule,
     UploadModule,
   ],
