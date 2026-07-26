@@ -43,7 +43,7 @@ const EMPTY_FILTERS: Filters = {
   foodPreference: '', kujaNumber: '',
 }
 
-const AGE_QUICK = [21, 22, 23, 24, 25, 26]
+// const AGE_QUICK = [21, 22, 23, 24, 25, 26]
 const CIVIL_STATUSES = ['Never Married', 'Divorced', 'Widowed', 'Separated']
 const EDUCATION_LEVELS = ["Below O/L", "O/L", "A/L", "Diploma", "Bachelor's", "Master's", "PhD"]
 const FOOD_PREFS = ['Vegetarian', 'Non-Vegetarian', 'Vegan', 'Halal']
@@ -111,8 +111,9 @@ function HomePageInner() {
     apiFetch<CurrentUser>('/auth/me')
       .then(setCurrentUser)
       .catch((err) => {
+        // A 404 means a signed-in user with no profile row yet — send them to onboarding.
+        // A 401 (no session) just means an anonymous visitor browsing Home — let them.
         if (err instanceof ApiError && err.status === 404) router.replace('/onboarding')
-        else if (err instanceof ApiError && err.status === 401) router.replace('/login')
       })
   }, [router])
 
@@ -189,7 +190,7 @@ function HomePageInner() {
         </div>
       </div>
 
-      {/* Quick filter age tags */}
+      {/* Quick filter age tags
       <div className="mb-4">
         <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Quick Filter</p>
         <div className="flex flex-wrap gap-1.5">
@@ -207,7 +208,7 @@ function HomePageInner() {
             </button>
           ))}
         </div>
-      </div>
+      </div> */}
 
       {/* Looking for */}
       <div className="mb-4">
@@ -326,7 +327,7 @@ function HomePageInner() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {results.map(p => (
                   <ProfileCard key={p.id} profile={p} />
                 ))}

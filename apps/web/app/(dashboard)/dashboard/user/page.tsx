@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Heart, MessageCircle, Phone, ChevronLeft, User, Lock, Bell } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import { useProfileGuard } from '@/contexts/profile-guard'
+import { defaultAvatarSrc } from '@/lib/avatar'
 
 interface Relationship {
   isMutual: boolean
@@ -225,9 +226,9 @@ function OtherProfileInner() {
         <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5 mb-4">
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
             <div className="w-20 h-20 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center shrink-0">
-              {profile.avatarUrl ? (
+              {profile.avatarUrl ?? defaultAvatarSrc(profile.gender) ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={profile.avatarUrl} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                <img src={profile.avatarUrl ?? defaultAvatarSrc(profile.gender)!} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
               ) : (
                 <User className="w-9 h-9 text-gray-300" />
               )}
@@ -260,7 +261,7 @@ function OtherProfileInner() {
               {/* Open Chat: any accepted interest means a conversation exists */}
               {canChat && (
                 <button
-                  onClick={openChat}
+                  onClick={() => guardAction(openChat)}
                   className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-brand text-white text-sm font-medium hover:opacity-90 transition-opacity"
                 >
                   <MessageCircle className="w-4 h-4" />
@@ -345,7 +346,7 @@ function OtherProfileInner() {
                   >
                     Decline Request
                   </button>
-                  <button onClick={openChat} className="ml-auto flex items-center gap-1.5 px-4 py-2 rounded-full bg-brand/10 text-brand text-sm font-medium hover:bg-brand/20">
+                  <button onClick={() => guardAction(openChat)} className="ml-auto flex items-center gap-1.5 px-4 py-2 rounded-full bg-brand/10 text-brand text-sm font-medium hover:bg-brand/20">
                     <MessageCircle className="w-4 h-4" /> Open Chat
                   </button>
                 </div>
@@ -389,7 +390,7 @@ function OtherProfileInner() {
                     {contactLoading ? 'Requesting…' : 'Request Contact Details'}
                   </button>
                 )}
-                <button onClick={openChat} className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-brand/10 text-brand text-sm font-medium hover:bg-brand/20">
+                <button onClick={() => guardAction(openChat)} className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-brand/10 text-brand text-sm font-medium hover:bg-brand/20">
                   <MessageCircle className="w-4 h-4" /> Open Chat
                 </button>
               </div>

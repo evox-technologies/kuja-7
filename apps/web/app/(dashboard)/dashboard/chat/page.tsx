@@ -18,6 +18,7 @@ interface ChatUser {
   firstName: string
   lastName: string
   avatarUrl: string | null
+  gender?: string | null
 }
 
 function ChatPageInner() {

@@ -108,9 +108,9 @@ export class UsersService {
 
   constructor(private prisma: PrismaService) {}
 
-  async search(dto: SearchProfilesDto, requesterId: string) {
+  async search(dto: SearchProfilesDto, requesterId?: string) {
     this.logger.log(
-      `search – requesterId=${requesterId} page=${dto.page ?? 1}`,
+      `search – requesterId=${requesterId ?? 'anonymous'} page=${dto.page ?? 1}`,
     );
 
     const page = dto.page ?? 1;
@@ -119,10 +119,10 @@ export class UsersService {
 
     const now = new Date();
     const where: Record<string, unknown> = {
-      id: { not: requesterId },
       isActive: true,
       isVerified: true,
     };
+    if (requesterId) where.id = { not: requesterId };
 
     if (dto.gender) where.gender = dto.gender;
     if (dto.religion)
@@ -171,17 +171,19 @@ export class UsersService {
       this.prisma.profile.count({ where }),
     ]);
 
-    const interests = await this.prisma.interest.findMany({
-      where: {
-        senderId: requesterId,
-        receiverId: { in: profiles.map((p) => p.id) },
-      },
-      select: { receiverId: true, status: true },
-    });
+    const interests = requesterId
+      ? await this.prisma.interest.findMany({
+          where: {
+            senderId: requesterId,
+            receiverId: { in: profiles.map((p) => p.id) },
+          },
+          select: { receiverId: true, status: true },
+        })
+      : [];
     const interestMap = new Map(interests.map((i) => [i.receiverId, i.status]));
 
     this.logger.log(
-      `search – returned ${profiles.length}/${total} profile(s) for requesterId=${requesterId}`,
+      `search – returned ${profiles.length}/${total} profile(s) for requesterId=${requesterId ?? 'anonymous'}`,
     );
 
     return {
@@ -207,7 +209,13 @@ export class UsersService {
           { lastName: { contains: q, mode: 'insensitive' } },
         ],
       },
-      select: { id: true, firstName: true, lastName: true, avatarUrl: true },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        gender: true,
+        avatarUrl: true,
+      },
       take: 10,
     });
 
@@ -217,8 +225,10 @@ export class UsersService {
     return results;
   }
 
-  async findOne(id: string, requesterId: string) {
-    this.logger.log(`findOne – profileId=${id} requesterId=${requesterId}`);
+  async findOne(id: string, requesterId?: string) {
+    this.logger.log(
+      `findOne – profileId=${id} requesterId=${requesterId ?? 'anonymous'}`,
+    );
 
     const profile = await this.prisma.profile.findUnique({
       where: { id },
@@ -233,6 +243,24 @@ export class UsersService {
     if (!profile) {
       this.logger.warn(`findOne – profile not found: id=${id}`);
       throw new NotFoundException('Profile not found');
+    }
+
+    if (!requesterId) {
+      return {
+        ...profile,
+        mobileNumber: null,
+        whatsappNumber: null,
+        address: null,
+        _relationship: {
+          isMutual: false,
+          myInterestStatus: null,
+          myInterestId: null,
+          theirInterestStatus: null,
+          theirInterestId: null,
+          myContactRequestStatus: null,
+          theirContactRequestStatus: null,
+        },
+      };
     }
 
     // Fetch all relationship data in one round-trip

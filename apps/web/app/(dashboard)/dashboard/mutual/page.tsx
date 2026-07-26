@@ -55,7 +55,7 @@ export default function MutualPage() {
             <p className="text-xs mt-1">When someone accepts your interest and you accept theirs, they appear here.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {mutuals.map(m => (
               <ProfileCard
                 key={m.id}

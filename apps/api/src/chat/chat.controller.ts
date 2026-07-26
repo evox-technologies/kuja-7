@@ -22,6 +22,11 @@ export class ChatController {
     return this.chat.getConversations(user.id);
   }
 
+  @Get('unread-count')
+  getUnreadCount(@CurrentUser() user: Profile) {
+    return this.chat.getUnreadCount(user.id);
+  }
+
   @Post('conversations')
   getOrCreate(
     @Body() dto: CreateConversationDto,

@@ -261,6 +261,7 @@ export default function OwnProfilePage() {
       setProfile(updated)
       setDraft(profileToDraft(updated))
       refreshStatus()
+      router.push('/dashboard/home')
     } catch {
       setSaveError('Failed to save. Please try again.')
     } finally {

@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,9 +10,10 @@ import { createClient } from '@/lib/supabase/client'
 import GoogleButton from '@/components/auth/google-button'
 import { useI18n } from '@/lib/i18n/use-i18n'
 
-export default function LoginPage() {
+function LoginPageInner() {
   const supabase = createClient()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { t, messages } = useI18n()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -34,7 +35,9 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     setLoading(false)
     if (error) { setError(error.message); return }
-    router.push('/dashboard')
+    const next = searchParams.get('next')
+    const safeNext = next && next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard'
+    router.push(safeNext)
   }
 
   return (
@@ -110,5 +113,17 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex justify-center py-20">
+        <div className="w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <LoginPageInner />
+    </Suspense>
   )
 }
