@@ -261,7 +261,7 @@ function OtherProfileInner() {
               {/* Open Chat: any accepted interest means a conversation exists */}
               {canChat && (
                 <button
-                  onClick={openChat}
+                  onClick={() => guardAction(openChat)}
                   className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-brand text-white text-sm font-medium hover:opacity-90 transition-opacity"
                 >
                   <MessageCircle className="w-4 h-4" />
@@ -346,7 +346,7 @@ function OtherProfileInner() {
                   >
                     Decline Request
                   </button>
-                  <button onClick={openChat} className="ml-auto flex items-center gap-1.5 px-4 py-2 rounded-full bg-brand/10 text-brand text-sm font-medium hover:bg-brand/20">
+                  <button onClick={() => guardAction(openChat)} className="ml-auto flex items-center gap-1.5 px-4 py-2 rounded-full bg-brand/10 text-brand text-sm font-medium hover:bg-brand/20">
                     <MessageCircle className="w-4 h-4" /> Open Chat
                   </button>
                 </div>
@@ -390,7 +390,7 @@ function OtherProfileInner() {
                     {contactLoading ? 'Requesting…' : 'Request Contact Details'}
                   </button>
                 )}
-                <button onClick={openChat} className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-brand/10 text-brand text-sm font-medium hover:bg-brand/20">
+                <button onClick={() => guardAction(openChat)} className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-brand/10 text-brand text-sm font-medium hover:bg-brand/20">
                   <MessageCircle className="w-4 h-4" /> Open Chat
                 </button>
               </div>

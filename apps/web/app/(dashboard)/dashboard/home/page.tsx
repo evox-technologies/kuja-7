@@ -111,8 +111,9 @@ function HomePageInner() {
     apiFetch<CurrentUser>('/auth/me')
       .then(setCurrentUser)
       .catch((err) => {
+        // A 404 means a signed-in user with no profile row yet — send them to onboarding.
+        // A 401 (no session) just means an anonymous visitor browsing Home — let them.
         if (err instanceof ApiError && err.status === 404) router.replace('/onboarding')
-        else if (err instanceof ApiError && err.status === 401) router.replace('/login')
       })
   }, [router])
 
