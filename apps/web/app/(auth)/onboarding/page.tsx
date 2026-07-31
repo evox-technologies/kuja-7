@@ -33,12 +33,13 @@ interface FormData {
   // Step 3 – Private Data
   mobileNumber: string
   whatsappNumber: string
+  height: string  
   address: string
   images: string[]
 }
 
 const EMPTY: FormData = {
-  firstName: '', lastName: '', dateOfBirth: '', nationality: '',
+  firstName: '', lastName: '', dateOfBirth: '', nationality: '', height: '',
   gender: '', ethnicity: '', caste: '', civilStatus: '', religion: '',
   country: '', city: '', stateDistrict: '',
   educationLevel: '', profession: '', drinking: '', smoking: '', foodPreference: '',
@@ -48,7 +49,7 @@ const EMPTY: FormData = {
 
 const KUJA_NUMBERS = ['1', '2', '4', '7', '8', '12']
 const CIVIL_STATUSES = ['Never Married', 'Divorced', 'Widowed', 'Separated']
-const EDUCATION_LEVELS = ['Below O/L', 'O/L', 'A/L', 'Diploma', 'Bachelor\'s', 'Master\'s', 'PhD']
+const EDUCATION_LEVELS = ['Bachelor\'s', 'Master\'s', 'PhD']
 const FOOD_PREFS = ['Vegetarian', 'Non-Vegetarian', 'Vegan', 'Halal']
 const DRINKING_OPTS = ['Never', 'Occasionally', 'Regularly']
 const SMOKING_OPTS = ['Never', 'Occasionally', 'Regularly']
@@ -211,6 +212,7 @@ export default function OnboardingPage() {
           caste: form.caste || undefined,
           civilStatus: form.civilStatus || undefined,
           religion: form.religion || undefined,
+          height: form.height || undefined,
           country: form.country || undefined,
           city: form.city || undefined,
           stateDistrict: form.stateDistrict || undefined,
@@ -228,7 +230,7 @@ export default function OnboardingPage() {
           location: location || undefined,
         }),
       })
-      router.replace('/dashboard/home')
+      router.replace('/dashboard')
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong.')
     } finally {
@@ -292,6 +294,10 @@ export default function OnboardingPage() {
                 <FieldGroup label="Religion">
                   <TextInput value={form.religion} onChange={v => set('religion', v)} placeholder="e.g. Buddhist, Catholic" />
                 </FieldGroup>
+                  <FieldGroup label="Height">
+                  <TextInput value={form.height} onChange={v => set('height', v)} placeholder="e.g. 5ft 8in" />
+                </FieldGroup>
+                
               </div>
             </div>
 
@@ -505,6 +511,7 @@ export default function OnboardingPage() {
             <PreviewField label="Caste" value={form.caste} />
             <PreviewField label="Civil Status" value={form.civilStatus} />
             <PreviewField label="Religion" value={form.religion} />
+             <PreviewField label="Height" value={form.height} />
           </div>
         </SectionCard>
 

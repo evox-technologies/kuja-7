@@ -10,7 +10,7 @@ import { apiFetch, ApiError } from '@/lib/api'
 import { defaultAvatarSrc } from '@/lib/avatar'
 import NotificationBell from './notification-bell'
 import NotificationInterests from './notification-interests'
-
+import Logo from '@/components/layout/logo'
 interface ProfileSummary {
   avatarUrl?: string | null
   images: string[]
@@ -64,7 +64,7 @@ export default function DashboardNavbar() {
     <nav className="bg-white border-b border-gray-100 shrink-0">
       <div className="px-4 lg:px-6 h-14 sm:h-16 flex items-center justify-between">
         <Link href="/" className="text-lg sm:text-xl font-bold tracking-widest text-gray-900">
-          LOGO
+         <Logo className="text-2xl" />
         </Link>
 
         <div className="flex items-center gap-2 sm:gap-3">

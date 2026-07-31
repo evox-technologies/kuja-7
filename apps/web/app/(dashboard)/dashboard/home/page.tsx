@@ -229,7 +229,7 @@ function HomePageInner() {
       <div className="mb-3">
         <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Age Range</label>
         <div className="flex items-center gap-2">
-          <input type="number" min={18} max={80} value={filters.ageMin} onChange={e => setFilter('ageMin', e.target.value)}
+          <input type="number" min={15} max={80} value={filters.ageMin} onChange={e => setFilter('ageMin', e.target.value)}
             placeholder="Min" className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-gray-50 focus:outline-none" />
           <span className="text-gray-300 text-xs">–</span>
           <input type="number" min={18} max={80} value={filters.ageMax} onChange={e => setFilter('ageMax', e.target.value)}

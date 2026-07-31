@@ -65,7 +65,7 @@ export default function Hero() {
             delay: 0.3,
           }}
         >
-          <form onSubmit={handleSearch}>
+          {/* <form onSubmit={handleSearch}>
             <div className="bg-white rounded-2xl shadow-2xl px-4 py-4 lg:px-6 lg:py-5 flex flex-col lg:flex-row items-stretch lg:items-end gap-3 lg:gap-4">
               <div className="flex-1">
                 <label className="block text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-2">
@@ -113,7 +113,63 @@ export default function Hero() {
                 {t("hero.searchNow")} <ChevronRight className="w-2 h-4 ml-1" />
               </Button>
             </div>
-          </form>
+          </form> */}
+          <form onSubmit={handleSearch} className="w-full max-w-6xl mx-auto">
+  <div className="bg-white rounded-3xl shadow-2xl px-6 py-6 lg:px-9 lg:py-8 flex flex-col lg:flex-row items-stretch lg:items-end gap-5 lg:gap-6">
+    <div className="flex-1">
+      <label className="block text-xs font-bold tracking-widest text-gray-400 uppercase mb-3">
+        {t("hero.lookingFor")}
+      </label>
+
+      <div className="relative">
+        <select
+          name="gender"
+          defaultValue="FEMALE"
+          className="w-full h-14 rounded-full border border-gray-200 bg-white pl-6 pr-12 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-brand/30 cursor-pointer"
+        >
+          <option value="FEMALE">{t("hero.bride")}</option>
+          <option value="MALE">{t("hero.groom")}</option>
+        </select>
+
+        <div className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 text-lg">
+          ▾
+        </div>
+      </div>
+    </div>
+
+    <div className="flex-1">
+      <label className="block text-xs font-bold tracking-widest text-gray-400 uppercase mb-3">
+        {t("hero.ageRange")}
+      </label>
+
+      <div className="flex items-center gap-3">
+        <Input
+          name="ageMin"
+          type="number"
+          placeholder={t("hero.min")}
+          className="h-14 rounded-full text-center text-base"
+        />
+
+        <span className="text-gray-300 text-xl font-light">—</span>
+
+        <Input
+          name="ageMax"
+          type="number"
+          placeholder={t("hero.max")}
+          className="h-14 rounded-full text-center text-base"
+        />
+      </div>
+    </div>
+
+    <Button
+      type="submit"
+      className="h-14 rounded-full px-9 text-base shrink-0 w-full lg:w-auto lg:-ml-2"
+    >
+      {t("hero.searchNow")}
+      <ChevronRight className="w-4 h-5 ml-2" />
+    </Button>
+  </div>
+</form>
         </motion.div>
       </div>
     </section>
