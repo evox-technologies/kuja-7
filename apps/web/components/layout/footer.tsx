@@ -12,7 +12,7 @@ export default function Footer() {
     <footer className="relative overflow-hidden bg-[#160a0e] text-gray-400">
       {/* Brand accent line + soft glow */}
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand to-transparent" />
-      <div className="pointer-events-none absolute -top-24 -right-16 w-80 h-80 rounded-full bg-brand/20 blur-3xl" />
+      <div className="pointer-events-none absolute -top-24 -right-16 w-80 h-80 rounded-full bg-brand-light blur-3xl" />
 
       <div className="relative mx-auto max-w-6xl px-6 py-16 grid grid-cols-2 lg:grid-cols-3 gap-10 lg:gap-16">
         {/* Brand */}
@@ -27,7 +27,7 @@ export default function Footer() {
             {[Globe, Camera, Phone].map((Icon, i) => (
               <button
                 key={i}
-                className="w-9 h-9 grid place-items-center rounded-full bg-white/5 ring-1 ring-white/10 text-gray-300 hover:bg-brand hover:text-white hover:ring-brand transition-colors"
+                className="w-9 h-9 grid place-items-center rounded-full bg-white/5 ring-1 ring-white/10 text-gray-300 hover:bg-brand hover:text-on-brand hover:ring-brand transition-colors"
               >
                 <Icon className="w-4 h-4" />
               </button>

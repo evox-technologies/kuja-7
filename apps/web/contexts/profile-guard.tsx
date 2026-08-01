@@ -101,7 +101,7 @@ export function ProfileGuardProvider({ children }: { children: ReactNode }) {
                 <div className="flex flex-col gap-2 items-center">
                   <button
                     onClick={handleSignIn}
-                    className="w-[90%] py-2.5 px-6 rounded-full bg-brand text-white text-sm font-semibold hover:opacity-90 transition-opacity"
+                    className="w-[90%] py-2.5 px-6 rounded-full bg-brand text-on-brand text-sm font-semibold hover:opacity-90 transition-opacity"
                   >
                     Sign In
                   </button>
@@ -126,7 +126,7 @@ export function ProfileGuardProvider({ children }: { children: ReactNode }) {
                 <div className="flex flex-col gap-2 items-center">
                   <button
                     onClick={handleCompleteProfile}
-                    className="w-[90%] py-2.5 px-6 rounded-full bg-brand text-white text-sm font-semibold hover:opacity-90 transition-opacity"
+                    className="w-[90%] py-2.5 px-6 rounded-full bg-brand text-on-brand text-sm font-semibold hover:opacity-90 transition-opacity"
                   >
                     Complete Profile
                   </button>

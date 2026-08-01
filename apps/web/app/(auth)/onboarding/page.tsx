@@ -73,7 +73,7 @@ function TextInput({ value, onChange, placeholder, type = 'text', max }: {
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
       max={max}
-      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors"
+      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-border focus:border-brand transition-colors"
     />
   )
 }
@@ -85,7 +85,7 @@ function SelectInput({ value, onChange, options, placeholder }: {
     <select
       value={value}
       onChange={e => onChange(e.target.value)}
-      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors appearance-none"
+      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-border focus:border-brand transition-colors appearance-none"
     >
       <option value="">{placeholder}</option>
       {options.map(o => <option key={o} value={o}>{o}</option>)}
@@ -113,7 +113,7 @@ function SectionCard({ title, icon, children, onEdit }: {
           {title}
         </div>
         {onEdit && (
-          <button onClick={onEdit} className="text-xs text-brand font-medium hover:underline">
+          <button onClick={onEdit} className="text-xs text-brand-text font-medium hover:text-brand hover:underline">
             ✏ Edit
           </button>
         )}
@@ -138,7 +138,7 @@ function StepIndicator({ current }: { current: 1 | 2 | 3 }) {
       {([1, 2, 3] as const).map((n, i) => (
         <div key={n} className="flex items-center">
           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-colors ${
-            n < current ? 'bg-brand border-brand text-white' :
+            n < current ? 'bg-brand border-brand text-on-brand' :
             n === current ? 'bg-gray-900 border-gray-900 text-white' :
             'bg-white border-gray-200 text-gray-400'
           }`}>{n}</div>
@@ -275,7 +275,7 @@ export default function OnboardingPage() {
                     {(['MALE', 'FEMALE'] as const).map(g => (
                       <button key={g} type="button" onClick={() => set('gender', g)}
                         className={`py-2 rounded-xl border text-sm font-medium transition-colors ${
-                          form.gender === g ? 'border-brand bg-brand/5 text-brand' : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                          form.gender === g ? 'border-brand bg-brand-light text-brand-text' : 'border-gray-200 text-gray-500 hover:border-gray-300'
                         }`}>
                         {g === 'MALE' ? '♂ Male' : '♀ Female'}
                       </button>
@@ -351,7 +351,7 @@ export default function OnboardingPage() {
             <button onClick={() => {
               const e = validateStep1(); if (e) { setError(e); return }
               setError(''); setStep(2)
-            }} className="w-full py-3 rounded-full bg-gradient-to-r from-brand to-pink-500 text-white font-semibold text-sm hover:opacity-90 transition-opacity">
+            }} className="w-full py-3 rounded-full bg-brand text-on-brand font-semibold text-sm hover:opacity-90 transition-opacity">
               Save &amp; Continue →
             </button>
           </div>
@@ -373,7 +373,7 @@ export default function OnboardingPage() {
               <select
                 value={form.kujaNumber}
                 onChange={e => set('kujaNumber', e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors appearance-none"
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-border focus:border-brand transition-colors appearance-none"
               >
                 <option value="">-</option>
                 {KUJA_NUMBERS.map(n => (
@@ -392,7 +392,7 @@ export default function OnboardingPage() {
             <button onClick={() => setStep(3)} className="px-5 py-2 rounded-full border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
               Skip
             </button>
-            <button onClick={() => setStep(3)} className="flex-1 py-2.5 rounded-full bg-gradient-to-r from-brand to-pink-500 text-white font-semibold text-sm hover:opacity-90 transition-opacity">
+            <button onClick={() => setStep(3)} className="flex-1 py-2.5 rounded-full bg-brand text-on-brand font-semibold text-sm hover:opacity-90 transition-opacity">
               Save &amp; Continue →
             </button>
           </div>
@@ -464,7 +464,7 @@ export default function OnboardingPage() {
             <button onClick={() => { setError(''); setStep('preview') }} className="px-5 py-2 rounded-full border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
               Skip
             </button>
-            <button onClick={() => { setError(''); setStep('preview') }} className="flex-1 py-2.5 rounded-full bg-gradient-to-r from-brand to-pink-500 text-white font-semibold text-sm hover:opacity-90 transition-opacity">
+            <button onClick={() => { setError(''); setStep('preview') }} className="flex-1 py-2.5 rounded-full bg-brand text-on-brand font-semibold text-sm hover:opacity-90 transition-opacity">
               Save &amp; Review →
             </button>
           </div>
@@ -555,7 +555,7 @@ export default function OnboardingPage() {
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="flex-1 py-3 rounded-full bg-gradient-to-r from-brand to-pink-500 text-white font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-60"
+            className="flex-1 py-3 rounded-full bg-brand text-on-brand font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-60"
           >
             {loading ? 'Creating Account…' : 'Confirm & Create Account'}
           </button>

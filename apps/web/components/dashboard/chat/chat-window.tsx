@@ -221,7 +221,7 @@ export default function ChatWindow({ conversationId, other, currentUserId, onBac
             <div className="flex justify-center mb-4">
               <button
                 onClick={loadMore}
-                className="text-xs text-brand hover:underline"
+                className="text-xs text-brand-text hover:text-brand hover:underline"
               >
                 Load earlier messages
               </button>
@@ -249,7 +249,7 @@ export default function ChatWindow({ conversationId, other, currentUserId, onBac
                       className={cn(
                         'max-w-[85%] sm:max-w-xs px-4 py-2.5 rounded-2xl text-sm break-words',
                         isMe
-                          ? 'bg-brand text-white rounded-br-sm'
+                          ? 'bg-brand text-on-brand rounded-br-sm'
                           : 'bg-rose-50 text-gray-800 rounded-bl-sm'
                       )}
                     >
@@ -257,7 +257,7 @@ export default function ChatWindow({ conversationId, other, currentUserId, onBac
                       <p
                         className={cn(
                           'text-[10px] mt-1',
-                          isMe ? 'text-white/60 text-right' : 'text-gray-400'
+                          isMe ? 'text-on-brand/60 text-right' : 'text-gray-400'
                         )}
                       >
                         {timeLabel(msg.createdAt)}
@@ -292,12 +292,12 @@ export default function ChatWindow({ conversationId, other, currentUserId, onBac
           <button
             onClick={send}
             disabled={!input.trim() || sending}
-            className="w-9 h-9 rounded-full bg-gradient-to-r from-orange-500 to-pink-600 flex items-center justify-center shrink-0 hover:opacity-90 transition-opacity disabled:opacity-40"
+            className="w-9 h-9 rounded-full bg-brand flex items-center justify-center shrink-0 hover:bg-brand-hover transition-colors disabled:opacity-40"
           >
             {sending ? (
-              <Loader2 className="w-4 h-4 text-white animate-spin" />
+              <Loader2 className="w-4 h-4 text-on-brand animate-spin" />
             ) : (
-              <Send className="w-4 h-4 text-white" />
+              <Send className="w-4 h-4 text-on-brand" />
             )}
           </button>
         </div>

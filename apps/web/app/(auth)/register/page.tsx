@@ -119,7 +119,7 @@ export default function RegisterPage() {
 
               <p className="text-center text-xs text-gray-400 mt-5">
                 {t('auth.register.alreadyHaveAccount')}{' '}
-                <Link href="/login" className="text-brand font-semibold hover:underline">
+                <Link href="/login" className="text-brand-text font-semibold hover:text-brand hover:underline">
                   {t('auth.register.signIn')}
                 </Link>
               </p>
@@ -131,7 +131,7 @@ export default function RegisterPage() {
               <h1 className="text-2xl font-bold text-gray-900 mb-1">{t('auth.register.verifyEmailTitle')}</h1>
               <p className="text-sm text-gray-400 mb-6">
                 {t('auth.register.verifyEmailSubtitlePrefix')}{' '}
-                <span className="text-brand font-semibold">{email}</span>
+                <span className="text-brand-text font-semibold">{email}</span>
               </p>
               <hr className="mb-8 border-gray-100" />
 
@@ -156,7 +156,7 @@ export default function RegisterPage() {
                 <button
                   onClick={() => sendOtp(true)}
                   disabled={loading || cooldown.remaining > 0}
-                  className="text-xs text-brand font-semibold hover:underline disabled:text-gray-300 disabled:no-underline transition-colors"
+                  className="text-xs text-brand-text font-semibold hover:text-brand hover:underline disabled:text-gray-300 disabled:no-underline transition-colors"
                 >
                   {cooldown.remaining > 0
                     ? t('auth.rateLimit.resendIn').replace('{s}', String(cooldown.remaining))

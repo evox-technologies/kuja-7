@@ -98,7 +98,7 @@ function profileToDraft(p: Profile): Draft {
 }
 
 const inputCls =
-  'w-full text-sm bg-white border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors'
+  'w-full text-sm bg-white border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-border focus:border-brand transition-colors'
 
 function ReadField({ label, value }: { label: string; value?: string | null }) {
   return (
@@ -335,7 +335,7 @@ export default function OwnProfilePage() {
               </div>
               {/* Photo count badge */}
               {profile.images.length > 0 && (
-                <span className="absolute -bottom-1 -right-1 bg-brand text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                <span className="absolute -bottom-1 -right-1 bg-brand text-on-brand text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
                   <Camera className="w-2.5 h-2.5" />
                   {profile.images.length}
                 </span>
@@ -384,7 +384,7 @@ export default function OwnProfilePage() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 {i === 0 && (
-                  <span className="absolute bottom-1 left-1 bg-brand text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                  <span className="absolute bottom-1 left-1 bg-brand text-on-brand text-[9px] font-bold px-1.5 py-0.5 rounded-full">
                     Main
                   </span>
                 )}
@@ -395,7 +395,7 @@ export default function OwnProfilePage() {
               </div>
             ))}
             {profile.images.length < 6 && (
-              <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-brand hover:bg-brand/5 transition-colors gap-1">
+              <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-brand hover:bg-brand-light transition-colors gap-1">
                 {uploadingIdx !== null ? (
                   <div className="w-5 h-5 border-2 border-brand border-t-transparent rounded-full animate-spin" />
                 ) : (
@@ -500,7 +500,7 @@ export default function OwnProfilePage() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="px-5 sm:px-7 py-2 rounded-full bg-brand text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
+            className="px-5 sm:px-7 py-2 rounded-full bg-brand text-on-brand text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
           >
             {saving && <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />}
             Save Changes

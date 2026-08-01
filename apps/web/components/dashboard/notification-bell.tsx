@@ -69,7 +69,7 @@ export default function NotificationBell() {
         <button className="relative p-2 rounded-full hover:bg-gray-50 transition-colors">
           <Bell className="w-5 h-5 text-gray-400" />
           {count > 0 && (
-            <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 bg-brand rounded-full text-[9px] font-semibold flex items-center justify-center text-white">
+            <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 bg-brand rounded-full text-[9px] font-semibold flex items-center justify-center text-on-brand">
               {count > 9 ? '9+' : count}
             </span>
           )}
@@ -106,7 +106,7 @@ export default function NotificationBell() {
                       </span>
                       <span
                         className={cn(
-                          'text-[9px] font-bold text-white rounded-full px-1.5 py-0.5 shrink-0',
+                          'text-[9px] font-bold text-on-brand rounded-full px-1.5 py-0.5 shrink-0',
                           'bg-brand'
                         )}
                       >

@@ -220,7 +220,7 @@ export default function ConversationList({ selectedId, onSelect, currentUserId, 
             value={query}
             onChange={handleQueryChange}
             placeholder={newChatMode ? 'Search people…' : 'Search'}
-            className="w-full pl-9 pr-3 py-2 text-sm bg-gray-50 border border-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-brand/20"
+            className="w-full pl-9 pr-3 py-2 text-sm bg-gray-50 border border-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-brand-border"
             autoFocus={newChatMode}
           />
         </div>
@@ -296,7 +296,7 @@ export default function ConversationList({ selectedId, onSelect, currentUserId, 
                   onClick={() => onSelect(c.id, c.other)}
                   className={cn(
                     'w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors',
-                    selectedId === c.id ? 'bg-brand/5' : 'hover:bg-gray-50'
+                    selectedId === c.id ? 'bg-brand-light' : 'hover:bg-gray-50'
                   )}
                 >
                   {c.other.avatarUrl || defaultAvatarSrc(c.other.gender) ? (

@@ -54,7 +54,7 @@ export default function Navbar() {
             </Button>
             <Button
               size="sm"
-              className="rounded-full shadow-sm shadow-brand/30"
+              className="rounded-full shadow-sm shadow-md"
               asChild
             >
               <Link href="/register">{t('nav.join')}</Link>

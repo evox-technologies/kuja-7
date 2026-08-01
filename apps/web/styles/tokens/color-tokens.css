@@ -1,0 +1,19 @@
+:root {
+  /* Primary palette — golden yellow */
+  --color-primary-50: #fffbea;
+  --color-primary-100: #fff3c4;
+  --color-primary-200: #fce588;
+  --color-primary-400: #f5b800;
+  --color-primary-600: #d4970a;
+  --color-primary-800: #a06c00;
+  --color-primary-900: #6b4500;
+
+
+  --color-brand: var(--color-primary-400);
+  --color-brand-hover: var(--color-primary-600);
+  --color-brand-light: var(--color-primary-50);
+  --color-brand-border: var(--color-primary-200);
+  --color-brand-text: var(--color-primary-800);
+  --color-brand-text-strong: var(--color-primary-900);
+  --color-on-brand: #1a1a1a;
+}

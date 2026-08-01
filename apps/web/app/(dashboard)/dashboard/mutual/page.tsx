@@ -61,14 +61,14 @@ export default function MutualPage() {
                 key={m.id}
                 profile={{ ...m.sender, createdAt: m.updatedAt, myInterestStatus: 'ACCEPTED' }}
                 badge={
-                  <span className="bg-brand text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="bg-brand text-on-brand text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
                     <span>❤</span> Mutual
                   </span>
                 }
                 actions={
                   <button
                     onClick={() => openChat(m.sender.id)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-brand/10 text-brand text-xs font-medium hover:bg-brand/20 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-brand-light text-brand-text text-xs font-medium hover:bg-brand-border transition-colors"
                   >
                     <MessageCircle className="w-3.5 h-3.5" />
                     Open Chat

@@ -72,13 +72,13 @@ export default function HowItWorks() {
                   onClick={() => select(i)}
                   className={`flex-1 flex flex-col items-center gap-1.5 py-2.5 rounded-2xl transition-all ${
                     on
-                      ? 'bg-white border border-brand-100 shadow-md shadow-brand/5'
+                      ? 'bg-white border border-brand-border shadow-md'
                       : 'border border-transparent'
                   }`}
                 >
                   <span
                     className={`grid place-items-center w-8 h-8 rounded-lg font-bold text-xs ${
-                      on ? 'bg-brand text-white' : 'bg-brand-50 text-brand'
+                      on ? 'bg-brand text-on-brand' : 'bg-brand-light text-brand-text'
                     }`}
                   >
                     0{i + 1}
@@ -107,15 +107,15 @@ export default function HowItWorks() {
                     onClick={() => select(i)}
                     className={`w-full text-left flex gap-4 items-start p-5 rounded-2xl transition-all duration-300 ${
                       on
-                        ? 'bg-white border border-brand-100 shadow-lg shadow-brand/5'
-                        : 'border border-transparent hover:bg-brand-50/40'
+                        ? 'bg-white border border-brand-border shadow-lg'
+                        : 'border border-transparent hover:bg-brand-light'
                     }`}
                   >
                     <span
                       className={`shrink-0 grid place-items-center w-11 h-11 rounded-xl font-bold text-base transition-all ${
                         on
-                          ? 'bg-brand text-white shadow-md shadow-brand/30'
-                          : 'bg-brand-50 text-brand'
+                          ? 'bg-brand text-on-brand shadow-md'
+                          : 'bg-brand-light text-brand-text'
                       }`}
                     >
                       0{i + 1}
@@ -129,7 +129,7 @@ export default function HowItWorks() {
                           <p className="mt-1.5 text-sm text-gray-500 leading-relaxed">
                             {step.description}
                           </p>
-                          <div className="mt-3 h-[3px] rounded-full bg-brand-100 overflow-hidden">
+                          <div className="mt-3 h-[3px] rounded-full bg-brand-border overflow-hidden">
                             <div
                               className="h-full bg-brand rounded-full"
                               style={{ width: `${progress}%` }}
@@ -144,7 +144,7 @@ export default function HowItWorks() {
             </div>
 
             {/* Browser-framed preview */}
-            <div className="rounded-3xl border border-brand-100 bg-white shadow-2xl shadow-brand/10 overflow-hidden">
+            <div className="rounded-3xl border border-brand-border bg-white shadow-2xl overflow-hidden">
               <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 bg-gray-50/80">
                 <span className="w-2.5 h-2.5 rounded-full bg-red-300" />
                 <span className="w-2.5 h-2.5 rounded-full bg-yellow-300" />
@@ -153,7 +153,7 @@ export default function HowItWorks() {
                   kuja7.lk / {URL_PATHS[active]}
                 </div>
               </div>
-              <div className="relative h-[440px] lg:h-[460px] bg-brand-50/30">
+              <div className="relative h-[440px] lg:h-[460px] bg-brand-light">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={active}
@@ -184,7 +184,7 @@ export default function HowItWorks() {
             <p className="mt-2 text-sm text-gray-500 leading-relaxed">
               {steps[active].description}
             </p>
-            <div className="mt-3.5 h-[3px] rounded-full bg-brand-100 overflow-hidden">
+            <div className="mt-3.5 h-[3px] rounded-full bg-brand-border overflow-hidden">
               <div
                 className="h-full bg-brand rounded-full"
                 style={{ width: `${progress}%` }}

@@ -75,7 +75,7 @@ export default function Hero() {
                   <select
                     name="gender"
                     defaultValue="FEMALE"
-                    className="w-full h-10 rounded-full border border-gray-200 bg-white pl-4 pr-8 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-brand/30 cursor-pointer"
+                    className="w-full h-10 rounded-full border border-gray-200 bg-white pl-4 pr-8 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-brand-border cursor-pointer"
                   >
                     <option value="FEMALE">{t("hero.bride")}</option>
                     <option value="MALE">{t("hero.groom")}</option>
@@ -125,7 +125,7 @@ export default function Hero() {
         <select
           name="gender"
           defaultValue="FEMALE"
-          className="w-full h-14 rounded-full border border-gray-200 bg-white pl-6 pr-12 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-brand/30 cursor-pointer"
+          className="w-full h-14 rounded-full border border-gray-200 bg-white pl-6 pr-12 text-base appearance-none focus:outline-none focus:ring-2 focus:ring-brand-border cursor-pointer"
         >
           <option value="FEMALE">{t("hero.bride")}</option>
           <option value="MALE">{t("hero.groom")}</option>

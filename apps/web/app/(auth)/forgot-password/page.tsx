@@ -49,7 +49,7 @@ export default function ForgotPasswordPage() {
             </p>
             <Link
               href="/login"
-              className="block text-center text-sm text-brand font-semibold hover:underline mt-2"
+              className="block text-center text-sm text-brand-text font-semibold hover:text-brand hover:underline mt-2"
             >
               {t('auth.forgotPassword.backToLogin')}
             </Link>
@@ -86,7 +86,7 @@ export default function ForgotPasswordPage() {
             </Button>
 
             <p className="text-center text-xs text-gray-400 mt-5">
-              <Link href="/login" className="text-brand font-semibold hover:underline">
+              <Link href="/login" className="text-brand-text font-semibold hover:text-brand hover:underline">
                 {t('auth.forgotPassword.backToLogin')}
               </Link>
             </p>
