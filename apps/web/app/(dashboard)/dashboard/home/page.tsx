@@ -6,6 +6,7 @@ import { SlidersHorizontal, X, AlertCircle, ArrowRight } from 'lucide-react'
 import { apiFetch, ApiError } from '@/lib/api'
 import ProfileCard, { ProfileCardData } from '@/components/dashboard/profile-card'
 import Link from 'next/link'
+import { HEIGHT_MIN_IN, HEIGHT_MAX_IN, formatHeight } from '@/lib/height'
 
 interface SearchResult {
   profiles: ProfileCardData[]
@@ -25,6 +26,8 @@ interface Filters {
   gender: string
   ageMin: string
   ageMax: string
+  heightMin: string
+  heightMax: string
   religion: string
   country: string
   city: string
@@ -38,14 +41,25 @@ interface Filters {
 }
 
 const EMPTY_FILTERS: Filters = {
-  gender: '', ageMin: '', ageMax: '', religion: '', country: '', city: '',
+  gender: '', ageMin: '', ageMax: '', heightMin: '', heightMax: '',
+  religion: '', country: '', city: '',
   ethnicity: '', civilStatus: '', educationLevel: '', drinking: '', smoking: '',
   foodPreference: '', kujaNumber: '',
 }
 
 // const AGE_QUICK = [21, 22, 23, 24, 25, 26]
 const CIVIL_STATUSES = ['Never Married', 'Divorced', 'Widowed', 'Separated']
-const EDUCATION_LEVELS = ["Below O/L", "O/L", "A/L", "Diploma", "Bachelor's", "Master's", "PhD"]
+const EDUCATION_LEVELS = [
+  'Up to GCE O/L',
+  'Up to GCE A/L',
+  'Diploma',
+  'Professional Qualification',
+  'Undergraduate',
+  "Bachelor's Degree or Equivalent",
+  'Post Graduate Diploma',
+  "Master's Degree or Equivalent",
+  'Phd or Post Doctoral',
+]
 const FOOD_PREFS = ['Vegetarian', 'Non-Vegetarian', 'Vegan', 'Halal']
 const DRINKING_OPTS = ['Never', 'Occasionally', 'Regularly']
 const SMOKING_OPTS = ['Never', 'Occasionally', 'Regularly']
@@ -81,6 +95,80 @@ function FilterInput({ label, value, onChange, placeholder }: {
         placeholder={placeholder}
         className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-1 focus:ring-brand-border"
       />
+    </div>
+  )
+}
+
+function HeightRangeFilter({
+  min,
+  max,
+  onMinChange,
+  onMaxChange,
+}: {
+  min: string
+  max: string
+  onMinChange: (v: string) => void
+  onMaxChange: (v: string) => void
+}) {
+  const minIn = min ? Number(min) : HEIGHT_MIN_IN
+  const maxIn = max ? Number(max) : HEIGHT_MAX_IN
+
+  function setMin(next: number) {
+    const clamped = Math.min(next, maxIn)
+    onMinChange(String(clamped))
+    if (!max) onMaxChange(String(HEIGHT_MAX_IN))
+  }
+
+  function setMax(next: number) {
+    const clamped = Math.max(next, minIn)
+    onMaxChange(String(clamped))
+    if (!min) onMinChange(String(HEIGHT_MIN_IN))
+  }
+
+  return (
+    <div className="mb-3">
+      <div className="flex items-center justify-between mb-2">
+        <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+          Height
+        </label>
+        <span className="text-xs font-semibold text-gray-800 tabular-nums">
+          {formatHeight(minIn)} – {formatHeight(maxIn)}
+        </span>
+      </div>
+      <div className="relative h-6 flex items-center">
+        <div className="absolute inset-x-0 h-1.5 rounded-full bg-gray-200" />
+        <div
+          className="absolute h-1.5 rounded-full bg-brand"
+          style={{
+            left: `${((minIn - HEIGHT_MIN_IN) / (HEIGHT_MAX_IN - HEIGHT_MIN_IN)) * 100}%`,
+            right: `${((HEIGHT_MAX_IN - maxIn) / (HEIGHT_MAX_IN - HEIGHT_MIN_IN)) * 100}%`,
+          }}
+        />
+        <input
+          type="range"
+          min={HEIGHT_MIN_IN}
+          max={HEIGHT_MAX_IN}
+          step={1}
+          value={minIn}
+          onChange={e => setMin(Number(e.target.value))}
+          className="absolute inset-x-0 w-full appearance-none bg-transparent pointer-events-none z-[1] [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-brand [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:shadow [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:h-3.5 [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-brand [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white"
+          aria-label="Minimum height"
+        />
+        <input
+          type="range"
+          min={HEIGHT_MIN_IN}
+          max={HEIGHT_MAX_IN}
+          step={1}
+          value={maxIn}
+          onChange={e => setMax(Number(e.target.value))}
+          className="absolute inset-x-0 w-full appearance-none bg-transparent pointer-events-none z-[2] [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-brand [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:shadow [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:h-3.5 [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-brand [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white"
+          aria-label="Maximum height"
+        />
+      </div>
+      <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+        <span>{formatHeight(HEIGHT_MIN_IN)}</span>
+        <span>{formatHeight(HEIGHT_MAX_IN)}</span>
+      </div>
     </div>
   )
 }
@@ -124,6 +212,8 @@ function HomePageInner() {
       if (f.gender) params.set('gender', f.gender)
       if (f.ageMin) params.set('ageMin', f.ageMin)
       if (f.ageMax) params.set('ageMax', f.ageMax)
+      if (f.heightMin) params.set('heightMin', f.heightMin)
+      if (f.heightMax) params.set('heightMax', f.heightMax)
       if (f.religion) params.set('religion', f.religion)
       if (f.country) params.set('country', f.country)
       if (f.city) params.set('city', f.city)
@@ -236,6 +326,13 @@ function HomePageInner() {
             placeholder="Max" className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-gray-50 focus:outline-none" />
         </div>
       </div>
+
+      <HeightRangeFilter
+        min={filters.heightMin}
+        max={filters.heightMax}
+        onMinChange={v => setFilter('heightMin', v)}
+        onMaxChange={v => setFilter('heightMax', v)}
+      />
 
       <FilterInput label="Country" value={filters.country} onChange={v => setFilter('country', v)} placeholder="Any" />
       <FilterInput label="City" value={filters.city} onChange={v => setFilter('city', v)} placeholder="Any" />

@@ -49,7 +49,17 @@ const EMPTY: FormData = {
 
 const KUJA_NUMBERS = ['1', '2', '4', '7', '8', '12']
 const CIVIL_STATUSES = ['Never Married', 'Divorced', 'Widowed', 'Separated']
-const EDUCATION_LEVELS = ['Bachelor\'s', 'Master\'s', 'PhD']
+const EDUCATION_LEVELS = [
+  'Up to GCE O/L',
+  'Up to GCE A/L',
+  'Diploma',
+  'Professional Qualification',
+  'Undergraduate',
+  "Bachelor's Degree or Equivalent",
+  'Post Graduate Diploma',
+  "Master's Degree or Equivalent",
+  'Phd or Post Doctoral',
+]
 const FOOD_PREFS = ['Vegetarian', 'Non-Vegetarian', 'Vegan', 'Halal']
 const DRINKING_OPTS = ['Never', 'Occasionally', 'Regularly']
 const SMOKING_OPTS = ['Never', 'Occasionally', 'Regularly']

@@ -5,6 +5,12 @@ import { useRouter } from 'next/navigation'
 import { Lock, User, Camera } from 'lucide-react'
 import { apiFetch, ApiError } from '@/lib/api'
 import { useProfileGuard } from '@/contexts/profile-guard'
+import {
+  HEIGHT_MIN_IN,
+  HEIGHT_MAX_IN,
+  formatHeight,
+  heightToInches,
+} from '@/lib/height'
 
 interface Profile {
   id: string
@@ -128,6 +134,38 @@ function FormField({ label, value, onChange, type = 'text', placeholder, require
         placeholder={placeholder}
         className={inputCls + (error ? ' border-red-400 focus:border-red-400 focus:ring-red-200' : '')}
       />
+    </div>
+  )
+}
+
+function HeightSlider({ value, onChange, required, error }: {
+  value: string; onChange: (v: string) => void; required?: boolean; error?: boolean
+}) {
+  const inches = heightToInches(value)
+  const display = formatHeight(inches)
+
+  return (
+    <div className={error ? 'rounded-xl ring-2 ring-red-200' : ''}>
+      <div className="flex items-center justify-between mb-1">
+        <p className="text-[10px] text-gray-400 uppercase tracking-wide">
+          Height{required && <RequiredStar />}
+        </p>
+        <span className="text-sm font-semibold text-gray-900 tabular-nums">{display}</span>
+      </div>
+      <input
+        type="range"
+        min={HEIGHT_MIN_IN}
+        max={HEIGHT_MAX_IN}
+        step={1}
+        value={inches}
+        onChange={e => onChange(formatHeight(Number(e.target.value)))}
+        className="w-full h-2 accent-brand cursor-pointer"
+        aria-label="Height"
+      />
+      <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+        <span>{formatHeight(HEIGHT_MIN_IN)}</span>
+        <span>{formatHeight(HEIGHT_MAX_IN)}</span>
+      </div>
     </div>
   )
 }
@@ -433,7 +471,7 @@ export default function OwnProfilePage() {
             <FormField label="Last Name" value={draft.lastName} onChange={v => set('lastName', v)} required error={!!fieldErrors.lastName} />
             <ReadField label="Age *" value={String(age(profile.dateOfBirth))} />
             <ReadField label="Gender *" value={profile.gender} />
-            <FormField label="Height" value={draft.height} onChange={v => set('height', v)} placeholder="e.g. 5ft 8in" required error={!!fieldErrors.height} />
+            <HeightSlider value={draft.height} onChange={v => set('height', v)} required error={!!fieldErrors.height} />
             <FormField label="Nationality" value={draft.nationality} onChange={v => set('nationality', v)} />
             <FormField label="Ethnicity" value={draft.ethnicity} onChange={v => set('ethnicity', v)} />
             <FormField label="Caste" value={draft.caste} onChange={v => set('caste', v)} />
