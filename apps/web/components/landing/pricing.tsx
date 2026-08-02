@@ -100,7 +100,7 @@ export default function Pricing() {
     <>
       {/* Hero */}
       <section className="relative overflow-hidden bg-gray-50 pt-16 pb-12 lg:pt-20 lg:pb-16">
-        <div className="pointer-events-none absolute -top-24 right-0 w-80 h-80 rounded-full bg-brand/10 blur-3xl" />
+        <div className="pointer-events-none absolute -top-24 right-0 w-80 h-80 rounded-full bg-brand-light blur-3xl" />
         <div className="mx-auto max-w-6xl px-4 lg:px-6 relative">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
@@ -108,7 +108,7 @@ export default function Pricing() {
             transition={{ duration: 0.5 }}
             className="text-center max-w-2xl mx-auto"
           >
-            <span className="inline-block text-xs font-bold uppercase tracking-widest text-brand bg-brand-50 rounded-full px-4 py-1.5 mb-5">
+            <span className="inline-block text-xs font-bold uppercase tracking-widest text-brand-text bg-brand-light rounded-full px-4 py-1.5 mb-5">
               Pricing
             </span>
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-gray-900">
@@ -142,7 +142,7 @@ export default function Pricing() {
                 )}
               >
                 {plan.highlighted && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold uppercase tracking-widest text-white bg-brand rounded-full px-3 py-1">
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold uppercase tracking-widest text-on-brand bg-brand rounded-full px-3 py-1">
                     Recommended
                   </span>
                 )}
@@ -198,7 +198,7 @@ export default function Pricing() {
                 transition={{ duration: 0.4, delay: idx * 0.05 }}
                 className="text-center px-2"
               >
-                <div className="w-11 h-11 mx-auto rounded-full bg-brand-50 text-brand flex items-center justify-center mb-4">
+                <div className="w-11 h-11 mx-auto rounded-full bg-brand-light text-brand-text flex items-center justify-center mb-4">
                   <Icon className="w-5 h-5" />
                 </div>
                 <h3 className="font-semibold text-gray-900 text-sm mb-1.5">{title}</h3>
@@ -247,13 +247,13 @@ export default function Pricing() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-40px' }}
             transition={{ duration: 0.5 }}
-            className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-brand to-pink-500 px-6 py-12 sm:px-10 sm:py-14 text-center text-white"
+            className="relative overflow-hidden rounded-3xl bg-brand px-6 py-12 sm:px-10 sm:py-14 text-center text-on-brand"
           >
             <div className="pointer-events-none absolute -top-16 -right-16 w-56 h-56 rounded-full bg-white/10 blur-2xl" />
             <h2 className="text-2xl md:text-3xl font-bold tracking-tight relative">
               Start free. Upgrade when it feels right.
             </h2>
-            <p className="mt-3 text-sm text-white/85 max-w-md mx-auto relative">
+            <p className="mt-3 text-sm text-on-brand/80 max-w-md mx-auto relative">
               Create your Kuja7.lk profile today and take the next step toward a
               meaningful match.
             </p>
@@ -261,13 +261,13 @@ export default function Pricing() {
               <Button
                 asChild
                 size="lg"
-                className="rounded-full bg-white text-brand hover:bg-white/95"
+                className="rounded-full bg-white text-brand-text hover:bg-white/95"
               >
                 <Link href="/register">Create Account</Link>
               </Button>
               <Link
                 href="/login"
-                className="text-sm text-white/90 hover:text-white underline-offset-4 hover:underline"
+                className="text-sm text-on-brand/90 hover:text-on-brand underline-offset-4 hover:underline"
               >
                 Already have an account? Log in
               </Link>

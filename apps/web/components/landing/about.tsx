@@ -142,7 +142,7 @@ export default function About() {
               transition={{ duration: 0.4 }}
               className="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm"
             >
-              <div className="w-11 h-11 rounded-full bg-brand-50 text-brand flex items-center justify-center mb-4">
+              <div className="w-11 h-11 rounded-full bg-brand-light text-brand-text flex items-center justify-center mb-4">
                 <Heart className="w-5 h-5" />
               </div>
               <h3 className="text-lg font-bold text-gray-900 mb-2">{a.missionTitle}</h3>
@@ -156,7 +156,7 @@ export default function About() {
               transition={{ duration: 0.4, delay: 0.08 }}
               className="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm"
             >
-              <div className="w-11 h-11 rounded-full bg-brand-50 text-brand flex items-center justify-center mb-4">
+              <div className="w-11 h-11 rounded-full bg-brand-light text-brand-text flex items-center justify-center mb-4">
                 <Target className="w-5 h-5" />
               </div>
               <h3 className="text-lg font-bold text-gray-900 mb-2">{a.visionTitle}</h3>
@@ -188,7 +188,7 @@ export default function About() {
                   transition={{ duration: 0.4, delay: idx * 0.05 }}
                   className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-6 flex gap-4"
                 >
-                  <div className="w-10 h-10 shrink-0 rounded-full bg-brand-50 text-brand flex items-center justify-center">
+                  <div className="w-10 h-10 shrink-0 rounded-full bg-brand-light text-brand-text flex items-center justify-center">
                     <Icon className="w-5 h-5" />
                   </div>
                   <div className="min-w-0">
@@ -249,26 +249,26 @@ export default function About() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-40px' }}
             transition={{ duration: 0.5 }}
-            className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-brand to-pink-500 px-6 py-12 sm:px-10 sm:py-14 text-center text-white"
+            className="relative overflow-hidden rounded-3xl bg-brand px-6 py-12 sm:px-10 sm:py-14 text-center text-on-brand"
           >
             <div className="pointer-events-none absolute -top-16 -right-16 w-56 h-56 rounded-full bg-white/10 blur-2xl" />
             <h2 className="text-2xl md:text-3xl font-bold tracking-tight relative">
               {a.ctaTitle}
             </h2>
-            <p className="mt-3 text-sm text-white/85 max-w-md mx-auto relative">
+            <p className="mt-3 text-sm text-on-brand/80 max-w-md mx-auto relative">
               {a.ctaSubtitle}
             </p>
             <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3 relative">
               <Button
                 asChild
                 size="lg"
-                className="rounded-full bg-white text-brand hover:bg-white/95"
+                className="rounded-full bg-white text-brand-text hover:bg-white/95"
               >
                 <Link href="/register">{a.getStarted}</Link>
               </Button>
               <Link
                 href="/login"
-                className="text-sm text-white/90 hover:text-white underline-offset-4 hover:underline"
+                className="text-sm text-on-brand/90 hover:text-on-brand underline-offset-4 hover:underline"
               >
                 {a.alreadyHaveAccount}
               </Link>

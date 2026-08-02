@@ -93,7 +93,7 @@ export default function ChatInfoPanel({ otherId }: Props) {
             {profile.firstName} {profile.lastName}
           </span>
           {profile.kujaNumber && (
-            <span className="bg-red-100 text-red-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+            <span className="bg-brand-light text-brand-text text-[10px] font-bold px-1.5 py-0.5 rounded-full">
               Kuja {profile.kujaNumber}
             </span>
           )}

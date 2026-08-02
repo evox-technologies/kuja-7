@@ -33,12 +33,13 @@ interface FormData {
   // Step 3 – Private Data
   mobileNumber: string
   whatsappNumber: string
+  height: string  
   address: string
   images: string[]
 }
 
 const EMPTY: FormData = {
-  firstName: '', lastName: '', dateOfBirth: '', nationality: '',
+  firstName: '', lastName: '', dateOfBirth: '', nationality: '', height: '',
   gender: '', ethnicity: '', caste: '', civilStatus: '', religion: '',
   country: '', city: '', stateDistrict: '',
   educationLevel: '', profession: '', drinking: '', smoking: '', foodPreference: '',
@@ -47,8 +48,24 @@ const EMPTY: FormData = {
 }
 
 const KUJA_NUMBERS = ['1', '2', '4', '7', '8', '12']
+const COUNTRIES = [
+  'Australia', 'Canada', 'Italy', 'Japan', 'Maldives', 'New Zealand',
+  'Singapore', 'South Korea', 'Sri Lanka', 'United Arab Emirates',
+  'United Kingdom', 'United States', 'Other',
+]
+const ETHNICITIES = ['Sinhalese', 'Tamil', 'Muslim', 'Burgher', 'Other']
 const CIVIL_STATUSES = ['Never Married', 'Divorced', 'Widowed', 'Separated']
-const EDUCATION_LEVELS = ['Below O/L', 'O/L', 'A/L', 'Diploma', 'Bachelor\'s', 'Master\'s', 'PhD']
+const EDUCATION_LEVELS = [
+  'Up to GCE O/L',
+  'Up to GCE A/L',
+  'Diploma',
+  'Professional Qualification',
+  'Undergraduate',
+  "Bachelor's Degree or Equivalent",
+  'Post Graduate Diploma',
+  "Master's Degree or Equivalent",
+  'Phd or Post Doctoral',
+]
 const FOOD_PREFS = ['Vegetarian', 'Non-Vegetarian', 'Vegan', 'Halal']
 const DRINKING_OPTS = ['Never', 'Occasionally', 'Regularly']
 const SMOKING_OPTS = ['Never', 'Occasionally', 'Regularly']
@@ -72,7 +89,7 @@ function TextInput({ value, onChange, placeholder, type = 'text', max }: {
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
       max={max}
-      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors"
+      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-border focus:border-brand transition-colors"
     />
   )
 }
@@ -84,7 +101,7 @@ function SelectInput({ value, onChange, options, placeholder }: {
     <select
       value={value}
       onChange={e => onChange(e.target.value)}
-      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors appearance-none"
+      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-border focus:border-brand transition-colors appearance-none"
     >
       <option value="">{placeholder}</option>
       {options.map(o => <option key={o} value={o}>{o}</option>)}
@@ -112,7 +129,7 @@ function SectionCard({ title, icon, children, onEdit }: {
           {title}
         </div>
         {onEdit && (
-          <button onClick={onEdit} className="text-xs text-brand font-medium hover:underline">
+          <button onClick={onEdit} className="text-xs text-brand-text font-medium hover:text-brand hover:underline">
             ✏ Edit
           </button>
         )}
@@ -137,7 +154,7 @@ function StepIndicator({ current }: { current: 1 | 2 | 3 }) {
       {([1, 2, 3] as const).map((n, i) => (
         <div key={n} className="flex items-center">
           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-colors ${
-            n < current ? 'bg-brand border-brand text-white' :
+            n < current ? 'bg-brand border-brand text-on-brand' :
             n === current ? 'bg-gray-900 border-gray-900 text-white' :
             'bg-white border-gray-200 text-gray-400'
           }`}>{n}</div>
@@ -152,6 +169,8 @@ export default function OnboardingPage() {
   const router = useRouter()
   const [step, setStep] = useState<Step>(1)
   const [form, setForm] = useState<FormData>(EMPTY)
+  const [countrySelection, setCountrySelection] = useState('')
+  const [ethnicitySelection, setEthnicitySelection] = useState('')
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -211,6 +230,7 @@ export default function OnboardingPage() {
           caste: form.caste || undefined,
           civilStatus: form.civilStatus || undefined,
           religion: form.religion || undefined,
+          height: form.height || undefined,
           country: form.country || undefined,
           city: form.city || undefined,
           stateDistrict: form.stateDistrict || undefined,
@@ -228,7 +248,7 @@ export default function OnboardingPage() {
           location: location || undefined,
         }),
       })
-      router.replace('/dashboard/home')
+      router.replace('/dashboard')
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong.')
     } finally {
@@ -273,7 +293,7 @@ export default function OnboardingPage() {
                     {(['MALE', 'FEMALE'] as const).map(g => (
                       <button key={g} type="button" onClick={() => set('gender', g)}
                         className={`py-2 rounded-xl border text-sm font-medium transition-colors ${
-                          form.gender === g ? 'border-brand bg-brand/5 text-brand' : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                          form.gender === g ? 'border-brand bg-brand-light text-brand-text' : 'border-gray-200 text-gray-500 hover:border-gray-300'
                         }`}>
                         {g === 'MALE' ? '♂ Male' : '♀ Female'}
                       </button>
@@ -281,7 +301,20 @@ export default function OnboardingPage() {
                   </div>
                 </FieldGroup>
                 <FieldGroup label="Ethnicity">
-                  <TextInput value={form.ethnicity} onChange={v => set('ethnicity', v)} placeholder="e.g. Sinhala, Tamil" />
+                  <SelectInput
+                    value={ethnicitySelection}
+                    onChange={v => {
+                      setEthnicitySelection(v)
+                      set('ethnicity', v === 'Other' ? '' : v)
+                    }}
+                    options={ETHNICITIES}
+                    placeholder="Select Ethnicity"
+                  />
+                  {ethnicitySelection === 'Other' && (
+                    <div className="mt-2">
+                      <TextInput value={form.ethnicity} onChange={v => set('ethnicity', v)} placeholder="Enter your ethnicity" />
+                    </div>
+                  )}
                 </FieldGroup>
                 <FieldGroup label="Caste">
                   <TextInput value={form.caste} onChange={v => set('caste', v)} placeholder="Optional" />
@@ -292,6 +325,10 @@ export default function OnboardingPage() {
                 <FieldGroup label="Religion">
                   <TextInput value={form.religion} onChange={v => set('religion', v)} placeholder="e.g. Buddhist, Catholic" />
                 </FieldGroup>
+                  <FieldGroup label="Height">
+                  <TextInput value={form.height} onChange={v => set('height', v)} placeholder="e.g. 5ft 8in" />
+                </FieldGroup>
+                
               </div>
             </div>
 
@@ -300,7 +337,20 @@ export default function OnboardingPage() {
               <h2 className="font-semibold text-gray-800 mb-4">Residency</h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <FieldGroup label="Country">
-                  <TextInput value={form.country} onChange={v => set('country', v)} placeholder="Country" />
+                  <SelectInput
+                    value={countrySelection}
+                    onChange={v => {
+                      setCountrySelection(v)
+                      set('country', v === 'Other' ? '' : v)
+                    }}
+                    options={COUNTRIES}
+                    placeholder="Select Country"
+                  />
+                  {countrySelection === 'Other' && (
+                    <div className="mt-2">
+                      <TextInput value={form.country} onChange={v => set('country', v)} placeholder="Enter your country" />
+                    </div>
+                  )}
                 </FieldGroup>
                 <FieldGroup label="City">
                   <TextInput value={form.city} onChange={v => set('city', v)} placeholder="City" />
@@ -345,7 +395,7 @@ export default function OnboardingPage() {
             <button onClick={() => {
               const e = validateStep1(); if (e) { setError(e); return }
               setError(''); setStep(2)
-            }} className="w-full py-3 rounded-full bg-gradient-to-r from-brand to-pink-500 text-white font-semibold text-sm hover:opacity-90 transition-opacity">
+            }} className="w-full py-3 rounded-full bg-brand text-on-brand font-semibold text-sm hover:opacity-90 transition-opacity">
               Save &amp; Continue →
             </button>
           </div>
@@ -367,7 +417,7 @@ export default function OnboardingPage() {
               <select
                 value={form.kujaNumber}
                 onChange={e => set('kujaNumber', e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors appearance-none"
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-border focus:border-brand transition-colors appearance-none"
               >
                 <option value="">-</option>
                 {KUJA_NUMBERS.map(n => (
@@ -386,7 +436,7 @@ export default function OnboardingPage() {
             <button onClick={() => setStep(3)} className="px-5 py-2 rounded-full border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
               Skip
             </button>
-            <button onClick={() => setStep(3)} className="flex-1 py-2.5 rounded-full bg-gradient-to-r from-brand to-pink-500 text-white font-semibold text-sm hover:opacity-90 transition-opacity">
+            <button onClick={() => setStep(3)} className="flex-1 py-2.5 rounded-full bg-brand text-on-brand font-semibold text-sm hover:opacity-90 transition-opacity">
               Save &amp; Continue →
             </button>
           </div>
@@ -458,7 +508,7 @@ export default function OnboardingPage() {
             <button onClick={() => { setError(''); setStep('preview') }} className="px-5 py-2 rounded-full border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
               Skip
             </button>
-            <button onClick={() => { setError(''); setStep('preview') }} className="flex-1 py-2.5 rounded-full bg-gradient-to-r from-brand to-pink-500 text-white font-semibold text-sm hover:opacity-90 transition-opacity">
+            <button onClick={() => { setError(''); setStep('preview') }} className="flex-1 py-2.5 rounded-full bg-brand text-on-brand font-semibold text-sm hover:opacity-90 transition-opacity">
               Save &amp; Review →
             </button>
           </div>
@@ -505,6 +555,7 @@ export default function OnboardingPage() {
             <PreviewField label="Caste" value={form.caste} />
             <PreviewField label="Civil Status" value={form.civilStatus} />
             <PreviewField label="Religion" value={form.religion} />
+             <PreviewField label="Height" value={form.height} />
           </div>
         </SectionCard>
 
@@ -548,7 +599,7 @@ export default function OnboardingPage() {
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="flex-1 py-3 rounded-full bg-gradient-to-r from-brand to-pink-500 text-white font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-60"
+            className="flex-1 py-3 rounded-full bg-brand text-on-brand font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-60"
           >
             {loading ? 'Creating Account…' : 'Confirm & Create Account'}
           </button>

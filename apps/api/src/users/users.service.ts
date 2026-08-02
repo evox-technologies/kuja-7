@@ -1,8 +1,9 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Gender } from '@prisma/client';
+import { Gender, Prisma } from '@prisma/client';
 import { IsOptional, IsString, IsEnum, IsInt, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
+import { parseHeightToInches } from './height.util';
 
 export class SearchProfilesDto {
   @IsOptional()
@@ -20,6 +21,20 @@ export class SearchProfilesDto {
   @Max(80)
   @Type(() => Number)
   ageMax?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(30)
+  @Max(120)
+  @Type(() => Number)
+  heightMin?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(30)
+  @Max(120)
+  @Type(() => Number)
+  heightMax?: number;
 
   @IsOptional()
   @IsString()
@@ -71,6 +86,9 @@ export class SearchProfilesDto {
   @Type(() => Number)
   page?: number = 1;
 }
+
+// Matches the fixed ethnicity list offered in the UI dropdowns (apps/web) minus 'Other'.
+const KNOWN_ETHNICITIES = ['Sinhalese', 'Tamil', 'Muslim', 'Burgher'];
 
 const PUBLIC_PROFILE_SELECT = {
   id: true,
@@ -132,8 +150,18 @@ export class UsersService {
     if (dto.country)
       where.country = { contains: dto.country, mode: 'insensitive' };
     if (dto.city) where.city = { contains: dto.city, mode: 'insensitive' };
-    if (dto.ethnicity)
-      where.ethnicity = { contains: dto.ethnicity, mode: 'insensitive' };
+    if (dto.ethnicity) {
+      // 'Other' covers both non-standard ethnicities and profiles that never set one.
+      if (dto.ethnicity === 'Other') {
+        where.OR = [
+          { ethnicity: null },
+          { ethnicity: '' },
+          { ethnicity: { notIn: KNOWN_ETHNICITIES } },
+        ];
+      } else {
+        where.ethnicity = { contains: dto.ethnicity, mode: 'insensitive' };
+      }
+    }
     if (dto.civilStatus) where.civilStatus = dto.civilStatus;
     if (dto.educationLevel) where.educationLevel = dto.educationLevel;
     if (dto.drinking) where.drinking = dto.drinking;
@@ -160,16 +188,46 @@ export class UsersService {
       };
     }
 
-    const [profiles, total] = await Promise.all([
-      this.prisma.profile.findMany({
+    // height is free text (onboarding accepts "5ft 8in", "5' 8\"", etc.), so a range
+    // can't be expressed as a Prisma `where` clause — filter in app code instead. That
+    // breaks DB-level pagination, so when a height filter is present we fetch every
+    // profile matching the other criteria and paginate the filtered array ourselves.
+    const hasHeightFilter = dto.heightMin != null || dto.heightMax != null;
+
+    let profiles: Array<
+      Prisma.ProfileGetPayload<{ select: typeof PUBLIC_PROFILE_SELECT }>
+    >;
+    let total: number;
+
+    if (hasHeightFilter) {
+      const heightMin = dto.heightMin ?? -Infinity;
+      const heightMax = dto.heightMax ?? Infinity;
+
+      const all = await this.prisma.profile.findMany({
         where,
-        skip,
-        take,
         select: PUBLIC_PROFILE_SELECT,
         orderBy: { createdAt: 'desc' },
-      }),
-      this.prisma.profile.count({ where }),
-    ]);
+      });
+
+      const filtered = all.filter((p) => {
+        const inches = parseHeightToInches(p.height);
+        return inches != null && inches >= heightMin && inches <= heightMax;
+      });
+
+      total = filtered.length;
+      profiles = filtered.slice(skip, skip + take);
+    } else {
+      [profiles, total] = await Promise.all([
+        this.prisma.profile.findMany({
+          where,
+          skip,
+          take,
+          select: PUBLIC_PROFILE_SELECT,
+          orderBy: { createdAt: 'desc' },
+        }),
+        this.prisma.profile.count({ where }),
+      ]);
+    }
 
     const interests = requesterId
       ? await this.prisma.interest.findMany({

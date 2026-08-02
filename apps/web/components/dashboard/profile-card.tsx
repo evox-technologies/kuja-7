@@ -145,7 +145,7 @@ export default function ProfileCard({ profile, badge, actions, note }: Props) {
                   {profile.firstName} {profile.lastName}
                 </span>
                 {profile.kujaNumber && (
-                  <span className="bg-red-100 text-red-600 text-xs font-bold px-1.5 py-0.5 rounded-full shrink-0">
+                  <span className="bg-brand-light text-brand-text text-xs font-bold px-1.5 py-0.5 rounded-full shrink-0">
                     Kuja {profile.kujaNumber}
                   </span>
                 )}
@@ -183,7 +183,7 @@ export default function ProfileCard({ profile, badge, actions, note }: Props) {
               className={cn(
                 'p-2 rounded-full border transition-colors shrink-0',
                 interested
-                  ? 'border-brand bg-brand/5 text-brand'
+                  ? 'border-brand bg-brand-light text-brand-text'
                   : 'border-gray-200 text-gray-300 hover:border-brand hover:text-brand'
               )}
             >

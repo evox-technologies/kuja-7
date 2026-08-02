@@ -5,6 +5,12 @@ import { useRouter } from 'next/navigation'
 import { Lock, User, Camera } from 'lucide-react'
 import { apiFetch, ApiError } from '@/lib/api'
 import { useProfileGuard } from '@/contexts/profile-guard'
+import {
+  HEIGHT_MIN_IN,
+  HEIGHT_MAX_IN,
+  formatHeight,
+  heightToInches,
+} from '@/lib/height'
 
 interface Profile {
   id: string
@@ -61,11 +67,53 @@ interface Draft {
   address: string
 }
 
-const KUJA_NUMBERS = ['1', '2', '4', '7', '8', '12']
+const KUJA_NUMBERS = ['1', '2', '4', '7', '8', '12', 'Other']
+const KNOWN_KUJA_NUMBERS = KUJA_NUMBERS.slice(0, -1)
 const CIVIL_STATUSES = ['Never Married', 'Divorced', 'Widowed', 'Separated']
 const DRINKING_OPTS = ['Never', 'Occasionally', 'Regularly']
 const SMOKING_OPTS = ['Never', 'Occasionally', 'Regularly']
 const FOOD_PREFS = ['Vegetarian', 'Non-Vegetarian', 'Vegan', 'Halal']
+const EDUCATION_LEVELS = [
+  'Up to GCE O/L',
+  'Up to GCE A/L',
+  'Diploma',
+  'Professional Qualification',
+  'Undergraduate',
+  "Bachelor's Degree or Equivalent",
+  'Post Graduate Diploma',
+  "Master's Degree or Equivalent",
+  'Phd or Post Doctoral',
+]
+const COUNTRIES = [
+  'Australia', 'Canada', 'Italy', 'Japan', 'Maldives', 'New Zealand',
+  'Singapore', 'South Korea', 'Sri Lanka', 'United Arab Emirates',
+  'United Kingdom', 'United States', 'Other',
+]
+const KNOWN_COUNTRIES = COUNTRIES.slice(0, -1)
+const ETHNICITIES = ['Sinhalese', 'Tamil', 'Muslim', 'Burgher', 'Other']
+const KNOWN_ETHNICITIES = ETHNICITIES.slice(0, -1)
+
+function deriveCountrySelection(country: string): string {
+  if (!country) return ''
+  return KNOWN_COUNTRIES.includes(country) ? country : 'Other'
+}
+
+function deriveEthnicitySelection(ethnicity: string): string {
+  if (!ethnicity) return ''
+  return KNOWN_ETHNICITIES.includes(ethnicity) ? ethnicity : 'Other'
+}
+
+function deriveKujaSelection(kujaNumber: string): string {
+  if (!kujaNumber) return ''
+  return KNOWN_KUJA_NUMBERS.includes(kujaNumber) ? kujaNumber : 'Other'
+}
+
+// A specific number is optional once 'Other' is picked — only pre-fill this when the
+// saved value is an actual custom number, not the literal 'Other' placeholder itself.
+function deriveKujaOther(kujaNumber: string): string {
+  if (!kujaNumber || kujaNumber === 'Other') return ''
+  return KNOWN_KUJA_NUMBERS.includes(kujaNumber) ? '' : kujaNumber
+}
 
 function age(dob: string) {
   return Math.floor((Date.now() - new Date(dob).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
@@ -98,7 +146,7 @@ function profileToDraft(p: Profile): Draft {
 }
 
 const inputCls =
-  'w-full text-sm bg-white border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors'
+  'w-full text-sm bg-white border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-border focus:border-brand transition-colors'
 
 function ReadField({ label, value }: { label: string; value?: string | null }) {
   return (
@@ -128,6 +176,38 @@ function FormField({ label, value, onChange, type = 'text', placeholder, require
         placeholder={placeholder}
         className={inputCls + (error ? ' border-red-400 focus:border-red-400 focus:ring-red-200' : '')}
       />
+    </div>
+  )
+}
+
+function HeightSlider({ value, onChange, required, error }: {
+  value: string; onChange: (v: string) => void; required?: boolean; error?: boolean
+}) {
+  const inches = heightToInches(value)
+  const display = formatHeight(inches)
+
+  return (
+    <div className={error ? 'rounded-xl ring-2 ring-red-200' : ''}>
+      <div className="flex items-center justify-between mb-1">
+        <p className="text-[10px] text-gray-400 uppercase tracking-wide">
+          Height{required && <RequiredStar />}
+        </p>
+        <span className="text-sm font-semibold text-gray-900 tabular-nums">{display}</span>
+      </div>
+      <input
+        type="range"
+        min={HEIGHT_MIN_IN}
+        max={HEIGHT_MAX_IN}
+        step={1}
+        value={inches}
+        onChange={e => onChange(formatHeight(Number(e.target.value)))}
+        className="w-full h-2 accent-brand cursor-pointer"
+        aria-label="Height"
+      />
+      <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+        <span>{formatHeight(HEIGHT_MIN_IN)}</span>
+        <span>{formatHeight(HEIGHT_MAX_IN)}</span>
+      </div>
     </div>
   )
 }
@@ -200,6 +280,10 @@ export default function OwnProfilePage() {
   const { refreshStatus } = useProfileGuard()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [draft, setDraft] = useState<Draft | null>(null)
+  const [countrySelection, setCountrySelection] = useState('')
+  const [ethnicitySelection, setEthnicitySelection] = useState('')
+  const [kujaSelection, setKujaSelection] = useState('')
+  const [kujaOther, setKujaOther] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
@@ -208,7 +292,15 @@ export default function OwnProfilePage() {
 
   useEffect(() => {
     apiFetch<Profile>('/auth/me')
-      .then(p => { setProfile(p); setDraft(profileToDraft(p)) })
+      .then(p => {
+        setProfile(p)
+        const d = profileToDraft(p)
+        setDraft(d)
+        setCountrySelection(deriveCountrySelection(d.country))
+        setEthnicitySelection(deriveEthnicitySelection(d.ethnicity))
+        setKujaSelection(deriveKujaSelection(d.kujaNumber))
+        setKujaOther(deriveKujaOther(d.kujaNumber))
+      })
       .catch((err) => {
         if (err instanceof ApiError && err.status === 401) router.replace('/login')
         else if (err instanceof ApiError && err.status === 404) router.replace('/onboarding')
@@ -270,7 +362,14 @@ export default function OwnProfilePage() {
   }
 
   function handleReset() {
-    if (profile) setDraft(profileToDraft(profile))
+    if (profile) {
+      const d = profileToDraft(profile)
+      setDraft(d)
+      setCountrySelection(deriveCountrySelection(d.country))
+      setEthnicitySelection(deriveEthnicitySelection(d.ethnicity))
+      setKujaSelection(deriveKujaSelection(d.kujaNumber))
+      setKujaOther(deriveKujaOther(d.kujaNumber))
+    }
     setSaveError('')
     setFieldErrors({})
   }
@@ -335,7 +434,7 @@ export default function OwnProfilePage() {
               </div>
               {/* Photo count badge */}
               {profile.images.length > 0 && (
-                <span className="absolute -bottom-1 -right-1 bg-brand text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                <span className="absolute -bottom-1 -right-1 bg-brand text-on-brand text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
                   <Camera className="w-2.5 h-2.5" />
                   {profile.images.length}
                 </span>
@@ -384,7 +483,7 @@ export default function OwnProfilePage() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 {i === 0 && (
-                  <span className="absolute bottom-1 left-1 bg-brand text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                  <span className="absolute bottom-1 left-1 bg-brand text-on-brand text-[9px] font-bold px-1.5 py-0.5 rounded-full">
                     Main
                   </span>
                 )}
@@ -395,7 +494,7 @@ export default function OwnProfilePage() {
               </div>
             ))}
             {profile.images.length < 6 && (
-              <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-brand hover:bg-brand/5 transition-colors gap-1">
+              <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-brand hover:bg-brand-light transition-colors gap-1">
                 {uploadingIdx !== null ? (
                   <div className="w-5 h-5 border-2 border-brand border-t-transparent rounded-full animate-spin" />
                 ) : (
@@ -433,9 +532,29 @@ export default function OwnProfilePage() {
             <FormField label="Last Name" value={draft.lastName} onChange={v => set('lastName', v)} required error={!!fieldErrors.lastName} />
             <ReadField label="Age *" value={String(age(profile.dateOfBirth))} />
             <ReadField label="Gender *" value={profile.gender} />
-            <FormField label="Height" value={draft.height} onChange={v => set('height', v)} placeholder="e.g. 5ft 8in" required error={!!fieldErrors.height} />
+            <HeightSlider value={draft.height} onChange={v => set('height', v)} required error={!!fieldErrors.height} />
             <FormField label="Nationality" value={draft.nationality} onChange={v => set('nationality', v)} />
-            <FormField label="Ethnicity" value={draft.ethnicity} onChange={v => set('ethnicity', v)} />
+            <div>
+              <FormSelect
+                label="Ethnicity"
+                value={ethnicitySelection}
+                options={ETHNICITIES}
+                onChange={v => {
+                  setEthnicitySelection(v)
+                  set('ethnicity', v === 'Other' ? '' : v)
+                }}
+              />
+              {ethnicitySelection === 'Other' && (
+                <div className="mt-2">
+                  <FormField
+                    label="Specify Ethnicity"
+                    value={draft.ethnicity}
+                    onChange={v => set('ethnicity', v)}
+                    placeholder="Enter your ethnicity"
+                  />
+                </div>
+              )}
+            </div>
             <FormField label="Caste" value={draft.caste} onChange={v => set('caste', v)} />
             <FormSelect label="Civil Status" value={draft.civilStatus} options={CIVIL_STATUSES} onChange={v => set('civilStatus', v)} />
             <FormField label="Religion" value={draft.religion} onChange={v => set('religion', v)} />
@@ -445,7 +564,31 @@ export default function OwnProfilePage() {
         {/* ── Residency ── */}
         <Section title="Residency">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            <FormField label="Country" value={draft.country} onChange={v => set('country', v)} required error={!!fieldErrors.country} />
+            <div>
+              <FormSelect
+                label="Country"
+                value={countrySelection}
+                options={COUNTRIES}
+                onChange={v => {
+                  setCountrySelection(v)
+                  set('country', v === 'Other' ? '' : v)
+                }}
+                required
+                error={!!fieldErrors.country && countrySelection !== 'Other'}
+              />
+              {countrySelection === 'Other' && (
+                <div className="mt-2">
+                  <FormField
+                    label="Specify Country"
+                    value={draft.country}
+                    onChange={v => set('country', v)}
+                    placeholder="Enter your country"
+                    required
+                    error={!!fieldErrors.country}
+                  />
+                </div>
+              )}
+            </div>
             <FormField label="City" value={draft.city} onChange={v => set('city', v)} required error={!!fieldErrors.city} />
             <FormField label="State / District" value={draft.stateDistrict} onChange={v => set('stateDistrict', v)} />
           </div>
@@ -454,7 +597,7 @@ export default function OwnProfilePage() {
         {/* ── Education & Profession ── */}
         <Section title="Education & Profession">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <FormField label="Education Level" value={draft.educationLevel} onChange={v => set('educationLevel', v)} placeholder="e.g. Bachelor's" required error={!!fieldErrors.educationLevel} />
+            <FormSelect label="Education Level" value={draft.educationLevel} options={EDUCATION_LEVELS} onChange={v => set('educationLevel', v)} required error={!!fieldErrors.educationLevel} />
             <FormField label="Profession" value={draft.profession} onChange={v => set('profession', v)} placeholder="e.g. Software Engineer" required error={!!fieldErrors.profession} />
           </div>
         </Section>
@@ -475,7 +618,34 @@ export default function OwnProfilePage() {
           note="Horoscope details are only visible to profiles you grant permission to view."
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <FormSelect label="Kuja Number" value={draft.kujaNumber} options={KUJA_NUMBERS} onChange={v => set('kujaNumber', v)} required error={!!fieldErrors.kujaNumber} />
+            <div>
+              <FormSelect
+                label="Kuja Number"
+                value={kujaSelection}
+                options={KUJA_NUMBERS}
+                onChange={v => {
+                  setKujaSelection(v)
+                  setKujaOther('')
+                  set('kujaNumber', v)
+                }}
+                required
+                error={!!fieldErrors.kujaNumber}
+              />
+              {kujaSelection === 'Other' && (
+                <div className="mt-2">
+                  <FormField
+                    label="Specify Kuja Number (optional)"
+                    value={kujaOther}
+                    onChange={v => {
+                      setKujaOther(v)
+                      set('kujaNumber', v.trim() ? v : 'Other')
+                    }}
+                    type="number"
+                    placeholder="Enter your Kuja number"
+                  />
+                </div>
+              )}
+            </div>
             <FormDate label="Birth Day" value={draft.birthDay} onChange={v => set('birthDay', v)} required error={!!fieldErrors.birthDay} />
           </div>
         </Section>
@@ -500,7 +670,7 @@ export default function OwnProfilePage() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="px-5 sm:px-7 py-2 rounded-full bg-brand text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
+            className="px-5 sm:px-7 py-2 rounded-full bg-brand text-on-brand text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
           >
             {saving && <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />}
             Save Changes

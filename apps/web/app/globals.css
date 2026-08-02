@@ -11,6 +11,9 @@
   body {
     @apply antialiased text-gray-900;
   }
+  html {
+    font-size: 18px; /* was effectively 16px */
+  }
 }
 
 /* Lightweight entrance animations — replaces motion/react on auth pages.

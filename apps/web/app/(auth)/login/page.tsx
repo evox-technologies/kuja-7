@@ -81,7 +81,7 @@ function LoginPageInner() {
         </div>
 
         <div className="flex justify-end mb-4 -mt-1">
-          <Link href="/forgot-password" className="text-xs text-brand font-semibold hover:underline">
+          <Link href="/forgot-password" className="text-xs text-brand-text font-semibold hover:text-brand hover:underline">
             {t('auth.login.forgotPassword')}
           </Link>
         </div>
@@ -107,7 +107,7 @@ function LoginPageInner() {
 
         <p className="text-center text-xs text-gray-400 mt-5">
           {t('auth.login.dontHaveAccount')}{' '}
-          <Link href="/register" className="text-brand font-semibold hover:underline">
+          <Link href="/register" className="text-brand-text font-semibold hover:text-brand hover:underline">
             {t('auth.login.createAccount')}
           </Link>
         </p>

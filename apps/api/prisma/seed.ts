@@ -80,13 +80,16 @@ const PROFESSIONS = [
 ];
 
 const EDUCATION_LEVELS = [
-  ...Array(5).fill('O/L'),
-  ...Array(10).fill('A/L'),
+  ...Array(5).fill('Up to GCE O/L'),
+  ...Array(10).fill('Up to GCE A/L'),
   ...Array(15).fill('Diploma'),
-  ...Array(40).fill("Bachelor's"),
-  ...Array(20).fill("Master's"),
-  ...Array(10).fill('PhD'),
-];
+  ...Array(10).fill('Professional Qualification'),
+  ...Array(10).fill('Undergraduate'),
+  ...Array(40).fill("Bachelor's Degree or Equivalent"),
+  ...Array(10).fill('Post Graduate Diploma'),
+  ...Array(20).fill("Master's Degree or Equivalent"),
+  ...Array(10).fill('Phd or Post Doctoral'),
+]
 
 const HEIGHTS = [
   "5' 0\"","5' 1\"","5' 2\"","5' 3\"","5' 4\"","5' 5\"","5' 6\"",

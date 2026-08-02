@@ -49,7 +49,7 @@ function RespondButtons({ interestId, profileId }: { interestId: string; profile
     return (
       <button
         onClick={openChat}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-brand text-white text-xs font-medium hover:opacity-90 transition-opacity"
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-brand text-on-brand text-xs font-medium hover:opacity-90 transition-opacity"
       >
         <MessageCircle className="w-3.5 h-3.5" />
         Open Chat
@@ -70,7 +70,7 @@ function RespondButtons({ interestId, profileId }: { interestId: string; profile
       <button
         onClick={() => respond('ACCEPTED')}
         disabled={state === 'loading'}
-        className="px-3 py-1.5 rounded-full bg-brand text-white text-xs font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+        className="px-3 py-1.5 rounded-full bg-brand text-on-brand text-xs font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
       >
         Accept
       </button>
@@ -103,7 +103,7 @@ function OpenChatButton({ profileId }: { profileId: string }) {
   return (
     <button
       onClick={openChat}
-      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-brand text-white text-xs font-medium hover:opacity-90 transition-opacity"
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-brand text-on-brand text-xs font-medium hover:opacity-90 transition-opacity"
     >
       <MessageCircle className="w-3.5 h-3.5" />
       Open Chat

@@ -1,4 +1,5 @@
 @import './tokens/scale-tokens.css';
+@import './tokens/color-tokens.css';
 @import './core/viewport-zoom.css';
 @import './core/firefox-fallback.css';
 @import './utilities/scale-overrides.css';

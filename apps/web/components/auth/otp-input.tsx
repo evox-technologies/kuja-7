@@ -52,9 +52,9 @@ export default function OtpInput({ value, onChange, disabled }: OtpInputProps) {
           onPaste={handlePaste}
           className={cn(
             'w-10 h-12 text-center text-lg font-semibold rounded-xl border',
-            'focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand',
+            'focus:outline-none focus:ring-2 focus:ring-brand-border focus:border-brand',
             'placeholder:text-gray-300 disabled:opacity-50 transition-colors',
-            value[i] ? 'border-brand/50 bg-brand-50' : 'border-gray-200 bg-white'
+            value[i] ? 'border-brand-border bg-brand-light' : 'border-gray-200 bg-white'
           )}
         />
       ))}

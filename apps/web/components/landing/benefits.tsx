@@ -76,7 +76,7 @@ function BenefitCard({
         whileHover={{ scale: 1.1 }}
         transition={{ type: 'spring', stiffness: 400, damping: 20 }}
         style={heartMask}
-        className="w-20 h-20 bg-brand-50 flex items-center justify-center mx-auto mb-3 group-hover:bg-brand-100 transition-colors"
+        className="w-20 h-20 bg-brand-light flex items-center justify-center mx-auto mb-3 group-hover:bg-brand-border transition-colors"
       >
         <Icon className="w-6 h-6 text-brand -translate-y-1" />
       </motion.div>
@@ -168,7 +168,7 @@ export default function Benefits() {
                 onClick={() => goTo(i)}
                 aria-label={`Go to benefit ${i + 1}`}
                 className={`h-2 rounded-full transition-all ${
-                  i === active ? 'w-5 bg-brand' : 'w-2 bg-brand-100'
+                  i === active ? 'w-5 bg-brand' : 'w-2 bg-brand-border'
                 }`}
               />
             ))}

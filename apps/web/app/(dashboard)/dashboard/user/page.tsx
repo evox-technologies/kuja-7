@@ -206,7 +206,7 @@ function OtherProfileInner() {
   const heartCanSend = !heartInterested && !rel.theirInterestStatus
   const heartCanRemove = heartIsPending && !rel.isMutual
   const heartCls = heartInterested
-    ? 'p-2 rounded-full border transition-colors border-brand bg-brand/5 text-brand hover:border-red-300 hover:text-red-400'
+    ? 'p-2 rounded-full border transition-colors border-brand bg-brand-light text-brand-text hover:border-red-300 hover:text-red-400'
     : 'p-2 rounded-full border transition-colors border-gray-200 text-gray-400 hover:border-brand hover:text-brand'
   const heartIconCls = heartInterested ? 'w-4 h-4 fill-brand' : 'w-4 h-4'
   const heartTitle = rel.isMutual ? 'Mutual interest' : heartIsPending ? 'Remove interest' : 'Send interest'
@@ -237,12 +237,12 @@ function OtherProfileInner() {
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                 <span className="font-bold text-lg text-gray-900">{profile.firstName} {profile.lastName}</span>
                 {profile.kujaNumber && (
-                  <span className="bg-red-100 text-red-600 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                  <span className="bg-brand-light text-brand-text text-[10px] font-bold px-2 py-0.5 rounded-full">
                     Kuja {profile.kujaNumber}
                   </span>
                 )}
                 {rel.isMutual && (
-                  <span className="bg-brand text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="bg-brand text-on-brand text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
                     ❤ Mutual
                   </span>
                 )}
@@ -262,7 +262,7 @@ function OtherProfileInner() {
               {canChat && (
                 <button
                   onClick={() => guardAction(openChat)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-brand text-white text-sm font-medium hover:opacity-90 transition-opacity"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-brand text-on-brand text-sm font-medium hover:opacity-90 transition-opacity"
                 >
                   <MessageCircle className="w-4 h-4" />
                   Open Chat
@@ -274,7 +274,7 @@ function OtherProfileInner() {
                 <>
                   <button
                     onClick={() => respondInterest('ACCEPT')}
-                    className="px-4 py-2 rounded-full bg-brand text-white text-sm font-medium hover:opacity-90 transition-opacity"
+                    className="px-4 py-2 rounded-full bg-brand text-on-brand text-sm font-medium hover:opacity-90 transition-opacity"
                   >
                     ✓ Accept Interest
                   </button>
@@ -289,7 +289,7 @@ function OtherProfileInner() {
 
               {/* We sent interest, waiting for their response */}
               {!rel.isMutual && rel.myInterestStatus === 'PENDING' && rel.theirInterestStatus !== 'PENDING' && (
-                <span className="px-4 py-2 rounded-full border border-brand/30 bg-brand/5 text-brand text-sm font-medium">
+                <span className="px-4 py-2 rounded-full border border-brand-border bg-brand-light text-brand-text text-sm font-medium">
                   ✓ Interest Sent
                 </span>
               )}
@@ -299,7 +299,7 @@ function OtherProfileInner() {
                 <button
                   onClick={() => guardAction(() => sendInterest())}
                   disabled={sendingInterest || interestSent}
-                  className="px-4 py-2 rounded-full border border-brand text-brand text-sm font-medium hover:bg-brand hover:text-white transition-colors disabled:opacity-50"
+                  className="px-4 py-2 rounded-full border border-brand text-brand text-sm font-medium hover:bg-brand hover:text-on-brand transition-colors disabled:opacity-50"
                 >
                   {interestSent ? '✓ Interest Sent' : sendingInterest ? 'Sending…' : 'Show Interest'}
                 </button>
@@ -346,7 +346,7 @@ function OtherProfileInner() {
                   >
                     Decline Request
                   </button>
-                  <button onClick={() => guardAction(openChat)} className="ml-auto flex items-center gap-1.5 px-4 py-2 rounded-full bg-brand/10 text-brand text-sm font-medium hover:bg-brand/20">
+                  <button onClick={() => guardAction(openChat)} className="ml-auto flex items-center gap-1.5 px-4 py-2 rounded-full bg-brand-light text-brand-text text-sm font-medium hover:bg-brand-border">
                     <MessageCircle className="w-4 h-4" /> Open Chat
                   </button>
                 </div>
@@ -390,7 +390,7 @@ function OtherProfileInner() {
                     {contactLoading ? 'Requesting…' : 'Request Contact Details'}
                   </button>
                 )}
-                <button onClick={() => guardAction(openChat)} className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-brand/10 text-brand text-sm font-medium hover:bg-brand/20">
+                <button onClick={() => guardAction(openChat)} className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-brand-light text-brand-text text-sm font-medium hover:bg-brand-border">
                   <MessageCircle className="w-4 h-4" /> Open Chat
                 </button>
               </div>

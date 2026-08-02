@@ -10,7 +10,7 @@ import { apiFetch, ApiError } from '@/lib/api'
 import { defaultAvatarSrc } from '@/lib/avatar'
 import NotificationBell from './notification-bell'
 import NotificationInterests from './notification-interests'
-
+import Logo from '@/components/layout/logo'
 interface ProfileSummary {
   avatarUrl?: string | null
   images: string[]
@@ -64,7 +64,7 @@ export default function DashboardNavbar() {
     <nav className="bg-white border-b border-gray-100 shrink-0">
       <div className="px-4 lg:px-6 h-14 sm:h-16 flex items-center justify-between">
         <Link href="/" className="text-lg sm:text-xl font-bold tracking-widest text-gray-900">
-          LOGO
+         <Logo className="text-2xl" />
         </Link>
 
         <div className="flex items-center gap-2 sm:gap-3">
@@ -80,7 +80,7 @@ export default function DashboardNavbar() {
               </Link>
               <Link
                 href="/register"
-                className="flex items-center bg-gradient-to-r from-orange-500 to-pink-600 text-white text-xs sm:text-sm font-semibold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full hover:opacity-90 transition-opacity"
+                className="flex items-center bg-brand text-on-brand text-xs sm:text-sm font-semibold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full hover:bg-brand-hover transition-colors"
               >
                 Register
               </Link>
@@ -95,7 +95,7 @@ export default function DashboardNavbar() {
               <div ref={ref} className="relative">
                 <button
                   onClick={() => setOpen(v => !v)}
-                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gray-100 ring-2 ring-gray-200 overflow-hidden cursor-pointer flex items-center justify-center hover:ring-brand/40 transition-all"
+                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gray-100 ring-2 ring-gray-200 overflow-hidden cursor-pointer flex items-center justify-center hover:ring-brand-border transition-all"
                 >
                   {avatar || fallbackAvatar ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -128,7 +128,7 @@ export default function DashboardNavbar() {
               </div>
 
               {/* Upgrade */}
-              <button className="flex items-center gap-1 sm:gap-1.5 bg-gradient-to-r from-orange-500 to-pink-600 text-white text-xs sm:text-sm font-semibold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full hover:opacity-90 transition-opacity">
+              <button className="flex items-center gap-1 sm:gap-1.5 bg-brand text-on-brand text-xs sm:text-sm font-semibold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full hover:bg-brand-hover transition-colors">
                 <Crown className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 <span className="hidden sm:inline">Upgrade</span>
               </button>
