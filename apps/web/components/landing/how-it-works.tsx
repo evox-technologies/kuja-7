@@ -167,7 +167,15 @@ export default function HowItWorks() {
                       src={asset(STEP_SHOTS[active])}
                       alt={steps[active].title}
                       fill
-                      className="object-cover object-top"
+                      className={
+                        // The Find Matches / Start Chatting screenshots have UI
+                        // (nav icons, rightmost cards) right at the edges, so
+                        // object-cover's center-crop cuts through them. Contain
+                        // instead — renders smaller, but nothing gets clipped.
+                        active === 0
+                          ? 'object-cover object-top'
+                          : 'object-contain object-top'
+                      }
                       sizes="(max-width: 1024px) 100vw, 55vw"
                     />
                   </motion.div>
