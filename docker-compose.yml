@@ -1,4 +1,5 @@
-# Requires Traefik to be running: cd deploy/traefik && docker compose up -d
+# Requires Traefik to be running on this host. It lives in evox-technologies/evox-infra
+# (/opt/infra/traefik on the droplet), shared by every app — not in this repo.
 
 services:
   kuja7-web:
@@ -14,7 +15,12 @@ services:
     networks:
       - traefik-public
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost/"]
+      # 127.0.0.1, not localhost: in nginx:alpine localhost resolves to ::1 while nginx
+      # binds 0.0.0.0:80 only, so this container has reported unhealthy since its first
+      # start while serving fine. Routing survives that only because it comes from
+      # Traefik's file provider; the docker provider skips unhealthy containers — this
+      # exact line kept evox-pos offline.
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -28,7 +34,12 @@ services:
     networks:
       - traefik-public
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3001/api/v1"]
+      # The old check could not pass: the API image has no wget (nor curl), so every
+      # probe died with exec not found and the container has been unhealthy for as long
+      # as it has run. Node is what the image is, so ask with node — and accept any HTTP
+      # status. The deployed app 404s on /api/v1, and liveness means "the process
+      # answers", not "this route exists".
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/api/v1').then(()=>process.exit(0),()=>process.exit(1))"]
       interval: 30s
       timeout: 10s
       retries: 3

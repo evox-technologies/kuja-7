@@ -22,7 +22,8 @@ mkdir -p /opt/apps/kuja-seven
 
 echo ""
 echo "Done. Next steps:"
-echo "  1. git clone <your-repo-url> /opt/apps/kuja-seven"
-echo "  2. cd /opt/apps/kuja-seven/deploy/traefik && docker compose up -d"
+echo "  1. Bring up Traefik from the evox-infra repo: clone it to /opt/infra,"
+echo "     then: cd /opt/infra/traefik && docker compose up -d"
+echo "  2. git clone <your-repo-url> /opt/apps/kuja-seven"
 echo "  3. Create .env and apps/api/.env.production (see .env.example files)"
 echo "  4. docker compose up --build -d"
