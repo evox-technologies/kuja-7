@@ -65,6 +65,7 @@ const COUNTRIES = [
   'Singapore', 'South Korea', 'Sri Lanka', 'United Arab Emirates',
   'United Kingdom', 'United States', 'Other',
 ]
+const ETHNICITIES = ['Sinhalese', 'Tamil', 'Muslim', 'Burgher', 'Other']
 const FOOD_PREFS = ['Vegetarian', 'Non-Vegetarian', 'Vegan', 'Halal']
 const DRINKING_OPTS = ['Never', 'Occasionally', 'Regularly']
 const SMOKING_OPTS = ['Never', 'Occasionally', 'Regularly']
@@ -342,7 +343,7 @@ function HomePageInner() {
       <FilterSelect label="Country" value={filters.country} onChange={v => setFilter('country', v)} options={COUNTRIES} placeholder="Any" />
       <FilterInput label="City" value={filters.city} onChange={v => setFilter('city', v)} placeholder="Any" />
       <FilterInput label="Religion" value={filters.religion} onChange={v => setFilter('religion', v)} placeholder="Any" />
-      <FilterInput label="Ethnicity" value={filters.ethnicity} onChange={v => setFilter('ethnicity', v)} placeholder="Any" />
+      <FilterSelect label="Ethnicity" value={filters.ethnicity} onChange={v => setFilter('ethnicity', v)} options={ETHNICITIES} placeholder="Any" />
       <FilterSelect label="Civil Status" value={filters.civilStatus} onChange={v => setFilter('civilStatus', v)} options={CIVIL_STATUSES} placeholder="Any" />
       <FilterInput label="Profession" value={filters.country} onChange={v => setFilter('country', v)} placeholder="Any" />
       <FilterSelect label="Education Level" value={filters.educationLevel} onChange={v => setFilter('educationLevel', v)} options={EDUCATION_LEVELS} placeholder="Any" />

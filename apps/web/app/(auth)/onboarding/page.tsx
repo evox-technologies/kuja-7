@@ -53,6 +53,7 @@ const COUNTRIES = [
   'Singapore', 'South Korea', 'Sri Lanka', 'United Arab Emirates',
   'United Kingdom', 'United States', 'Other',
 ]
+const ETHNICITIES = ['Sinhalese', 'Tamil', 'Muslim', 'Burgher', 'Other']
 const CIVIL_STATUSES = ['Never Married', 'Divorced', 'Widowed', 'Separated']
 const EDUCATION_LEVELS = [
   'Up to GCE O/L',
@@ -169,6 +170,7 @@ export default function OnboardingPage() {
   const [step, setStep] = useState<Step>(1)
   const [form, setForm] = useState<FormData>(EMPTY)
   const [countrySelection, setCountrySelection] = useState('')
+  const [ethnicitySelection, setEthnicitySelection] = useState('')
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -299,7 +301,20 @@ export default function OnboardingPage() {
                   </div>
                 </FieldGroup>
                 <FieldGroup label="Ethnicity">
-                  <TextInput value={form.ethnicity} onChange={v => set('ethnicity', v)} placeholder="e.g. Sinhala, Tamil" />
+                  <SelectInput
+                    value={ethnicitySelection}
+                    onChange={v => {
+                      setEthnicitySelection(v)
+                      set('ethnicity', v === 'Other' ? '' : v)
+                    }}
+                    options={ETHNICITIES}
+                    placeholder="Select Ethnicity"
+                  />
+                  {ethnicitySelection === 'Other' && (
+                    <div className="mt-2">
+                      <TextInput value={form.ethnicity} onChange={v => set('ethnicity', v)} placeholder="Enter your ethnicity" />
+                    </div>
+                  )}
                 </FieldGroup>
                 <FieldGroup label="Caste">
                   <TextInput value={form.caste} onChange={v => set('caste', v)} placeholder="Optional" />

@@ -87,6 +87,9 @@ export class SearchProfilesDto {
   page?: number = 1;
 }
 
+// Matches the fixed ethnicity list offered in the UI dropdowns (apps/web) minus 'Other'.
+const KNOWN_ETHNICITIES = ['Sinhalese', 'Tamil', 'Muslim', 'Burgher'];
+
 const PUBLIC_PROFILE_SELECT = {
   id: true,
   firstName: true,
@@ -147,8 +150,18 @@ export class UsersService {
     if (dto.country)
       where.country = { contains: dto.country, mode: 'insensitive' };
     if (dto.city) where.city = { contains: dto.city, mode: 'insensitive' };
-    if (dto.ethnicity)
-      where.ethnicity = { contains: dto.ethnicity, mode: 'insensitive' };
+    if (dto.ethnicity) {
+      // 'Other' covers both non-standard ethnicities and profiles that never set one.
+      if (dto.ethnicity === 'Other') {
+        where.OR = [
+          { ethnicity: null },
+          { ethnicity: '' },
+          { ethnicity: { notIn: KNOWN_ETHNICITIES } },
+        ];
+      } else {
+        where.ethnicity = { contains: dto.ethnicity, mode: 'insensitive' };
+      }
+    }
     if (dto.civilStatus) where.civilStatus = dto.civilStatus;
     if (dto.educationLevel) where.educationLevel = dto.educationLevel;
     if (dto.drinking) where.drinking = dto.drinking;

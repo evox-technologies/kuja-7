@@ -78,10 +78,17 @@ const COUNTRIES = [
   'United Kingdom', 'United States', 'Other',
 ]
 const KNOWN_COUNTRIES = COUNTRIES.slice(0, -1)
+const ETHNICITIES = ['Sinhalese', 'Tamil', 'Muslim', 'Burgher', 'Other']
+const KNOWN_ETHNICITIES = ETHNICITIES.slice(0, -1)
 
 function deriveCountrySelection(country: string): string {
   if (!country) return ''
   return KNOWN_COUNTRIES.includes(country) ? country : 'Other'
+}
+
+function deriveEthnicitySelection(ethnicity: string): string {
+  if (!ethnicity) return ''
+  return KNOWN_ETHNICITIES.includes(ethnicity) ? ethnicity : 'Other'
 }
 
 function age(dob: string) {
@@ -250,6 +257,7 @@ export default function OwnProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [draft, setDraft] = useState<Draft | null>(null)
   const [countrySelection, setCountrySelection] = useState('')
+  const [ethnicitySelection, setEthnicitySelection] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
@@ -263,6 +271,7 @@ export default function OwnProfilePage() {
         const d = profileToDraft(p)
         setDraft(d)
         setCountrySelection(deriveCountrySelection(d.country))
+        setEthnicitySelection(deriveEthnicitySelection(d.ethnicity))
       })
       .catch((err) => {
         if (err instanceof ApiError && err.status === 401) router.replace('/login')
@@ -329,6 +338,7 @@ export default function OwnProfilePage() {
       const d = profileToDraft(profile)
       setDraft(d)
       setCountrySelection(deriveCountrySelection(d.country))
+      setEthnicitySelection(deriveEthnicitySelection(d.ethnicity))
     }
     setSaveError('')
     setFieldErrors({})
@@ -494,7 +504,27 @@ export default function OwnProfilePage() {
             <ReadField label="Gender *" value={profile.gender} />
             <HeightSlider value={draft.height} onChange={v => set('height', v)} required error={!!fieldErrors.height} />
             <FormField label="Nationality" value={draft.nationality} onChange={v => set('nationality', v)} />
-            <FormField label="Ethnicity" value={draft.ethnicity} onChange={v => set('ethnicity', v)} />
+            <div>
+              <FormSelect
+                label="Ethnicity"
+                value={ethnicitySelection}
+                options={ETHNICITIES}
+                onChange={v => {
+                  setEthnicitySelection(v)
+                  set('ethnicity', v === 'Other' ? '' : v)
+                }}
+              />
+              {ethnicitySelection === 'Other' && (
+                <div className="mt-2">
+                  <FormField
+                    label="Specify Ethnicity"
+                    value={draft.ethnicity}
+                    onChange={v => set('ethnicity', v)}
+                    placeholder="Enter your ethnicity"
+                  />
+                </div>
+              )}
+            </div>
             <FormField label="Caste" value={draft.caste} onChange={v => set('caste', v)} />
             <FormSelect label="Civil Status" value={draft.civilStatus} options={CIVIL_STATUSES} onChange={v => set('civilStatus', v)} />
             <FormField label="Religion" value={draft.religion} onChange={v => set('religion', v)} />
