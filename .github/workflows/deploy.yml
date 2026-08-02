@@ -57,8 +57,14 @@ jobs:
             FRONTEND_URL=${FRONTEND_URL}
             EOF
 
-            # Ensure Traefik is running (no-op if already up)
-            cd deploy/traefik && docker compose up -d && cd /opt/apps/kuja-seven
+            # Traefik is shared infrastructure and runs from /opt/infra/traefik (the
+            # evox-technologies/evox-infra repo) — an app deploy must not restart the
+            # proxy that serves every other app on the box. Fail loudly if it is gone
+            # rather than start a rival one fighting for :80.
+            docker network inspect traefik-public >/dev/null 2>&1 || {
+              echo "traefik-public network missing — bring Traefik up from /opt/infra/traefik first" >&2
+              exit 1
+            }
 
             docker compose up --build -d --remove-orphans
             docker compose ps
