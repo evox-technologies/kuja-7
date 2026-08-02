@@ -72,6 +72,17 @@ const CIVIL_STATUSES = ['Never Married', 'Divorced', 'Widowed', 'Separated']
 const DRINKING_OPTS = ['Never', 'Occasionally', 'Regularly']
 const SMOKING_OPTS = ['Never', 'Occasionally', 'Regularly']
 const FOOD_PREFS = ['Vegetarian', 'Non-Vegetarian', 'Vegan', 'Halal']
+const EDUCATION_LEVELS = [
+  'Up to GCE O/L',
+  'Up to GCE A/L',
+  'Diploma',
+  'Professional Qualification',
+  'Undergraduate',
+  "Bachelor's Degree or Equivalent",
+  'Post Graduate Diploma',
+  "Master's Degree or Equivalent",
+  'Phd or Post Doctoral',
+]
 const COUNTRIES = [
   'Australia', 'Canada', 'Italy', 'Japan', 'Maldives', 'New Zealand',
   'Singapore', 'South Korea', 'Sri Lanka', 'United Arab Emirates',
@@ -567,7 +578,7 @@ export default function OwnProfilePage() {
         {/* ── Education & Profession ── */}
         <Section title="Education & Profession">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <FormField label="Education Level" value={draft.educationLevel} onChange={v => set('educationLevel', v)} placeholder="e.g. Bachelor's" required error={!!fieldErrors.educationLevel} />
+            <FormSelect label="Education Level" value={draft.educationLevel} options={EDUCATION_LEVELS} onChange={v => set('educationLevel', v)} required error={!!fieldErrors.educationLevel} />
             <FormField label="Profession" value={draft.profession} onChange={v => set('profession', v)} placeholder="e.g. Software Engineer" required error={!!fieldErrors.profession} />
           </div>
         </Section>
