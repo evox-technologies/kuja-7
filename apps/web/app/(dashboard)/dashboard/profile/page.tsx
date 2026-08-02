@@ -67,7 +67,8 @@ interface Draft {
   address: string
 }
 
-const KUJA_NUMBERS = ['1', '2', '4', '7', '8', '12']
+const KUJA_NUMBERS = ['1', '2', '4', '7', '8', '12', 'Other']
+const KNOWN_KUJA_NUMBERS = KUJA_NUMBERS.slice(0, -1)
 const CIVIL_STATUSES = ['Never Married', 'Divorced', 'Widowed', 'Separated']
 const DRINKING_OPTS = ['Never', 'Occasionally', 'Regularly']
 const SMOKING_OPTS = ['Never', 'Occasionally', 'Regularly']
@@ -100,6 +101,18 @@ function deriveCountrySelection(country: string): string {
 function deriveEthnicitySelection(ethnicity: string): string {
   if (!ethnicity) return ''
   return KNOWN_ETHNICITIES.includes(ethnicity) ? ethnicity : 'Other'
+}
+
+function deriveKujaSelection(kujaNumber: string): string {
+  if (!kujaNumber) return ''
+  return KNOWN_KUJA_NUMBERS.includes(kujaNumber) ? kujaNumber : 'Other'
+}
+
+// A specific number is optional once 'Other' is picked — only pre-fill this when the
+// saved value is an actual custom number, not the literal 'Other' placeholder itself.
+function deriveKujaOther(kujaNumber: string): string {
+  if (!kujaNumber || kujaNumber === 'Other') return ''
+  return KNOWN_KUJA_NUMBERS.includes(kujaNumber) ? '' : kujaNumber
 }
 
 function age(dob: string) {
@@ -269,6 +282,8 @@ export default function OwnProfilePage() {
   const [draft, setDraft] = useState<Draft | null>(null)
   const [countrySelection, setCountrySelection] = useState('')
   const [ethnicitySelection, setEthnicitySelection] = useState('')
+  const [kujaSelection, setKujaSelection] = useState('')
+  const [kujaOther, setKujaOther] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
@@ -283,6 +298,8 @@ export default function OwnProfilePage() {
         setDraft(d)
         setCountrySelection(deriveCountrySelection(d.country))
         setEthnicitySelection(deriveEthnicitySelection(d.ethnicity))
+        setKujaSelection(deriveKujaSelection(d.kujaNumber))
+        setKujaOther(deriveKujaOther(d.kujaNumber))
       })
       .catch((err) => {
         if (err instanceof ApiError && err.status === 401) router.replace('/login')
@@ -350,6 +367,8 @@ export default function OwnProfilePage() {
       setDraft(d)
       setCountrySelection(deriveCountrySelection(d.country))
       setEthnicitySelection(deriveEthnicitySelection(d.ethnicity))
+      setKujaSelection(deriveKujaSelection(d.kujaNumber))
+      setKujaOther(deriveKujaOther(d.kujaNumber))
     }
     setSaveError('')
     setFieldErrors({})
@@ -599,7 +618,34 @@ export default function OwnProfilePage() {
           note="Horoscope details are only visible to profiles you grant permission to view."
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <FormSelect label="Kuja Number" value={draft.kujaNumber} options={KUJA_NUMBERS} onChange={v => set('kujaNumber', v)} required error={!!fieldErrors.kujaNumber} />
+            <div>
+              <FormSelect
+                label="Kuja Number"
+                value={kujaSelection}
+                options={KUJA_NUMBERS}
+                onChange={v => {
+                  setKujaSelection(v)
+                  setKujaOther('')
+                  set('kujaNumber', v)
+                }}
+                required
+                error={!!fieldErrors.kujaNumber}
+              />
+              {kujaSelection === 'Other' && (
+                <div className="mt-2">
+                  <FormField
+                    label="Specify Kuja Number (optional)"
+                    value={kujaOther}
+                    onChange={v => {
+                      setKujaOther(v)
+                      set('kujaNumber', v.trim() ? v : 'Other')
+                    }}
+                    type="number"
+                    placeholder="Enter your Kuja number"
+                  />
+                </div>
+              )}
+            </div>
             <FormDate label="Birth Day" value={draft.birthDay} onChange={v => set('birthDay', v)} required error={!!fieldErrors.birthDay} />
           </div>
         </Section>
