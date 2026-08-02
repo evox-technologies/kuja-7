@@ -60,6 +60,11 @@ const EDUCATION_LEVELS = [
   "Master's Degree or Equivalent",
   'Phd or Post Doctoral',
 ]
+const COUNTRIES = [
+  'Australia', 'Canada', 'Italy', 'Japan', 'Maldives', 'New Zealand',
+  'Singapore', 'South Korea', 'Sri Lanka', 'United Arab Emirates',
+  'United Kingdom', 'United States', 'Other',
+]
 const FOOD_PREFS = ['Vegetarian', 'Non-Vegetarian', 'Vegan', 'Halal']
 const DRINKING_OPTS = ['Never', 'Occasionally', 'Regularly']
 const SMOKING_OPTS = ['Never', 'Occasionally', 'Regularly']
@@ -334,7 +339,7 @@ function HomePageInner() {
         onMaxChange={v => setFilter('heightMax', v)}
       />
 
-      <FilterInput label="Country" value={filters.country} onChange={v => setFilter('country', v)} placeholder="Any" />
+      <FilterSelect label="Country" value={filters.country} onChange={v => setFilter('country', v)} options={COUNTRIES} placeholder="Any" />
       <FilterInput label="City" value={filters.city} onChange={v => setFilter('city', v)} placeholder="Any" />
       <FilterInput label="Religion" value={filters.religion} onChange={v => setFilter('religion', v)} placeholder="Any" />
       <FilterInput label="Ethnicity" value={filters.ethnicity} onChange={v => setFilter('ethnicity', v)} placeholder="Any" />

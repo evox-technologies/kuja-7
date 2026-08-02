@@ -72,6 +72,17 @@ const CIVIL_STATUSES = ['Never Married', 'Divorced', 'Widowed', 'Separated']
 const DRINKING_OPTS = ['Never', 'Occasionally', 'Regularly']
 const SMOKING_OPTS = ['Never', 'Occasionally', 'Regularly']
 const FOOD_PREFS = ['Vegetarian', 'Non-Vegetarian', 'Vegan', 'Halal']
+const COUNTRIES = [
+  'Australia', 'Canada', 'Italy', 'Japan', 'Maldives', 'New Zealand',
+  'Singapore', 'South Korea', 'Sri Lanka', 'United Arab Emirates',
+  'United Kingdom', 'United States', 'Other',
+]
+const KNOWN_COUNTRIES = COUNTRIES.slice(0, -1)
+
+function deriveCountrySelection(country: string): string {
+  if (!country) return ''
+  return KNOWN_COUNTRIES.includes(country) ? country : 'Other'
+}
 
 function age(dob: string) {
   return Math.floor((Date.now() - new Date(dob).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
@@ -238,6 +249,7 @@ export default function OwnProfilePage() {
   const { refreshStatus } = useProfileGuard()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [draft, setDraft] = useState<Draft | null>(null)
+  const [countrySelection, setCountrySelection] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
@@ -246,7 +258,12 @@ export default function OwnProfilePage() {
 
   useEffect(() => {
     apiFetch<Profile>('/auth/me')
-      .then(p => { setProfile(p); setDraft(profileToDraft(p)) })
+      .then(p => {
+        setProfile(p)
+        const d = profileToDraft(p)
+        setDraft(d)
+        setCountrySelection(deriveCountrySelection(d.country))
+      })
       .catch((err) => {
         if (err instanceof ApiError && err.status === 401) router.replace('/login')
         else if (err instanceof ApiError && err.status === 404) router.replace('/onboarding')
@@ -308,7 +325,11 @@ export default function OwnProfilePage() {
   }
 
   function handleReset() {
-    if (profile) setDraft(profileToDraft(profile))
+    if (profile) {
+      const d = profileToDraft(profile)
+      setDraft(d)
+      setCountrySelection(deriveCountrySelection(d.country))
+    }
     setSaveError('')
     setFieldErrors({})
   }
@@ -483,7 +504,31 @@ export default function OwnProfilePage() {
         {/* ── Residency ── */}
         <Section title="Residency">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            <FormField label="Country" value={draft.country} onChange={v => set('country', v)} required error={!!fieldErrors.country} />
+            <div>
+              <FormSelect
+                label="Country"
+                value={countrySelection}
+                options={COUNTRIES}
+                onChange={v => {
+                  setCountrySelection(v)
+                  set('country', v === 'Other' ? '' : v)
+                }}
+                required
+                error={!!fieldErrors.country && countrySelection !== 'Other'}
+              />
+              {countrySelection === 'Other' && (
+                <div className="mt-2">
+                  <FormField
+                    label="Specify Country"
+                    value={draft.country}
+                    onChange={v => set('country', v)}
+                    placeholder="Enter your country"
+                    required
+                    error={!!fieldErrors.country}
+                  />
+                </div>
+              )}
+            </div>
             <FormField label="City" value={draft.city} onChange={v => set('city', v)} required error={!!fieldErrors.city} />
             <FormField label="State / District" value={draft.stateDistrict} onChange={v => set('stateDistrict', v)} />
           </div>

@@ -48,6 +48,11 @@ const EMPTY: FormData = {
 }
 
 const KUJA_NUMBERS = ['1', '2', '4', '7', '8', '12']
+const COUNTRIES = [
+  'Australia', 'Canada', 'Italy', 'Japan', 'Maldives', 'New Zealand',
+  'Singapore', 'South Korea', 'Sri Lanka', 'United Arab Emirates',
+  'United Kingdom', 'United States', 'Other',
+]
 const CIVIL_STATUSES = ['Never Married', 'Divorced', 'Widowed', 'Separated']
 const EDUCATION_LEVELS = [
   'Up to GCE O/L',
@@ -163,6 +168,7 @@ export default function OnboardingPage() {
   const router = useRouter()
   const [step, setStep] = useState<Step>(1)
   const [form, setForm] = useState<FormData>(EMPTY)
+  const [countrySelection, setCountrySelection] = useState('')
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -316,7 +322,20 @@ export default function OnboardingPage() {
               <h2 className="font-semibold text-gray-800 mb-4">Residency</h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <FieldGroup label="Country">
-                  <TextInput value={form.country} onChange={v => set('country', v)} placeholder="Country" />
+                  <SelectInput
+                    value={countrySelection}
+                    onChange={v => {
+                      setCountrySelection(v)
+                      set('country', v === 'Other' ? '' : v)
+                    }}
+                    options={COUNTRIES}
+                    placeholder="Select Country"
+                  />
+                  {countrySelection === 'Other' && (
+                    <div className="mt-2">
+                      <TextInput value={form.country} onChange={v => set('country', v)} placeholder="Enter your country" />
+                    </div>
+                  )}
                 </FieldGroup>
                 <FieldGroup label="City">
                   <TextInput value={form.city} onChange={v => set('city', v)} placeholder="City" />
