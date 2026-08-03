@@ -12,13 +12,15 @@ export class SearchProfilesDto {
 
   @IsOptional()
   @IsInt()
-  @Min(18)
+  @Min(0)
+  @Max(120)
   @Type(() => Number)
   ageMin?: number;
 
   @IsOptional()
   @IsInt()
-  @Max(80)
+  @Min(0)
+  @Max(120)
   @Type(() => Number)
   ageMax?: number;
 
@@ -171,9 +173,14 @@ export class UsersService {
 
     if (dto.ageMin || dto.ageMax) {
       where.dateOfBirth = {
+        // "age <= ageMax" means not yet reached the (ageMax+1)th birthday, i.e.
+        // born strictly after the date exactly (ageMax+1) years ago — using
+        // ageMax years with `gte` excludes anyone whose birthday this year has
+        // already passed (e.g. born in January vs. today being in August),
+        // even though they're still exactly ageMax.
         ...(dto.ageMax && {
-          gte: new Date(
-            now.getFullYear() - dto.ageMax,
+          gt: new Date(
+            now.getFullYear() - (dto.ageMax + 1),
             now.getMonth(),
             now.getDate(),
           ),

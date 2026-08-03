@@ -216,8 +216,11 @@ function HomePageInner() {
     try {
       const params = new URLSearchParams({ page: String(p) })
       if (f.gender) params.set('gender', f.gender)
-      if (f.ageMin) params.set('ageMin', f.ageMin)
-      if (f.ageMax) params.set('ageMax', f.ageMax)
+      // Clamp to sane technical bounds (0-120) — the backend rejects out-of-range
+      // values outright, which search() then swallows silently, so an unclamped
+      // value here reads as "no profiles found" instead of an error.
+      if (f.ageMin) params.set('ageMin', String(Math.min(120, Math.max(0, Number(f.ageMin) || 0))))
+      if (f.ageMax) params.set('ageMax', String(Math.min(120, Math.max(0, Number(f.ageMax) || 120))))
       if (f.heightMin) params.set('heightMin', f.heightMin)
       if (f.heightMax) params.set('heightMax', f.heightMax)
       if (f.religion) params.set('religion', f.religion)
@@ -325,10 +328,10 @@ function HomePageInner() {
       <div className="mb-3">
         <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Age Range</label>
         <div className="flex items-center gap-2">
-          <input type="number" min={15} max={80} value={filters.ageMin} onChange={e => setFilter('ageMin', e.target.value)}
+          <input type="number" min={0} max={120} value={filters.ageMin} onChange={e => setFilter('ageMin', e.target.value)}
             placeholder="Min" className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-gray-50 focus:outline-none" />
           <span className="text-gray-300 text-xs">–</span>
-          <input type="number" min={18} max={80} value={filters.ageMax} onChange={e => setFilter('ageMax', e.target.value)}
+          <input type="number" min={0} max={120} value={filters.ageMax} onChange={e => setFilter('ageMax', e.target.value)}
             placeholder="Max" className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-gray-50 focus:outline-none" />
         </div>
       </div>

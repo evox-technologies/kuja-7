@@ -283,7 +283,7 @@ export default function OnboardingPage() {
                 </FieldGroup>
                 <FieldGroup label="Date of Birth *">
                   <TextInput type="date" value={form.dateOfBirth} onChange={v => set('dateOfBirth', v)}
-                    max={new Date(Date.now() - 18 * 365.25 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]} />
+                    max={new Date().toISOString().split('T')[0]} />
                 </FieldGroup>
                 <FieldGroup label="Nationality">
                   <TextInput value={form.nationality} onChange={v => set('nationality', v)} placeholder="e.g. Sri Lankan" />
