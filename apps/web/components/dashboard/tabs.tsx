@@ -4,18 +4,20 @@ import { useRouter, usePathname } from 'next/navigation'
 import { Home, Heart, Users, MessageCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useProfileGuard } from '@/contexts/profile-guard'
-
-const TABS = [
-  { label: 'Home',             href: '/dashboard/home',      icon: Home,          protected: false },
-  { label: 'Interests',        href: '/dashboard/interests',  icon: Heart,         protected: true  },
-  { label: 'Mutual Interests', href: '/dashboard/mutual',     icon: Users,         protected: true  },
-  { label: 'Chat',             href: '/dashboard/chat',       icon: MessageCircle, protected: true  },
-]
+import { useI18n } from '@/lib/i18n/use-i18n'
 
 export default function DashboardTabs() {
   const pathname = usePathname()
   const router = useRouter()
   const { guardAction } = useProfileGuard()
+  const { t } = useI18n()
+
+  const TABS = [
+    { label: t('dashboard.tabs.home'),      href: '/dashboard/home',      icon: Home,          protected: false },
+    { label: t('dashboard.tabs.interests'), href: '/dashboard/interests', icon: Heart,         protected: true  },
+    { label: t('dashboard.tabs.mutual'),    href: '/dashboard/mutual',    icon: Users,         protected: true  },
+    { label: t('dashboard.tabs.chat'),      href: '/dashboard/chat',      icon: MessageCircle, protected: true  },
+  ]
 
   return (
     <div className="bg-white border-b border-gray-100 shrink-0">

@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsArray } from 'class-validator';
+import { IsString, IsOptional, IsArray, Matches } from 'class-validator';
 
 export class UpdateProfileDto {
   @IsString()
@@ -87,10 +87,14 @@ export class UpdateProfileDto {
 
   @IsString()
   @IsOptional()
+  @Matches(/^$|^\+?[0-9][0-9\s-]{6,18}$/, { message: 'Invalid mobile number' })
   mobileNumber?: string;
 
   @IsString()
   @IsOptional()
+  @Matches(/^$|^\+?[0-9][0-9\s-]{6,18}$/, {
+    message: 'Invalid WhatsApp number',
+  })
   whatsappNumber?: string;
 
   @IsString()
