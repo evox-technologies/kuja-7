@@ -5,12 +5,12 @@ import { useRouter } from 'next/navigation'
 import { Lock, User, Camera } from 'lucide-react'
 import { apiFetch, ApiError } from '@/lib/api'
 import { useProfileGuard } from '@/contexts/profile-guard'
+import HeightSlider from '@/components/dashboard/height-slider'
 import {
-  HEIGHT_MIN_IN,
-  HEIGHT_MAX_IN,
-  formatHeight,
-  heightToInches,
-} from '@/lib/height'
+  NATIONALITIES, ETHNICITIES, RELIGIONS, COUNTRIES, citiesForCountry, DISTRICTS,
+  EDUCATION_LEVELS, PROFESSIONS, CIVIL_STATUSES,
+  DRINKING_OPTS, SMOKING_OPTS, FOOD_PREFS, KUJA_NUMBERS,
+} from '@/lib/options'
 
 interface Profile {
   id: string
@@ -66,12 +66,6 @@ interface Draft {
   whatsappNumber: string
   address: string
 }
-
-const KUJA_NUMBERS = ['1', '2', '4', '7', '8', '12']
-const CIVIL_STATUSES = ['Never Married', 'Divorced', 'Widowed', 'Separated']
-const DRINKING_OPTS = ['Never', 'Occasionally', 'Regularly']
-const SMOKING_OPTS = ['Never', 'Occasionally', 'Regularly']
-const FOOD_PREFS = ['Vegetarian', 'Non-Vegetarian', 'Vegan', 'Halal']
 
 function age(dob: string) {
   return Math.floor((Date.now() - new Date(dob).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
@@ -134,38 +128,6 @@ function FormField({ label, value, onChange, type = 'text', placeholder, require
         placeholder={placeholder}
         className={inputCls + (error ? ' border-red-400 focus:border-red-400 focus:ring-red-200' : '')}
       />
-    </div>
-  )
-}
-
-function HeightSlider({ value, onChange, required, error }: {
-  value: string; onChange: (v: string) => void; required?: boolean; error?: boolean
-}) {
-  const inches = heightToInches(value)
-  const display = formatHeight(inches)
-
-  return (
-    <div className={error ? 'rounded-xl ring-2 ring-red-200' : ''}>
-      <div className="flex items-center justify-between mb-1">
-        <p className="text-[10px] text-gray-400 uppercase tracking-wide">
-          Height{required && <RequiredStar />}
-        </p>
-        <span className="text-sm font-semibold text-gray-900 tabular-nums">{display}</span>
-      </div>
-      <input
-        type="range"
-        min={HEIGHT_MIN_IN}
-        max={HEIGHT_MAX_IN}
-        step={1}
-        value={inches}
-        onChange={e => onChange(formatHeight(Number(e.target.value)))}
-        className="w-full h-2 accent-brand cursor-pointer"
-        aria-label="Height"
-      />
-      <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-        <span>{formatHeight(HEIGHT_MIN_IN)}</span>
-        <span>{formatHeight(HEIGHT_MAX_IN)}</span>
-      </div>
     </div>
   )
 }
@@ -243,6 +205,7 @@ export default function OwnProfilePage() {
   const [saveError, setSaveError] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof Draft, true>>>({})
   const [uploadingIdx, setUploadingIdx] = useState<number | null>(null)
+  const [resetNotice, setResetNotice] = useState('')
 
   useEffect(() => {
     apiFetch<Profile>('/auth/me')
@@ -307,10 +270,19 @@ export default function OwnProfilePage() {
     }
   }
 
-  function handleReset() {
-    if (profile) setDraft(profileToDraft(profile))
+  async function handleReset() {
+    if (!window.confirm('Discard unsaved changes?')) return
     setSaveError('')
     setFieldErrors({})
+    try {
+      const fresh = await apiFetch<Profile>('/auth/me')
+      setProfile(fresh)
+      setDraft(profileToDraft(fresh))
+    } catch {
+      if (profile) setDraft(profileToDraft(profile))
+    }
+    setResetNotice('Changes reverted')
+    setTimeout(() => setResetNotice(''), 3000)
   }
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -472,28 +444,38 @@ export default function OwnProfilePage() {
             <ReadField label="Age *" value={String(age(profile.dateOfBirth))} />
             <ReadField label="Gender *" value={profile.gender} />
             <HeightSlider value={draft.height} onChange={v => set('height', v)} required error={!!fieldErrors.height} />
-            <FormField label="Nationality" value={draft.nationality} onChange={v => set('nationality', v)} />
-            <FormField label="Ethnicity" value={draft.ethnicity} onChange={v => set('ethnicity', v)} />
+            <FormSelect label="Nationality" value={draft.nationality} options={NATIONALITIES} onChange={v => set('nationality', v)} />
+            <FormSelect label="Ethnicity" value={draft.ethnicity} options={ETHNICITIES} onChange={v => set('ethnicity', v)} />
             <FormField label="Caste" value={draft.caste} onChange={v => set('caste', v)} />
             <FormSelect label="Civil Status" value={draft.civilStatus} options={CIVIL_STATUSES} onChange={v => set('civilStatus', v)} />
-            <FormField label="Religion" value={draft.religion} onChange={v => set('religion', v)} />
+            <FormSelect label="Religion" value={draft.religion} options={RELIGIONS} onChange={v => set('religion', v)} />
           </div>
         </Section>
 
         {/* ── Residency ── */}
         <Section title="Residency">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            <FormField label="Country" value={draft.country} onChange={v => set('country', v)} required error={!!fieldErrors.country} />
-            <FormField label="City" value={draft.city} onChange={v => set('city', v)} required error={!!fieldErrors.city} />
-            <FormField label="State / District" value={draft.stateDistrict} onChange={v => set('stateDistrict', v)} />
+            <FormSelect
+              label="Country"
+              value={draft.country}
+              options={COUNTRIES}
+              onChange={v => {
+                // Changing country invalidates the selected city
+                setDraft(prev => prev ? { ...prev, country: v, city: '' } : prev)
+              }}
+              required
+              error={!!fieldErrors.country}
+            />
+            <FormSelect label="City" value={draft.city} options={citiesForCountry(draft.country)} onChange={v => set('city', v)} required error={!!fieldErrors.city} />
+            <FormSelect label="State / District" value={draft.stateDistrict} options={DISTRICTS} onChange={v => set('stateDistrict', v)} />
           </div>
         </Section>
 
         {/* ── Education & Profession ── */}
         <Section title="Education & Profession">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <FormField label="Education Level" value={draft.educationLevel} onChange={v => set('educationLevel', v)} placeholder="e.g. Bachelor's" required error={!!fieldErrors.educationLevel} />
-            <FormField label="Profession" value={draft.profession} onChange={v => set('profession', v)} placeholder="e.g. Software Engineer" required error={!!fieldErrors.profession} />
+            <FormSelect label="Education Level" value={draft.educationLevel} options={EDUCATION_LEVELS} onChange={v => set('educationLevel', v)} required error={!!fieldErrors.educationLevel} />
+            <FormSelect label="Profession" value={draft.profession} options={PROFESSIONS} onChange={v => set('profession', v)} required error={!!fieldErrors.profession} />
           </div>
         </Section>
 
@@ -526,6 +508,8 @@ export default function OwnProfilePage() {
         <div className="max-w-3xl mx-auto px-3 sm:px-6 py-3 flex flex-wrap items-center gap-3">
           {saveError
             ? <p className="flex-1 min-w-0 text-xs text-red-500">{saveError}</p>
+            : resetNotice
+            ? <p className="flex-1 min-w-0 text-xs text-green-600 font-medium">{resetNotice}</p>
             : <p className="flex-1 text-xs text-gray-400 hidden sm:block">Changes are saved to your profile</p>
           }
           <button

@@ -5,6 +5,13 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { apiFetch } from '@/lib/api'
 import { ChevronLeft, Lock, Info } from 'lucide-react'
+import HeightSlider from '@/components/dashboard/height-slider'
+import {
+  NATIONALITIES, ETHNICITIES, RELIGIONS, COUNTRIES, citiesForCountry, DISTRICTS,
+  PROFESSIONS, CIVIL_STATUSES, EDUCATION_LEVELS,
+  FOOD_PREFS, DRINKING_OPTS, SMOKING_OPTS, KUJA_NUMBERS,
+  MIN_AGE, PHONE_COUNTRY_CODES,
+} from '@/lib/options'
 
 type Step = 1 | 2 | 3 | 'preview'
 
@@ -47,23 +54,6 @@ const EMPTY: FormData = {
   mobileNumber: '', whatsappNumber: '', address: '', images: [],
 }
 
-const KUJA_NUMBERS = ['1', '2', '4', '7', '8', '12']
-const CIVIL_STATUSES = ['Never Married', 'Divorced', 'Widowed', 'Separated']
-const EDUCATION_LEVELS = [
-  'Up to GCE O/L',
-  'Up to GCE A/L',
-  'Diploma',
-  'Professional Qualification',
-  'Undergraduate',
-  "Bachelor's Degree or Equivalent",
-  'Post Graduate Diploma',
-  "Master's Degree or Equivalent",
-  'Phd or Post Doctoral',
-]
-const FOOD_PREFS = ['Vegetarian', 'Non-Vegetarian', 'Vegan', 'Halal']
-const DRINKING_OPTS = ['Never', 'Occasionally', 'Regularly']
-const SMOKING_OPTS = ['Never', 'Occasionally', 'Regularly']
-
 function FieldGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
@@ -100,6 +90,44 @@ function SelectInput({ value, onChange, options, placeholder }: {
       <option value="">{placeholder}</option>
       {options.map(o => <option key={o} value={o}>{o}</option>)}
     </select>
+  )
+}
+
+function splitPhone(value: string): { code: string; digits: string } {
+  const match = PHONE_COUNTRY_CODES.find(c => value.startsWith(c.code))
+  if (match) return { code: match.code, digits: value.slice(match.code.length) }
+  return { code: '+94', digits: value.replace(/\D/g, '') }
+}
+
+function PhoneInput({ value, onChange }: {
+  value: string; onChange: (v: string) => void
+}) {
+  const { code, digits } = splitPhone(value)
+  return (
+    <div className="flex gap-2">
+      <select
+        value={code}
+        onChange={e => onChange(digits ? `${e.target.value}${digits}` : '')}
+        className="px-2 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-border focus:border-brand transition-colors appearance-none"
+        aria-label="Country code"
+      >
+        {PHONE_COUNTRY_CODES.map(c => (
+          <option key={c.code} value={c.code}>{c.label}</option>
+        ))}
+      </select>
+      <input
+        type="tel"
+        inputMode="numeric"
+        value={digits}
+        maxLength={10}
+        onChange={e => {
+          const d = e.target.value.replace(/\D/g, '').slice(0, 10)
+          onChange(d ? `${code}${d}` : '')
+        }}
+        placeholder="7X XXX XXXX"
+        className="flex-1 min-w-0 px-3 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-border focus:border-brand transition-colors"
+      />
+    </div>
   )
 }
 
@@ -184,6 +212,26 @@ export default function OnboardingPage() {
     if (!form.lastName.trim()) return 'Last name is required'
     if (!form.gender) return 'Gender is required'
     if (!form.dateOfBirth) return 'Date of birth is required'
+    const dob = new Date(form.dateOfBirth)
+    const cutoff = new Date()
+    cutoff.setFullYear(cutoff.getFullYear() - MIN_AGE)
+    if (isNaN(dob.getTime()) || dob > cutoff) {
+      return `You must be at least ${MIN_AGE} years old`
+    }
+    return null
+  }
+
+  function validateStep3() {
+    for (const [label, value] of [
+      ['mobile', form.mobileNumber],
+      ['WhatsApp', form.whatsappNumber],
+    ] as const) {
+      if (!value) continue
+      const { digits } = splitPhone(value)
+      if (digits.length < 7 || digits.length > 10) {
+        return `Please enter a valid ${label} number (7–10 digits)`
+      }
+    }
     return null
   }
 
@@ -278,7 +326,7 @@ export default function OnboardingPage() {
                     max={new Date(Date.now() - 18 * 365.25 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]} />
                 </FieldGroup>
                 <FieldGroup label="Nationality">
-                  <TextInput value={form.nationality} onChange={v => set('nationality', v)} placeholder="e.g. Sri Lankan" />
+                  <SelectInput value={form.nationality} onChange={v => set('nationality', v)} options={NATIONALITIES} placeholder="Choose Nationality" />
                 </FieldGroup>
                 <FieldGroup label="Gender *">
                   <div className="grid grid-cols-2 gap-2">
@@ -293,7 +341,7 @@ export default function OnboardingPage() {
                   </div>
                 </FieldGroup>
                 <FieldGroup label="Ethnicity">
-                  <TextInput value={form.ethnicity} onChange={v => set('ethnicity', v)} placeholder="e.g. Sinhala, Tamil" />
+                  <SelectInput value={form.ethnicity} onChange={v => set('ethnicity', v)} options={ETHNICITIES} placeholder="Choose Ethnicity" />
                 </FieldGroup>
                 <FieldGroup label="Caste">
                   <TextInput value={form.caste} onChange={v => set('caste', v)} placeholder="Optional" />
@@ -302,12 +350,10 @@ export default function OnboardingPage() {
                   <SelectInput value={form.civilStatus} onChange={v => set('civilStatus', v)} options={CIVIL_STATUSES} placeholder="Choose Civil Status" />
                 </FieldGroup>
                 <FieldGroup label="Religion">
-                  <TextInput value={form.religion} onChange={v => set('religion', v)} placeholder="e.g. Buddhist, Catholic" />
+                  <SelectInput value={form.religion} onChange={v => set('religion', v)} options={RELIGIONS} placeholder="Choose Religion" />
                 </FieldGroup>
-                  <FieldGroup label="Height">
-                  <TextInput value={form.height} onChange={v => set('height', v)} placeholder="e.g. 5ft 8in" />
-                </FieldGroup>
-                
+                <HeightSlider value={form.height} onChange={v => set('height', v)} />
+
               </div>
             </div>
 
@@ -316,13 +362,21 @@ export default function OnboardingPage() {
               <h2 className="font-semibold text-gray-800 mb-4">Residency</h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <FieldGroup label="Country">
-                  <TextInput value={form.country} onChange={v => set('country', v)} placeholder="Country" />
+                  <SelectInput
+                    value={form.country}
+                    onChange={v => {
+                      // Changing country invalidates the selected city
+                      setForm(prev => ({ ...prev, country: v, city: '' }))
+                    }}
+                    options={COUNTRIES}
+                    placeholder="Choose Country"
+                  />
                 </FieldGroup>
                 <FieldGroup label="City">
-                  <TextInput value={form.city} onChange={v => set('city', v)} placeholder="City" />
+                  <SelectInput value={form.city} onChange={v => set('city', v)} options={citiesForCountry(form.country)} placeholder="Choose City" />
                 </FieldGroup>
                 <FieldGroup label="State / District">
-                  <TextInput value={form.stateDistrict} onChange={v => set('stateDistrict', v)} placeholder="District" />
+                  <SelectInput value={form.stateDistrict} onChange={v => set('stateDistrict', v)} options={DISTRICTS} placeholder="Choose District" />
                 </FieldGroup>
               </div>
             </div>
@@ -335,7 +389,7 @@ export default function OnboardingPage() {
                   <SelectInput value={form.educationLevel} onChange={v => set('educationLevel', v)} options={EDUCATION_LEVELS} placeholder="Choose Education Level" />
                 </FieldGroup>
                 <FieldGroup label="Profession">
-                  <TextInput value={form.profession} onChange={v => set('profession', v)} placeholder="e.g. Engineer, Doctor" />
+                  <SelectInput value={form.profession} onChange={v => set('profession', v)} options={PROFESSIONS} placeholder="Choose Profession" />
                 </FieldGroup>
               </div>
             </div>
@@ -392,17 +446,26 @@ export default function OnboardingPage() {
               </select>
             </FieldGroup>
             <FieldGroup label="Birth Day">
-              <TextInput type="date" value={form.birthDay} onChange={v => set('birthDay', v)} />
+              <TextInput type="date" value={form.birthDay} onChange={v => set('birthDay', v)}
+                max={new Date().toISOString().split('T')[0]} />
             </FieldGroup>
           </div>
           <div className="flex flex-col-reverse sm:flex-row gap-3 mt-6">
             <button onClick={() => setStep(1)} className="flex items-center justify-center gap-1 text-sm text-gray-500 hover:text-gray-700 sm:mr-auto">
               <ChevronLeft className="w-4 h-4" /> Back
             </button>
-            <button onClick={() => setStep(3)} className="px-5 py-2 rounded-full border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
+            <button
+              onClick={() => {
+                // Skip must discard anything typed in this step
+                setForm(prev => ({ ...prev, kujaNumber: '', birthDay: '' }))
+                setError('')
+                setStep(3)
+              }}
+              className="px-5 py-2 rounded-full border border-gray-200 text-sm text-gray-600 hover:bg-gray-50"
+            >
               Skip
             </button>
-            <button onClick={() => setStep(3)} className="flex-1 py-2.5 rounded-full bg-brand text-on-brand font-semibold text-sm hover:opacity-90 transition-opacity">
+            <button onClick={() => { setError(''); setStep(3) }} className="flex-1 py-2.5 rounded-full bg-brand text-on-brand font-semibold text-sm hover:opacity-90 transition-opacity">
               Save &amp; Continue →
             </button>
           </div>
@@ -423,10 +486,10 @@ export default function OnboardingPage() {
             <PrivacyBanner text="Your private details (photos, contact info, and horoscope) are only visible to profiles you grant permission to view." />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FieldGroup label="Mobile Number">
-                <TextInput value={form.mobileNumber} onChange={v => set('mobileNumber', v)} placeholder="-" type="tel" />
+                <PhoneInput value={form.mobileNumber} onChange={v => set('mobileNumber', v)} />
               </FieldGroup>
               <FieldGroup label="WhatsApp Number">
-                <TextInput value={form.whatsappNumber} onChange={v => set('whatsappNumber', v)} placeholder="-" type="tel" />
+                <PhoneInput value={form.whatsappNumber} onChange={v => set('whatsappNumber', v)} />
               </FieldGroup>
               <div className="sm:col-span-2">
                 <FieldGroup label="Address">
@@ -471,10 +534,26 @@ export default function OnboardingPage() {
             <button onClick={() => setStep(2)} className="flex items-center justify-center gap-1 text-sm text-gray-500 hover:text-gray-700 sm:mr-auto">
               <ChevronLeft className="w-4 h-4" /> Back
             </button>
-            <button onClick={() => { setError(''); setStep('preview') }} className="px-5 py-2 rounded-full border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
+            <button
+              onClick={() => {
+                // Skip must discard anything entered in this step
+                setForm(prev => ({ ...prev, mobileNumber: '', whatsappNumber: '', address: '', images: [] }))
+                setError('')
+                setStep('preview')
+              }}
+              className="px-5 py-2 rounded-full border border-gray-200 text-sm text-gray-600 hover:bg-gray-50"
+            >
               Skip
             </button>
-            <button onClick={() => { setError(''); setStep('preview') }} className="flex-1 py-2.5 rounded-full bg-brand text-on-brand font-semibold text-sm hover:opacity-90 transition-opacity">
+            <button
+              onClick={() => {
+                const e = validateStep3()
+                if (e) { setError(e); return }
+                setError('')
+                setStep('preview')
+              }}
+              className="flex-1 py-2.5 rounded-full bg-brand text-on-brand font-semibold text-sm hover:opacity-90 transition-opacity"
+            >
               Save &amp; Review →
             </button>
           </div>

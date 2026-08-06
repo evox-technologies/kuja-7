@@ -16,6 +16,17 @@
   }
 }
 
+/* Sinhala is an abugida: letter-spacing separates combining vowel signs and
+   hal kirīma from their base consonants, garbling the text. Neutralize all
+   tracking utilities when the page language is Sinhala. */
+html[lang='si'] .tracking-widest,
+html[lang='si'] .tracking-wider,
+html[lang='si'] .tracking-wide,
+html[lang='si'] .tracking-tight,
+html[lang='si'] .tracking-tighter {
+  letter-spacing: normal;
+}
+
 /* Lightweight entrance animations — replaces motion/react on auth pages.
    ponytail: CSS keyframes instead of a ~100kB JS animation lib for fades. */
 @keyframes fade-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
