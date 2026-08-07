@@ -18,7 +18,7 @@ interface SearchResult {
 interface CurrentUser {
   id: string
   firstName: string
-  isVerified: boolean
+  profileCompleted: boolean
   country?: string | null
 }
 
@@ -250,7 +250,7 @@ function HomePageInner() {
     debounceRef.current = setTimeout(() => search(filters, page), 300)
   }, [filters, page, search])
 
-  const profileIncomplete = currentUser && !currentUser.isVerified
+  const profileIncomplete = currentUser && !currentUser.profileCompleted
 
   const filterPanel = (
     <div className="flex flex-col gap-0">
