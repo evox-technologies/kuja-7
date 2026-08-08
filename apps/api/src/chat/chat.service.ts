@@ -147,8 +147,12 @@ export class ChatService {
       };
     }
 
+    // Sorted so the ordered @@unique([participant1Id, participant2Id]) enforces
+    // one conversation per pair instead of one per ordering.
+    const [participant1Id, participant2Id] = [profileId, targetId].sort();
+
     const created = await this.prisma.conversation.create({
-      data: { participant1Id: profileId, participant2Id: targetId },
+      data: { participant1Id, participant2Id },
       include: {
         participant1: {
           select: {

@@ -8,7 +8,7 @@ import {
   Body,
   UseGuards,
 } from '@nestjs/common';
-import { IsEnum, IsUUID, IsIn } from 'class-validator';
+import { IsUUID, IsIn } from 'class-validator';
 import { InterestStatus } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
@@ -16,8 +16,10 @@ import { MatchesService } from './matches.service';
 import type { Profile } from '@prisma/client';
 
 class RespondInterestDto {
-  @IsEnum(InterestStatus)
-  status!: InterestStatus;
+  // Deliberately narrower than InterestStatus: an interest may be accepted or
+  // rejected, never pushed back to PENDING.
+  @IsIn([InterestStatus.ACCEPTED, InterestStatus.REJECTED])
+  status!: typeof InterestStatus.ACCEPTED | typeof InterestStatus.REJECTED;
 }
 
 class SendInterestDto {
