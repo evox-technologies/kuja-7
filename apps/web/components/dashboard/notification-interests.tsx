@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { Users, Heart, User } from 'lucide-react'
+import type { Socket } from 'socket.io-client'
 import { apiFetch } from '@/lib/api'
 import { getSocket } from '@/lib/socket'
 import { timeAgo } from '@/lib/utils'
@@ -35,10 +36,12 @@ function messageFor(n: AppNotification) {
 export default function NotificationInterests() {
   const [items, setItems] = useState<AppNotification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
+  const seenRef = useRef<Set<string>>(new Set())
 
   const refresh = useCallback(() => {
     apiFetch<{ items: AppNotification[]; unreadCount: number }>('/notifications')
       .then(r => {
+        r.items.forEach(n => seenRef.current.add(n.id))
         setItems(r.items)
         setUnreadCount(r.unreadCount)
       })
@@ -49,18 +52,29 @@ export default function NotificationInterests() {
     refresh()
 
     let mounted = true
+    let socket: Socket | null = null
+
+    const onNotification = (n: AppNotification) => {
+      // A refresh may already have picked this one up, and a duplicated
+      // listener would deliver it twice; counting either would leave the badge
+      // permanently ahead of the list.
+      if (seenRef.current.has(n.id)) return
+      seenRef.current.add(n.id)
+      setItems(prev => (prev.some(e => e.id === n.id) ? prev : [n, ...prev]))
+      setUnreadCount(count => count + 1)
+    }
+
     getSocket()
-      .then(socket => {
+      .then(s => {
         if (!mounted) return
-        socket.on('notification', (n: AppNotification) => {
-          setItems(prev => [n, ...prev])
-          setUnreadCount(prev => prev + 1)
-        })
+        socket = s
+        s.on('notification', onNotification)
       })
       .catch(() => {})
 
     return () => {
       mounted = false
+      socket?.off('notification', onNotification)
     }
   }, [refresh])
 

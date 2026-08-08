@@ -103,30 +103,36 @@ export default function ConversationList({ selectedId, onSelect, currentUserId, 
   // Socket: update last message preview on new_message
   useEffect(() => {
     let mounted = true
-    getSocket()
-      .then((socket) => {
-        if (!mounted) return
-        socketRef.current = socket
-        socket.on('new_message', (msg: NewMessage) => {
-          setConversations((prev) =>
-            prev
-              .map((c) =>
-                c.id === msg.conversationId
-                  ? { ...c, lastMessage: { id: msg.id, content: msg.content, createdAt: msg.createdAt, senderId: msg.senderId } }
-                  : c
-              )
-              .sort((a, b) => {
-                const ta = a.lastMessage?.createdAt ?? a.id
-                const tb = b.lastMessage?.createdAt ?? b.id
-                return tb > ta ? 1 : -1
-              })
+    let socket: Socket | null = null
+
+    const onNewMessage = (msg: NewMessage) => {
+      setConversations((prev) =>
+        prev
+          .map((c) =>
+            c.id === msg.conversationId
+              ? { ...c, lastMessage: { id: msg.id, content: msg.content, createdAt: msg.createdAt, senderId: msg.senderId } }
+              : c
           )
-        })
+          .sort((a, b) => {
+            const ta = a.lastMessage?.createdAt ?? a.id
+            const tb = b.lastMessage?.createdAt ?? b.id
+            return tb > ta ? 1 : -1
+          })
+      )
+    }
+
+    getSocket()
+      .then((s) => {
+        if (!mounted) return
+        socket = s
+        socketRef.current = s
+        s.on('new_message', onNewMessage)
       })
       .catch(console.error)
 
     return () => {
       mounted = false
+      socket?.off('new_message', onNewMessage)
     }
   }, [])
 
