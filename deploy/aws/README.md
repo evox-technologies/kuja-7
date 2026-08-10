@@ -1,4 +1,4 @@
-# Deploying kuja-seven to a customer's AWS EC2 (domain on domains.lk)
+# Deploying kuja-seven to a customer's AWS EC2
 
 What actually runs on the box: two containers (`kuja7-web`, a static Next.js export
 served by nginx; `kuja7-api`, NestJS on :3001 with a socket.io chat gateway) plus one
@@ -9,9 +9,11 @@ hosted elsewhere, nothing to install. No RDS, no S3, no ALB.
 That is the whole reason a t3.micro works — 1 GB of RAM cannot run `next build`, but
 it runs the result comfortably.
 
-Target hostnames: the site at **`kuja7.lk`** (with `www.kuja7.lk` redirecting to it)
-and the API at **`api.kuja7.lk`**. The domain is registered at
-[domains.lk](https://www.domains.lk/) (LK Domain Registry).
+Target hostnames: the site at **`kuja7.lk`** and the API at **`api.kuja7.lk`**, both
+registered at [domains.lk](https://www.domains.lk/) (LK Domain Registry). **`kuja7.com`**
+(GoDaddy) and the two `www.` names 301 to the site. DNS points straight at the box; TLS
+is Caddy's automatic Let's Encrypt. Cloudflare is not in the path — see the appendix for
+putting it there.
 
 ---
 
@@ -145,47 +147,82 @@ EOF
 
 ---
 
-## Phase 5 — Point kuja7.lk at the server (domains.lk)
+## Phase 5 — Point both domains at the server
 
 Do this **before** starting Caddy — Let's Encrypt validates by resolving each hostname
-back to this server, so certificates cannot be issued until DNS is live.
+back to this server, so no certificate can be issued until DNS is live and ports 80 and
+443 are open to the world.
 
-Sign in at [domains.lk](https://www.domains.lk/) → your domain → the **DNS / Zone
-records** section (the panel's exact wording varies), and add three A records:
+Five hostnames, one Elastic IP. Caddy tells them apart by `Host` header; DNS just has to
+get the traffic to the box.
 
-| Type | Host | Value | TTL |
+| Hostname | Registrar | Serves |
+|---|---|---|
+| `kuja7.lk` | domains.lk | the site |
+| `www.kuja7.lk` | domains.lk | 301 → `kuja7.lk` |
+| `api.kuja7.lk` | domains.lk | the API |
+| `kuja7.com` | GoDaddy | 301 → `kuja7.lk` |
+| `www.kuja7.com` | GoDaddy | 301 → `kuja7.lk` |
+
+### kuja7.lk — domains.lk
+
+The **Other Resource Records** table takes fully-qualified names *with a trailing dot*.
+Match the row already sitting there rather than guessing at `@`:
+
+| Name | TTL | Type | Value |
 |---|---|---|---|
-| A | `@` — the apex | `<ELASTIC_IP>` | 3600 |
-| A | `www` | `<ELASTIC_IP>` | 3600 |
-| A | `api` | `<ELASTIC_IP>` | 3600 |
+| `kuja7.lk.` | Default | A | `<ELASTIC_IP>` |
+| `api.kuja7.lk.` | Default | A | `<ELASTIC_IP>` |
+| `www.kuja7.lk.` | Default | A | `<ELASTIC_IP>` |
 
-Two things that trip people up here:
+The panel offers two blank rows — use **Add More** for the third. Leave the existing
+`"Ranganatha"` TXT alone; it matches no SPF or verification format and does nothing.
 
-- **The apex record.** If the panel rejects `@`, it wants either an empty host field or
-  the fully-qualified `kuja7.lk.` (trailing dot). One of the three is always accepted.
-- **The default parking record.** Registrars ship new domains pointing at a "coming
-  soon" page. Delete that A record — leaving it alongside yours means DNS round-robins
-  between the parking server and your box, and roughly half the certificate validations
-  fail for no visible reason.
+`.lk` accepts only A, AAAA, CNAME and TXT here, which covers this deployment entirely.
+Anything else — SPF, DMARC, SRV, so mail on this domain — needs external nameservers;
+see the appendix.
 
-If the domains.lk panel only lets you set **nameservers** and has no record editor,
-delegate instead: create a free Cloudflare zone for `kuja7.lk`, add the same three A
-records there, and set Cloudflare's two nameservers at domains.lk. Keep every record
-**DNS-only (grey cloud)** — proxying puts Cloudflare's own TLS in front of Caddy's, and
-you would be maintaining two certificate layers to serve one site.
+As of August 2026 this zone had **no NS delegation at all**, so nothing resolved. Saving
+records should make the registry serve the zone; confirm that below rather than assuming
+it.
 
-Verify before continuing. `.lk` zone changes can take a few hours to publish, longer
-than most gTLDs:
+### kuja7.com — GoDaddy
+
+GoDaddy ships every domain with `A @ → <parking IP>` and `CNAME www → @`. **Edit** the
+existing A record instead of adding a second one — two A records on the apex means DNS
+round-robins between the parking page and your box, and roughly half the certificate
+validations fail for no visible reason.
+
+| Type | Name | Value | TTL |
+|---|---|---|---|
+| A | `@` | `<ELASTIC_IP>` | 600 |
+| CNAME | `www` | `@` | leave GoDaddy's default |
+
+Then check **Domain Settings → Forwarding** and turn it **off** if set. GoDaddy's
+forwarding answers at their edge before your server is ever consulted, so it silently
+shadows the redirect Caddy serves.
+
+Nothing further is needed for the redirect itself: `kuja7.com` and `www.kuja7.com` are
+already in the [Caddyfile](Caddyfile), 301-ing to `https://kuja7.lk` on their own
+certificates.
+
+### Verify
+
+`.lk` publishes slower than most gTLDs — allow hours, not minutes. Its parent zone sets
+negative caching to 3600, so "no such name" answers linger up to an hour after the
+records go in.
 
 ```bash
-dig +short kuja7.lk @8.8.8.8        # @8.8.8.8 skips your ISP's cache
-dig +short api.kuja7.lk @8.8.8.8
-dig +short www.kuja7.lk @8.8.8.8
+dig kuja7.lk NS +short @8.8.8.8      # must return nameservers now, not empty
+
+for h in kuja7.lk www.kuja7.lk api.kuja7.lk kuja7.com www.kuja7.com; do
+  printf '%-18s %s\n' "$h" "$(dig +short $h @8.8.8.8 | tail -1)"
+done
 ```
 
-All three must return `<ELASTIC_IP>`. Do not start Caddy until they do — failed
-validations count against Let's Encrypt's rate limit of 5 certificates per domain per
-week.
+All five must show `<ELASTIC_IP>`. Do not start Caddy until they do — Let's Encrypt
+allows only **5 failed validations per hostname per hour**, and Caddy retries on a
+backoff that will outlast your patience.
 
 ---
 
@@ -279,9 +316,10 @@ free -h                                 # watch swap usage on the micro
 - **Rollback** is `IMAGE_TAG=<older-sha>` in `/opt/apps/kuja-seven/.env` then
   `docker compose up -d`. No rebuild — CI tags every image with its commit SHA and the
   deploy prunes only images older than 72h.
-- **Certificates renew themselves.** Caddy handles it; certs live in the `caddy-data`
-  volume. Deleting that volume re-triggers issuance and can hit Let's Encrypt rate
-  limits (5 per domain per week).
+- **Certificates renew themselves.** Caddy handles all five hostnames; they live in the
+  `caddy-data` volume. Deleting that volume re-triggers issuance for every name at once
+  — survivable, but Let's Encrypt caps duplicate certificates at 5 per week, so do not
+  do it repeatedly while debugging.
 - **Changing a domain** means re-running the workflow, not restarting — `NEXT_PUBLIC_*`
   are compiled into the JS bundle at build time.
 - **`deploy.yml` still deploys to the DigitalOcean droplet on every push to main.**
@@ -299,3 +337,41 @@ free -h                                 # watch swap usage on the micro
 ALB + ACM (removes TLS from the box but adds ~\$16/month and target groups),
 multi-arch images for cheaper Graviton `t4g.micro`, CloudWatch alarms, auto-scaling.
 Add the ALB when a second instance appears.
+
+---
+
+## Appendix — putting Cloudflare in front later
+
+Worth doing for the WAF, for hiding the origin IP, or the day `.lk`'s A/AAAA/CNAME/TXT-
+only record set stops being enough (mail on the domain needs MX and SPF, which the
+registrar panel cannot express). The domain stays registered where it is; only the
+nameservers move.
+
+1. **Inventory the zone first** — `dig kuja7.lk MX +short`, `TXT`, `NS`. Moving
+   nameservers moves everything; whatever is not recreated at Cloudflare stops
+   resolving.
+2. **Add the zone** at [dash.cloudflare.com](https://dash.cloudflare.com), Free plan.
+   Recreate the same A records, all **Proxied (orange)** — a grey-clouded record is a
+   hole straight past the WAF.
+3. **SSL/TLS → Full (strict)**, before the zone goes live. Flexible loops the browser
+   against Caddy's HTTPS redirect; plain Full accepts a forged origin certificate.
+4. **Swap Caddy's automatic TLS for a Cloudflare Origin Certificate.** ACME's HTTP-01
+   challenge would have to pass through the WAF, and one managed rule or Bot Fight Mode
+   challenging that request breaks renewal 60 days later — the site starts returning 526
+   with nothing in the app logs. Issue a 15-year cert under **SSL/TLS → Origin Server**
+   for `kuja7.lk` *and* `*.kuja7.lk` (the wildcard does not cover the apex), drop it in
+   `/opt/infra/caddy/certs/`, mount that directory in the Caddy compose file, and give
+   each site block `tls /etc/caddy/certs/origin.pem /etc/caddy/certs/origin.key`.
+5. **Set the nameservers at domains.lk.** For `.lk` this is sometimes a support ticket
+   rather than a self-service field, and can take a working day.
+6. **Close the bypass** — narrow the security group's ports 80 and 443 from
+   `0.0.0.0/0` to `curl https://www.cloudflare.com/ips-v4`, via an AWS managed prefix
+   list rather than 30 hand-maintained rules. Until then anyone with the Elastic IP
+   walks around the WAF.
+
+Two settings to leave alone once proxied: **Bot Fight Mode off**, and never **Under
+Attack Mode** on `api.kuja7.lk`. Both answer with a JavaScript challenge that a
+socket.io client cannot solve, so chat dies with nothing the API can log. Spend the one
+Free-plan rate-limiting rule on the API instead — `@nestjs/throttler` is imported in
+`apps/api/src/app.module.ts:16` but no `ThrottlerGuard` is ever registered, so the app
+does no rate limiting of its own.

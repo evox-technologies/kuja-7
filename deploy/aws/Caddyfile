@@ -14,3 +14,11 @@
 www.{$WEB_DOMAIN} {
 	redir https://{$WEB_DOMAIN}{uri} permanent
 }
+
+# kuja7.com is a second registered domain (GoDaddy) that should land on the .lk site.
+# Done here rather than with GoDaddy's forwarding feature so it is a real 301 served
+# on a valid certificate — Caddy issues for these two names automatically, same as
+# the rest. Hardcoded because they are actual domains, not deployment parameters.
+kuja7.com, www.kuja7.com {
+	redir https://{$WEB_DOMAIN}{uri} permanent
+}
