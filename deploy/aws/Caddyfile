@@ -1,0 +1,16 @@
+# Domains come from deploy/aws/.env on the server.
+# Caddy gets + renews Let's Encrypt certs on its own (HTTP-01), so there is no
+# certbot cron to forget. Requires DNS already pointing here and :80/:443 open.
+
+{$WEB_DOMAIN} {
+	reverse_proxy kuja7-web:80
+}
+
+{$API_DOMAIN} {
+	# ponytail: no websocket block — Caddy v2 proxies the socket.io upgrade as-is.
+	reverse_proxy kuja7-api:3001
+}
+
+www.{$WEB_DOMAIN} {
+	redir https://{$WEB_DOMAIN}{uri} permanent
+}

@@ -3,6 +3,10 @@
 
 services:
   kuja7-web:
+    # Built and pushed by .github/workflows/deploy-aws.yml; the server only pulls.
+    # `build:` stays for local dev and the droplet, which still build in place —
+    # compose builds when you pass --build and pulls this tag when you don't.
+    image: ghcr.io/evox-technologies/kuja-7-web:${IMAGE_TAG:-latest}
     build:
       context: apps/web
       args:
@@ -27,6 +31,7 @@ services:
       start_period: 20s
 
   kuja7-api:
+    image: ghcr.io/evox-technologies/kuja-7-api:${IMAGE_TAG:-latest}
     build:
       context: apps/api
     env_file: apps/api/.env.production

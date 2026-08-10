@@ -1,0 +1,33 @@
+# Standalone TLS proxy for a single-box deploy (customer's EC2), replacing the
+# shared Traefik that only exists on the evox-infra droplet.
+#
+#   cd /opt/infra/caddy && docker compose up -d
+#
+# Runs as its own stack, not part of the app stack, so `docker compose up --build`
+# in the app dir never restarts the proxy holding the certs.
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    env_file: .env
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data # certs live here — never delete this volume
+      - caddy-config:/config
+    networks:
+      - traefik-public
+
+networks:
+  # ponytail: name kept as traefik-public even though Traefik is gone, because the
+  # app's docker-compose.yml and .github/workflows/deploy.yml both expect it.
+  # Renaming buys nothing and breaks the deploy's network-exists guard.
+  traefik-public:
+    external: true
+
+volumes:
+  caddy-data:
+  caddy-config:
