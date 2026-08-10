@@ -322,9 +322,9 @@ free -h                                 # watch swap usage on the micro
   do it repeatedly while debugging.
 - **Changing a domain** means re-running the workflow, not restarting — `NEXT_PUBLIC_*`
   are compiled into the JS bundle at build time.
-- **`deploy.yml` still deploys to the DigitalOcean droplet on every push to main.**
-  If that box is being retired, delete the workflow; otherwise both targets deploy
-  together, which is fine as long as their secrets stay separate.
+- **The two targets deploy independently.** `deploy.yml` ships the droplet on every
+  push to main; this one is `workflow_dispatch` only, so the customer's box moves when
+  you run it and not before. A merge to main does not touch production here.
 - **GHCR storage** counts against the org's package quota. Two images per commit adds
   up; set a retention rule under **Packages → Manage versions** if it grows.
 - **Backups:** the EC2 box holds no data — everything is in Supabase. Rebuilding it is

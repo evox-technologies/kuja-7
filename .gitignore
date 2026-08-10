@@ -18,6 +18,8 @@
 **/.env
 **/.env.local
 **/.env.*.local
+# Real secret values staged for `gh secret set --env-file`; **/.env does not match it
+deploy/aws/customer-aws.env
 
 # Logs
 *.log
