@@ -9,7 +9,7 @@ import ProfileCard, { ProfileCardData } from '@/components/dashboard/profile-car
 interface MutualRecord {
   id: string
   updatedAt: string
-  sender: ProfileCardData
+  profile: ProfileCardData
 }
 
 export default function MutualPage() {
@@ -59,7 +59,7 @@ export default function MutualPage() {
             {mutuals.map(m => (
               <ProfileCard
                 key={m.id}
-                profile={{ ...m.sender, createdAt: m.updatedAt, myInterestStatus: 'ACCEPTED' }}
+                profile={{ ...m.profile, createdAt: m.updatedAt, myInterestStatus: 'ACCEPTED' }}
                 badge={
                   <span className="bg-brand text-on-brand text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
                     <span>❤</span> Mutual
@@ -67,7 +67,7 @@ export default function MutualPage() {
                 }
                 actions={
                   <button
-                    onClick={() => openChat(m.sender.id)}
+                    onClick={() => openChat(m.profile.id)}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-brand-light text-brand-text text-xs font-medium hover:bg-brand-border transition-colors"
                   >
                     <MessageCircle className="w-3.5 h-3.5" />

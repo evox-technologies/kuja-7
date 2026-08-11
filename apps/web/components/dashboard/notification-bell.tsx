@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { Bell, MessageCircle } from 'lucide-react'
+import type { Socket } from 'socket.io-client'
 import { apiFetch } from '@/lib/api'
 import { getSocket } from '@/lib/socket'
 import { cn, timeAgo } from '@/lib/utils'
@@ -27,7 +28,8 @@ interface ConversationSummary {
 export default function NotificationBell() {
   const [count, setCount] = useState(0)
   const [conversations, setConversations] = useState<ConversationSummary[]>([])
-  const [loaded, setLoaded] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const openRef = useRef(false)
 
   const refreshCount = useCallback(() => {
     apiFetch<{ count: number }>('/chat/unread-count')
@@ -35,30 +37,49 @@ export default function NotificationBell() {
       .catch(() => {})
   }, [])
 
+  const loadConversations = useCallback(() => {
+    setLoading(true)
+    apiFetch<ConversationSummary[]>('/chat/conversations')
+      .then(setConversations)
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
   useEffect(() => {
     refreshCount()
 
     let mounted = true
+    let socket: Socket | null = null
+
+    const onChange = () => {
+      refreshCount()
+      if (openRef.current) loadConversations()
+    }
+
     getSocket()
-      .then(socket => {
+      .then(s => {
         if (!mounted) return
-        socket.on('new_message', refreshCount)
-        socket.on('messages_read', refreshCount)
+        socket = s
+        s.on('new_message', onChange)
+        s.on('messages_read', onChange)
       })
       .catch(() => {})
 
     return () => {
       mounted = false
+      socket?.off('new_message', onChange)
+      socket?.off('messages_read', onChange)
     }
-  }, [refreshCount])
+  }, [refreshCount, loadConversations])
 
   function handleOpenChange(open: boolean) {
-    if (open && !loaded) {
-      apiFetch<ConversationSummary[]>('/chat/conversations')
-        .then(setConversations)
-        .catch(() => {})
-        .finally(() => setLoaded(true))
-    }
+    openRef.current = open
+    if (!open) return
+    // Always refetch. The cached list went stale the moment the user opened a
+    // conversation, which is what made an already-read message keep appearing
+    // here after navigating back.
+    loadConversations()
+    refreshCount()
   }
 
   const unread = conversations.filter(c => c.unreadCount > 0)
@@ -80,7 +101,9 @@ export default function NotificationBell() {
           <p className="text-sm font-bold text-gray-900">Messages</p>
         </div>
         <div className="max-h-80 overflow-y-auto">
-          {unread.length === 0 ? (
+          {loading && conversations.length === 0 ? (
+            <p className="text-xs text-gray-400 text-center py-8">Loading…</p>
+          ) : unread.length === 0 ? (
             <p className="text-xs text-gray-400 text-center py-8">No new messages</p>
           ) : (
             unread.map(c => {

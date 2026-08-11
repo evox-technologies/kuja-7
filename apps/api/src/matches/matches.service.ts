@@ -6,7 +6,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { InterestStatus, ContactRequestStatus } from '@prisma/client';
+import { InterestStatus, ContactRequestStatus, Prisma } from '@prisma/client';
 import { NotificationsService } from '../notifications/notifications.service';
 
 const INTEREST_PROFILE_SELECT = {
@@ -35,6 +35,45 @@ export class MatchesService {
     private notifications: NotificationsService,
   ) {}
 
+  /**
+   * Returns the pair's conversation, creating it only if neither ordering
+   * exists. The @@unique on Conversation covers the *ordered* pair, so an
+   * upsert keyed on (a, b) silently creates a second row when (b, a) is
+   * already there — which is what the chat module writes when a user opens a
+   * chat first. New rows are stored with the ids sorted so the constraint can
+   * actually enforce one conversation per pair.
+   */
+  private async ensureConversation(userA: string, userB: string) {
+    const pairFilter = {
+      OR: [
+        { participant1Id: userA, participant2Id: userB },
+        { participant1Id: userB, participant2Id: userA },
+      ],
+    };
+
+    const existing = await this.prisma.conversation.findFirst({
+      where: pairFilter,
+    });
+    if (existing) return existing;
+
+    const [participant1Id, participant2Id] = [userA, userB].sort();
+
+    try {
+      return await this.prisma.conversation.create({
+        data: { participant1Id, participant2Id },
+      });
+    } catch (error) {
+      // Concurrent accept/open-chat raced us to it.
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        return this.prisma.conversation.findFirst({ where: pairFilter });
+      }
+      throw error;
+    }
+  }
+
   async sendInterest(senderId: string, receiverId: string) {
     if (senderId === receiverId) {
       this.logger.warn(
@@ -61,6 +100,19 @@ export class MatchesService {
       `sendInterest – senderId=${senderId} → receiverId=${receiverId}`,
     );
 
+    // Re-sending to someone already matched must not reset the interest to
+    // PENDING: that would tear down the existing match for both users.
+    const mine = await this.prisma.interest.findUnique({
+      where: { senderId_receiverId: { senderId, receiverId } },
+    });
+
+    if (mine?.status === InterestStatus.ACCEPTED) {
+      this.logger.log(
+        `sendInterest – already accepted, no-op: senderId=${senderId} receiverId=${receiverId}`,
+      );
+      return mine;
+    }
+
     const theirPending = await this.prisma.interest.findFirst({
       where: {
         senderId: receiverId,
@@ -84,17 +136,9 @@ export class MatchesService {
           where: { id: theirPending.id },
           data: { status: InterestStatus.ACCEPTED },
         }),
-        this.prisma.conversation.upsert({
-          where: {
-            participant1Id_participant2Id: {
-              participant1Id: receiverId,
-              participant2Id: senderId,
-            },
-          },
-          create: { participant1Id: receiverId, participant2Id: senderId },
-          update: {},
-        }),
       ]);
+
+      await this.ensureConversation(receiverId, senderId);
 
       this.logger.log(
         `sendInterest – auto-mutual complete, conversation created: senderId=${senderId} receiverId=${receiverId}`,
@@ -133,6 +177,18 @@ export class MatchesService {
       `respondToInterest – interestId=${interestId} userId=${userId} status=${status}`,
     );
 
+    if (
+      status !== InterestStatus.ACCEPTED &&
+      status !== InterestStatus.REJECTED
+    ) {
+      this.logger.warn(
+        `respondToInterest – invalid target status ${status}: interestId=${interestId}`,
+      );
+      throw new BadRequestException(
+        'An interest can only be accepted or rejected',
+      );
+    }
+
     const interest = await this.prisma.interest.findFirst({
       where: { id: interestId, receiverId: userId },
     });
@@ -144,25 +200,24 @@ export class MatchesService {
       throw new NotFoundException('Interest not found');
     }
 
+    // Without this an accepted interest could be flipped to rejected (or the
+    // reverse) later, re-firing notifications and silently breaking a match.
+    if (interest.status !== InterestStatus.PENDING) {
+      this.logger.warn(
+        `respondToInterest – already ${interest.status}: interestId=${interestId}`,
+      );
+      throw new BadRequestException(
+        `This interest was already ${interest.status.toLowerCase()}`,
+      );
+    }
+
     const updated = await this.prisma.interest.update({
       where: { id: interestId },
       data: { status },
     });
 
     if (status === InterestStatus.ACCEPTED) {
-      await this.prisma.conversation.upsert({
-        where: {
-          participant1Id_participant2Id: {
-            participant1Id: interest.senderId,
-            participant2Id: interest.receiverId,
-          },
-        },
-        create: {
-          participant1Id: interest.senderId,
-          participant2Id: interest.receiverId,
-        },
-        update: {},
-      });
+      await this.ensureConversation(interest.senderId, interest.receiverId);
       this.logger.log(
         `respondToInterest – accepted, conversation ensured: senderId=${interest.senderId} receiverId=${interest.receiverId}`,
       );
@@ -208,36 +263,50 @@ export class MatchesService {
     return interests;
   }
 
+  /**
+   * A single ACCEPTED interest is the match — the receiver accepting *is* the
+   * mutual event, and the auto-match branch in sendInterest treats crossing
+   * interests the same way. Requiring an ACCEPTED row in both directions meant
+   * the accept button never produced a match, since nothing writes the
+   * reciprocal row.
+   */
   async getMutualInterests(userId: string) {
     this.logger.log(`getMutualInterests – userId=${userId}`);
 
-    const myAccepted = await this.prisma.interest.findMany({
-      where: { senderId: userId, status: InterestStatus.ACCEPTED },
-      select: { receiverId: true },
-    });
-
-    const mutualPartnerIds = myAccepted.map((i) => i.receiverId);
-    if (mutualPartnerIds.length === 0) {
-      this.logger.log(
-        `getMutualInterests – no mutual partners for userId=${userId}`,
-      );
-      return [];
-    }
-
-    const theyAlsoAccepted = await this.prisma.interest.findMany({
+    const accepted = await this.prisma.interest.findMany({
       where: {
-        senderId: { in: mutualPartnerIds },
-        receiverId: userId,
         status: InterestStatus.ACCEPTED,
+        OR: [{ senderId: userId }, { receiverId: userId }],
       },
-      include: { sender: { select: INTEREST_PROFILE_SELECT } },
+      include: {
+        sender: { select: INTEREST_PROFILE_SELECT },
+        receiver: { select: INTEREST_PROFILE_SELECT },
+      },
       orderBy: { updatedAt: 'desc' },
     });
 
+    // Crossing interests leave two ACCEPTED rows for one pair; show the
+    // partner once, keyed off the most recently updated row.
+    const seen = new Set<string>();
+    const mutual = accepted
+      .map((interest) => ({
+        id: interest.id,
+        status: interest.status,
+        createdAt: interest.createdAt,
+        updatedAt: interest.updatedAt,
+        profile:
+          interest.senderId === userId ? interest.receiver : interest.sender,
+      }))
+      .filter((entry) => {
+        if (seen.has(entry.profile.id)) return false;
+        seen.add(entry.profile.id);
+        return true;
+      });
+
     this.logger.log(
-      `getMutualInterests – returned ${theyAlsoAccepted.length} mutual match(es) for userId=${userId}`,
+      `getMutualInterests – returned ${mutual.length} mutual match(es) for userId=${userId}`,
     );
-    return theyAlsoAccepted;
+    return mutual;
   }
 
   async removeInterest(senderId: string, receiverId: string) {
@@ -312,24 +381,17 @@ export class MatchesService {
       `sendContactRequest – requesterId=${requesterId} targetId=${targetId}`,
     );
 
-    const [iSent, theySent] = await Promise.all([
-      this.prisma.interest.findFirst({
-        where: {
-          senderId: requesterId,
-          receiverId: targetId,
-          status: InterestStatus.ACCEPTED,
-        },
-      }),
-      this.prisma.interest.findFirst({
-        where: {
-          senderId: targetId,
-          receiverId: requesterId,
-          status: InterestStatus.ACCEPTED,
-        },
-      }),
-    ]);
+    const accepted = await this.prisma.interest.findFirst({
+      where: {
+        status: InterestStatus.ACCEPTED,
+        OR: [
+          { senderId: requesterId, receiverId: targetId },
+          { senderId: targetId, receiverId: requesterId },
+        ],
+      },
+    });
 
-    if (!iSent || !theySent) {
+    if (!accepted) {
       this.logger.warn(
         `sendContactRequest – mutual interest required but not met: requesterId=${requesterId} targetId=${targetId}`,
       );

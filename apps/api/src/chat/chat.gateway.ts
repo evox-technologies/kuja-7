@@ -194,7 +194,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       `send_message – message created: id=${message.id} conversationId=${dto.conversationId}`,
     );
 
-    this.server.to(dto.conversationId).emit('new_message', message);
+    // Target the per-user rooms rather than the conversation room: conversation
+    // rooms are only joined in handleConnection, so a participant who was
+    // already online when this conversation was created would never be in it.
+    // Chained .to() unions the rooms and still delivers once per socket.
+    this.emitToParticipants(conversation, 'new_message', message);
     return message;
   }
 
@@ -237,9 +241,24 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       `mark_read – marked ${result.count} message(s) as read: readerId=${reader.id} conversationId=${data.conversationId}`,
     );
 
-    this.server.to(data.conversationId).emit('messages_read', {
+    this.emitToParticipants(conv, 'messages_read', {
       conversationId: data.conversationId,
       readBy: reader.id,
     });
+  }
+
+  /**
+   * Broadcast to both participants' personal rooms, which every socket joins on
+   * connect. Reaches the actor too, so their own unread badge refreshes.
+   */
+  private emitToParticipants(
+    conversation: { participant1Id: string; participant2Id: string },
+    event: string,
+    payload: unknown,
+  ) {
+    this.server
+      .to(`user:${conversation.participant1Id}`)
+      .to(`user:${conversation.participant2Id}`)
+      .emit(event, payload);
   }
 }

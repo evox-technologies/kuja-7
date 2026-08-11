@@ -351,8 +351,10 @@ export class UsersService {
         }),
       ]);
 
+    // An interest accepted in either direction is a match — only the accepted
+    // side gets a row, so requiring both would never be true.
     const isMutual =
-      myInterest?.status === 'ACCEPTED' && theirInterest?.status === 'ACCEPTED';
+      myInterest?.status === 'ACCEPTED' || theirInterest?.status === 'ACCEPTED';
 
     const contactVisible =
       isMutual &&

@@ -67,29 +67,52 @@ export default function ChatWindow({ conversationId, other, currentUserId, onBac
   const socketRef = useRef<Socket | null>(null)
   const convIdRef = useRef<string | null>(null)
 
+  // Tell the server this conversation has been seen. Awaits the socket rather
+  // than testing it: on a cold mount — arriving straight from a notification
+  // link — the socket is still connecting, and the old `if (socket?.connected)`
+  // guard silently skipped the emit, so the messages stayed unread and the
+  // navbar badge kept counting them.
+  const markRead = useCallback(async (id: string) => {
+    try {
+      const socket = await getSocket()
+      socket.emit('mark_read', { conversationId: id })
+    } catch {
+      // Offline; the next successful open marks them.
+    }
+  }, [])
+
   // Connect socket once
   useEffect(() => {
     let mounted = true
-    getSocket()
-      .then((socket) => {
-        if (!mounted) return
-        socketRef.current = socket
+    let socket: Socket | null = null
 
-        socket.on('new_message', (msg: ChatMessage) => {
-          if (msg.conversationId !== convIdRef.current) return
-          setMessages((prev) => {
-            if (prev.some((m) => m.id === msg.id)) return prev
-            return [...prev, msg]
-          })
-        })
+    const onNewMessage = (msg: ChatMessage) => {
+      if (msg.conversationId !== convIdRef.current) return
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === msg.id)) return prev
+        return [...prev, msg]
+      })
+      // It arrived while the user was looking at it, so it is already read.
+      if (msg.senderId !== currentUserId) markRead(msg.conversationId)
+    }
+
+    getSocket()
+      .then((s) => {
+        if (!mounted) return
+        socket = s
+        socketRef.current = s
+        s.on('new_message', onNewMessage)
       })
       .catch(console.error)
 
     return () => {
       mounted = false
-      socketRef.current?.off('new_message')
+      // Remove only this handler. `off('new_message')` with no handler argument
+      // unregisters *every* listener on the shared socket, which used to kill
+      // the navbar badge and the conversation list preview until a page reload.
+      socket?.off('new_message', onNewMessage)
     }
-  }, [])
+  }, [currentUserId, markRead])
 
   // Fetch messages when conversation changes
   const fetchMessages = useCallback(async (id: string) => {
@@ -116,12 +139,8 @@ export default function ChatWindow({ conversationId, other, currentUserId, onBac
     }
 
     fetchMessages(conversationId)
-
-    // Mark read
-    if (socketRef.current?.connected) {
-      socketRef.current.emit('mark_read', { conversationId })
-    }
-  }, [conversationId, fetchMessages])
+    markRead(conversationId)
+  }, [conversationId, fetchMessages, markRead])
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
