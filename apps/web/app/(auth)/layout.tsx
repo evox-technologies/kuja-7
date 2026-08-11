@@ -5,11 +5,12 @@ import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
 import LanguageToggle from '@/components/layout/language-toggle'
+import Logo from '@/components/layout/logo'
 import { asset } from '@/lib/assets'
 import { useI18n } from '@/lib/i18n/use-i18n'
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
-  const { messages, t } = useI18n()
+  const { t } = useI18n()
   const pathname = usePathname()
   const isOnboarding = pathname === '/onboarding'
 
@@ -21,8 +22,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             <Link href="/" className="text-gray-500 hover:text-white transition-colors">
               <ChevronLeft className="w-5 h-5" />
             </Link>
-            <Link href="/" className="text-xl font-bold tracking-widest text-white">
-              {messages.nav.brand}
+            <Link href="/" className="transition-opacity hover:opacity-80">
+              <Logo className="text-xl text-white" />
             </Link>
           </div>
           <div className="flex items-center gap-4">

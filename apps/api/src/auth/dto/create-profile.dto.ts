@@ -5,6 +5,7 @@ import {
   IsDateString,
   IsOptional,
   IsArray,
+  Matches,
 } from 'class-validator';
 import { Gender } from '@prisma/client';
 
@@ -107,10 +108,14 @@ export class CreateProfileDto {
   // Private contact
   @IsString()
   @IsOptional()
+  @Matches(/^$|^\+?[0-9][0-9\s-]{6,18}$/, { message: 'Invalid mobile number' })
   mobileNumber?: string;
 
   @IsString()
   @IsOptional()
+  @Matches(/^$|^\+?[0-9][0-9\s-]{6,18}$/, {
+    message: 'Invalid WhatsApp number',
+  })
   whatsappNumber?: string;
 
   @IsString()

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Heart, MessageCircle } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import ProfileCard, { ProfileCardData } from '@/components/dashboard/profile-card'
+import { useI18n } from '@/lib/i18n/use-i18n'
 
 interface InterestRecord {
   id: string
@@ -112,9 +113,11 @@ function OpenChatButton({ profileId }: { profileId: string }) {
 }
 
 export default function InterestsPage() {
+  const { t: tr } = useI18n()
   const [tab, setTab] = useState<Tab>('received')
   const [received, setReceived] = useState<InterestRecord[]>([])
   const [sent, setSent] = useState<InterestRecord[]>([])
+  const [sort, setSort] = useState<'newest' | 'oldest'>('newest')
   const [loading, setLoading] = useState(true)
 
   async function load() {
@@ -135,7 +138,10 @@ export default function InterestsPage() {
 
   useEffect(() => { load() }, [])
 
-  const items = tab === 'received' ? received : sent
+  const items = [...(tab === 'received' ? received : sent)].sort((a, b) => {
+    const diff = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    return sort === 'oldest' ? diff : -diff
+  })
 
   return (
     <div className="h-full overflow-y-auto">
@@ -151,14 +157,18 @@ export default function InterestsPage() {
                   tab === t ? 'bg-gray-900 text-white' : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                {t.charAt(0).toUpperCase() + t.slice(1)}
+                {t === 'sent' ? tr('dashboard.sent') : tr('dashboard.received')}
               </button>
             ))}
           </div>
           <div className="ml-auto">
-            <select className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none">
-              <option>Newest First</option>
-              <option>Oldest First</option>
+            <select
+              value={sort}
+              onChange={e => setSort(e.target.value as 'newest' | 'oldest')}
+              className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none"
+            >
+              <option value="newest">{tr('dashboard.newestFirst')}</option>
+              <option value="oldest">{tr('dashboard.oldestFirst')}</option>
             </select>
           </div>
         </div>

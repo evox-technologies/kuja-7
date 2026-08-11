@@ -35,7 +35,7 @@ export default function About() {
       {/* Hero */}
       <section className="relative h-[70vh] min-h-[420px] w-full overflow-hidden">
         <Image
-          src={asset('/images/hero.webp')}
+          src={asset('/images/hero.jpeg')}
           alt={a.heroTitle}
           fill
           priority

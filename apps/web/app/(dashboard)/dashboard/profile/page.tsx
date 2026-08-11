@@ -5,12 +5,18 @@ import { useRouter } from 'next/navigation'
 import { Lock, User, Camera } from 'lucide-react'
 import { apiFetch, ApiError } from '@/lib/api'
 import { useProfileGuard } from '@/contexts/profile-guard'
+import HeightSlider from '@/components/dashboard/height-slider'
 import {
   HEIGHT_MIN_IN,
   HEIGHT_MAX_IN,
   formatHeight,
   heightToInches,
 } from '@/lib/height'
+import {
+  NATIONALITIES, ETHNICITIES, RELIGIONS, COUNTRIES, citiesForCountry, DISTRICTS,
+  EDUCATION_LEVELS, PROFESSIONS, CIVIL_STATUSES,
+  DRINKING_OPTS, SMOKING_OPTS, FOOD_PREFS, KUJA_NUMBERS,
+} from '@/lib/options'
 
 interface Profile {
   id: string
@@ -289,18 +295,11 @@ export default function OwnProfilePage() {
   const [saveError, setSaveError] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof Draft, true>>>({})
   const [uploadingIdx, setUploadingIdx] = useState<number | null>(null)
+  const [resetNotice, setResetNotice] = useState('')
 
   useEffect(() => {
     apiFetch<Profile>('/auth/me')
-      .then(p => {
-        setProfile(p)
-        const d = profileToDraft(p)
-        setDraft(d)
-        setCountrySelection(deriveCountrySelection(d.country))
-        setEthnicitySelection(deriveEthnicitySelection(d.ethnicity))
-        setKujaSelection(deriveKujaSelection(d.kujaNumber))
-        setKujaOther(deriveKujaOther(d.kujaNumber))
-      })
+      .then(p => { setProfile(p); setDraft(profileToDraft(p)) })
       .catch((err) => {
         if (err instanceof ApiError && err.status === 401) router.replace('/login')
         else if (err instanceof ApiError && err.status === 404) router.replace('/onboarding')
@@ -361,17 +360,19 @@ export default function OwnProfilePage() {
     }
   }
 
-  function handleReset() {
-    if (profile) {
-      const d = profileToDraft(profile)
-      setDraft(d)
-      setCountrySelection(deriveCountrySelection(d.country))
-      setEthnicitySelection(deriveEthnicitySelection(d.ethnicity))
-      setKujaSelection(deriveKujaSelection(d.kujaNumber))
-      setKujaOther(deriveKujaOther(d.kujaNumber))
-    }
+  async function handleReset() {
+    if (!window.confirm('Discard unsaved changes?')) return
     setSaveError('')
     setFieldErrors({})
+    try {
+      const fresh = await apiFetch<Profile>('/auth/me')
+      setProfile(fresh)
+      setDraft(profileToDraft(fresh))
+    } catch {
+      if (profile) setDraft(profileToDraft(profile))
+    }
+    setResetNotice('Changes reverted')
+    setTimeout(() => setResetNotice(''), 3000)
   }
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -533,64 +534,30 @@ export default function OwnProfilePage() {
             <ReadField label="Age *" value={String(age(profile.dateOfBirth))} />
             <ReadField label="Gender *" value={profile.gender} />
             <HeightSlider value={draft.height} onChange={v => set('height', v)} required error={!!fieldErrors.height} />
-            <FormField label="Nationality" value={draft.nationality} onChange={v => set('nationality', v)} />
-            <div>
-              <FormSelect
-                label="Ethnicity"
-                value={ethnicitySelection}
-                options={ETHNICITIES}
-                onChange={v => {
-                  setEthnicitySelection(v)
-                  set('ethnicity', v === 'Other' ? '' : v)
-                }}
-              />
-              {ethnicitySelection === 'Other' && (
-                <div className="mt-2">
-                  <FormField
-                    label="Specify Ethnicity"
-                    value={draft.ethnicity}
-                    onChange={v => set('ethnicity', v)}
-                    placeholder="Enter your ethnicity"
-                  />
-                </div>
-              )}
-            </div>
+            <FormSelect label="Nationality" value={draft.nationality} options={NATIONALITIES} onChange={v => set('nationality', v)} />
+            <FormSelect label="Ethnicity" value={draft.ethnicity} options={ETHNICITIES} onChange={v => set('ethnicity', v)} />
             <FormField label="Caste" value={draft.caste} onChange={v => set('caste', v)} />
             <FormSelect label="Civil Status" value={draft.civilStatus} options={CIVIL_STATUSES} onChange={v => set('civilStatus', v)} />
-            <FormField label="Religion" value={draft.religion} onChange={v => set('religion', v)} />
+            <FormSelect label="Religion" value={draft.religion} options={RELIGIONS} onChange={v => set('religion', v)} />
           </div>
         </Section>
 
         {/* ── Residency ── */}
         <Section title="Residency">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            <div>
-              <FormSelect
-                label="Country"
-                value={countrySelection}
-                options={COUNTRIES}
-                onChange={v => {
-                  setCountrySelection(v)
-                  set('country', v === 'Other' ? '' : v)
-                }}
-                required
-                error={!!fieldErrors.country && countrySelection !== 'Other'}
-              />
-              {countrySelection === 'Other' && (
-                <div className="mt-2">
-                  <FormField
-                    label="Specify Country"
-                    value={draft.country}
-                    onChange={v => set('country', v)}
-                    placeholder="Enter your country"
-                    required
-                    error={!!fieldErrors.country}
-                  />
-                </div>
-              )}
-            </div>
-            <FormField label="City" value={draft.city} onChange={v => set('city', v)} required error={!!fieldErrors.city} />
-            <FormField label="State / District" value={draft.stateDistrict} onChange={v => set('stateDistrict', v)} />
+            <FormSelect
+              label="Country"
+              value={draft.country}
+              options={COUNTRIES}
+              onChange={v => {
+                // Changing country invalidates the selected city
+                setDraft(prev => prev ? { ...prev, country: v, city: '' } : prev)
+              }}
+              required
+              error={!!fieldErrors.country}
+            />
+            <FormSelect label="City" value={draft.city} options={citiesForCountry(draft.country)} onChange={v => set('city', v)} required error={!!fieldErrors.city} />
+            <FormSelect label="State / District" value={draft.stateDistrict} options={DISTRICTS} onChange={v => set('stateDistrict', v)} />
           </div>
         </Section>
 
@@ -598,7 +565,7 @@ export default function OwnProfilePage() {
         <Section title="Education & Profession">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <FormSelect label="Education Level" value={draft.educationLevel} options={EDUCATION_LEVELS} onChange={v => set('educationLevel', v)} required error={!!fieldErrors.educationLevel} />
-            <FormField label="Profession" value={draft.profession} onChange={v => set('profession', v)} placeholder="e.g. Software Engineer" required error={!!fieldErrors.profession} />
+            <FormSelect label="Profession" value={draft.profession} options={PROFESSIONS} onChange={v => set('profession', v)} required error={!!fieldErrors.profession} />
           </div>
         </Section>
 
@@ -618,34 +585,7 @@ export default function OwnProfilePage() {
           note="Horoscope details are only visible to profiles you grant permission to view."
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <FormSelect
-                label="Kuja Number"
-                value={kujaSelection}
-                options={KUJA_NUMBERS}
-                onChange={v => {
-                  setKujaSelection(v)
-                  setKujaOther('')
-                  set('kujaNumber', v)
-                }}
-                required
-                error={!!fieldErrors.kujaNumber}
-              />
-              {kujaSelection === 'Other' && (
-                <div className="mt-2">
-                  <FormField
-                    label="Specify Kuja Number (optional)"
-                    value={kujaOther}
-                    onChange={v => {
-                      setKujaOther(v)
-                      set('kujaNumber', v.trim() ? v : 'Other')
-                    }}
-                    type="number"
-                    placeholder="Enter your Kuja number"
-                  />
-                </div>
-              )}
-            </div>
+            <FormSelect label="Kuja Number" value={draft.kujaNumber} options={KUJA_NUMBERS} onChange={v => set('kujaNumber', v)} required error={!!fieldErrors.kujaNumber} />
             <FormDate label="Birth Day" value={draft.birthDay} onChange={v => set('birthDay', v)} required error={!!fieldErrors.birthDay} />
           </div>
         </Section>
@@ -658,6 +598,8 @@ export default function OwnProfilePage() {
         <div className="max-w-3xl mx-auto px-3 sm:px-6 py-3 flex flex-wrap items-center gap-3">
           {saveError
             ? <p className="flex-1 min-w-0 text-xs text-red-500">{saveError}</p>
+            : resetNotice
+            ? <p className="flex-1 min-w-0 text-xs text-green-600 font-medium">{resetNotice}</p>
             : <p className="flex-1 text-xs text-gray-400 hidden sm:block">Changes are saved to your profile</p>
           }
           <button

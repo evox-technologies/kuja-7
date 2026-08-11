@@ -7,6 +7,12 @@ import { apiFetch, ApiError } from '@/lib/api'
 import ProfileCard, { ProfileCardData } from '@/components/dashboard/profile-card'
 import Link from 'next/link'
 import { HEIGHT_MIN_IN, HEIGHT_MAX_IN, formatHeight } from '@/lib/height'
+import { useI18n } from '@/lib/i18n/use-i18n'
+import {
+  COUNTRIES, citiesForCountry, RELIGIONS, ETHNICITIES, PROFESSIONS,
+  CIVIL_STATUSES, EDUCATION_LEVELS, FOOD_PREFS, DRINKING_OPTS, SMOKING_OPTS,
+  KUJA_NUMBERS, MIN_AGE, MAX_AGE,
+} from '@/lib/options'
 
 interface SearchResult {
   profiles: ProfileCardData[]
@@ -34,17 +40,19 @@ interface Filters {
   ethnicity: string
   civilStatus: string
   educationLevel: string
+  profession: string
   drinking: string
   smoking: string
   foodPreference: string
   kujaNumber: string
+  sort: string
 }
 
 const EMPTY_FILTERS: Filters = {
   gender: '', ageMin: '', ageMax: '', heightMin: '', heightMax: '',
   religion: '', country: '', city: '',
-  ethnicity: '', civilStatus: '', educationLevel: '', drinking: '', smoking: '',
-  foodPreference: '', kujaNumber: '',
+  ethnicity: '', civilStatus: '', educationLevel: '', profession: '',
+  drinking: '', smoking: '', foodPreference: '', kujaNumber: '', sort: '',
 }
 
 // const AGE_QUICK = [21, 22, 23, 24, 25, 26]
@@ -106,11 +114,13 @@ function FilterInput({ label, value, onChange, placeholder }: {
 }
 
 function HeightRangeFilter({
+  label,
   min,
   max,
   onMinChange,
   onMaxChange,
 }: {
+  label: string
   min: string
   max: string
   onMinChange: (v: string) => void
@@ -135,7 +145,7 @@ function HeightRangeFilter({
     <div className="mb-3">
       <div className="flex items-center justify-between mb-2">
         <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
-          Height
+          {label}
         </label>
         <span className="text-xs font-semibold text-gray-800 tabular-nums">
           {formatHeight(minIn)} – {formatHeight(maxIn)}
@@ -180,6 +190,7 @@ function HeightRangeFilter({
 }
 
 function HomePageInner() {
+  const { t } = useI18n()
   const router = useRouter()
   const searchParams = useSearchParams()
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
@@ -193,6 +204,7 @@ function HomePageInner() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(false)
+  const [searchError, setSearchError] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -230,13 +242,16 @@ function HomePageInner() {
       if (f.smoking) params.set('smoking', f.smoking)
       if (f.foodPreference) params.set('foodPreference', f.foodPreference)
       if (f.kujaNumber) params.set('kujaNumber', f.kujaNumber)
+      if (f.profession) params.set('profession', f.profession)
+      if (f.sort) params.set('sort', f.sort)
 
       const data = await apiFetch<SearchResult>(`/users/search?${params}`)
       if (p === 1) setResults(data.profiles)
       else setResults(prev => [...prev, ...data.profiles])
       setTotalPages(data.totalPages)
+      setSearchError(false)
     } catch {
-      // noop
+      setSearchError(true)
     } finally {
       setLoading(false)
     }
@@ -254,7 +269,7 @@ function HomePageInner() {
       {/* Kuja Number — card with grid buttons */}
       <div className="mb-4 rounded-2xl overflow-hidden bg-brand">
         <div className="flex items-center justify-between px-4 pt-4 pb-3">
-          <p className="text-sm font-bold text-on-brand tracking-wide">Kuja Number</p>
+          <p className="text-sm font-bold text-on-brand tracking-wide">{t('dashboard.filters.kujaNumber')}</p>
           <div className="flex items-center gap-2">
             {filters.kujaNumber && (
               <button onClick={() => setFilter('kujaNumber', '')} className="text-on-brand/70 hover:text-on-brand transition-colors">
@@ -308,9 +323,9 @@ function HomePageInner() {
 
       {/* Looking for */}
       <div className="mb-4">
-        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Looking For</p>
+        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-2">{t('dashboard.filters.lookingFor')}</p>
         <div className="flex gap-2">
-          {[{ label: '♀ Bride', value: 'FEMALE' }, { label: '♂ Groom', value: 'MALE' }].map(g => (
+          {[{ label: t('dashboard.filters.bride'), value: 'FEMALE' }, { label: t('dashboard.filters.groom'), value: 'MALE' }].map(g => (
             <button key={g.value} onClick={() => setFilter('gender', filters.gender === g.value ? '' : g.value)}
               className={`flex-1 py-2 rounded-xl border text-xs font-medium transition-colors ${
                 filters.gender === g.value ? 'border-brand bg-brand-light text-brand-text' : 'border-gray-200 text-gray-500 hover:border-gray-300'
@@ -323,39 +338,54 @@ function HomePageInner() {
 
       {/* Age range */}
       <div className="mb-3">
-        <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Age Range</label>
+        <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-2">{t('dashboard.filters.ageRange')}</label>
         <div className="flex items-center gap-2">
-          <input type="number" min={15} max={80} value={filters.ageMin} onChange={e => setFilter('ageMin', e.target.value)}
-            placeholder="Min" className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-gray-50 focus:outline-none" />
+          <input type="number" min={MIN_AGE} max={MAX_AGE} value={filters.ageMin} onChange={e => setFilter('ageMin', e.target.value)}
+            placeholder={t('dashboard.filters.min')} className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-gray-50 focus:outline-none" />
           <span className="text-gray-300 text-xs">–</span>
-          <input type="number" min={18} max={80} value={filters.ageMax} onChange={e => setFilter('ageMax', e.target.value)}
-            placeholder="Max" className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-gray-50 focus:outline-none" />
+          <input type="number" min={MIN_AGE} max={MAX_AGE} value={filters.ageMax} onChange={e => setFilter('ageMax', e.target.value)}
+            placeholder={t('dashboard.filters.max')} className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-gray-50 focus:outline-none" />
         </div>
       </div>
 
       <HeightRangeFilter
+        label={t('dashboard.filters.height')}
         min={filters.heightMin}
         max={filters.heightMax}
         onMinChange={v => setFilter('heightMin', v)}
         onMaxChange={v => setFilter('heightMax', v)}
       />
 
-      <FilterSelect label="Country" value={filters.country} onChange={v => setFilter('country', v)} options={COUNTRIES} placeholder="Any" />
-      <FilterInput label="City" value={filters.city} onChange={v => setFilter('city', v)} placeholder="Any" />
-      <FilterInput label="Religion" value={filters.religion} onChange={v => setFilter('religion', v)} placeholder="Any" />
-      <FilterSelect label="Ethnicity" value={filters.ethnicity} onChange={v => setFilter('ethnicity', v)} options={ETHNICITIES} placeholder="Any" />
-      <FilterSelect label="Civil Status" value={filters.civilStatus} onChange={v => setFilter('civilStatus', v)} options={CIVIL_STATUSES} placeholder="Any" />
-      <FilterInput label="Profession" value={filters.country} onChange={v => setFilter('country', v)} placeholder="Any" />
-      <FilterSelect label="Education Level" value={filters.educationLevel} onChange={v => setFilter('educationLevel', v)} options={EDUCATION_LEVELS} placeholder="Any" />
-      <FilterSelect label="Food Preference" value={filters.foodPreference} onChange={v => setFilter('foodPreference', v)} options={FOOD_PREFS} placeholder="Any" />
-      <FilterSelect label="Drinking" value={filters.drinking} onChange={v => setFilter('drinking', v)} options={DRINKING_OPTS} placeholder="Any" />
-      <FilterSelect label="Smoking" value={filters.smoking} onChange={v => setFilter('smoking', v)} options={SMOKING_OPTS} placeholder="Any" />
+      <FilterSelect
+        label={t('dashboard.filters.country')}
+        value={filters.country}
+        onChange={v => {
+          // Changing country invalidates the selected city
+          setFilters(prev => ({ ...prev, country: v, city: '' }))
+          setPage(1)
+        }}
+        options={COUNTRIES}
+        placeholder={t('dashboard.filters.any')}
+      />
+      <FilterSelect label={t('dashboard.filters.city')} value={filters.city} onChange={v => setFilter('city', v)} options={citiesForCountry(filters.country)} placeholder={t('dashboard.filters.any')} />
+      <FilterSelect label={t('dashboard.filters.religion')} value={filters.religion} onChange={v => setFilter('religion', v)} options={RELIGIONS} placeholder={t('dashboard.filters.any')} />
+      <FilterSelect label={t('dashboard.filters.ethnicity')} value={filters.ethnicity} onChange={v => setFilter('ethnicity', v)} options={ETHNICITIES} placeholder={t('dashboard.filters.any')} />
+      <FilterSelect label={t('dashboard.filters.civilStatus')} value={filters.civilStatus} onChange={v => setFilter('civilStatus', v)} options={CIVIL_STATUSES} placeholder={t('dashboard.filters.any')} />
+      <FilterSelect label={t('dashboard.filters.profession')} value={filters.profession} onChange={v => setFilter('profession', v)} options={PROFESSIONS} placeholder={t('dashboard.filters.any')} />
+      <FilterSelect label={t('dashboard.filters.educationLevel')} value={filters.educationLevel} onChange={v => setFilter('educationLevel', v)} options={EDUCATION_LEVELS} placeholder={t('dashboard.filters.any')} />
+      <FilterSelect label={t('dashboard.filters.foodPreference')} value={filters.foodPreference} onChange={v => setFilter('foodPreference', v)} options={FOOD_PREFS} placeholder={t('dashboard.filters.any')} />
+      <FilterSelect label={t('dashboard.filters.drinking')} value={filters.drinking} onChange={v => setFilter('drinking', v)} options={DRINKING_OPTS} placeholder={t('dashboard.filters.any')} />
+      <FilterSelect label={t('dashboard.filters.smoking')} value={filters.smoking} onChange={v => setFilter('smoking', v)} options={SMOKING_OPTS} placeholder={t('dashboard.filters.any')} />
 
       <button
-        onClick={() => { setFilters(EMPTY_FILTERS); setPage(1) }}
+        onClick={() => {
+          setFilters({ ...EMPTY_FILTERS })
+          setPage(1)
+          router.replace('/dashboard/home')
+        }}
         className="mt-2 text-xs text-gray-400 hover:text-brand transition-colors text-left"
       >
-        Reset all filters
+        {t('dashboard.filters.reset')}
       </button>
     </div>
   )
@@ -373,7 +403,7 @@ function HomePageInner() {
           <div className="absolute inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
           <aside className="relative z-10 w-72 max-w-[85vw] bg-white h-full overflow-y-auto p-4 shadow-xl">
             <div className="flex items-center justify-between mb-4">
-              <span className="font-semibold text-gray-800">Filters</span>
+              <span className="font-semibold text-gray-800">{t('dashboard.filters.title')}</span>
               <button onClick={() => setSidebarOpen(false)}><X className="w-5 h-5 text-gray-400" /></button>
             </div>
             {filterPanel}
@@ -391,12 +421,12 @@ function HomePageInner() {
               <div className="flex items-start gap-2">
                 <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-semibold text-amber-800 text-sm">Complete your profile</p>
-                  <p className="text-xs text-amber-600 mt-0.5">Your profile is incomplete. Finish setting it up to increase your chances of finding the right partner.</p>
+                  <p className="font-semibold text-amber-800 text-sm">{t('dashboard.completeProfileTitle')}</p>
+                  <p className="text-xs text-amber-600 mt-0.5">{t('dashboard.completeProfileBody')}</p>
                 </div>
               </div>
               <Link href="/dashboard/profile" className="flex items-center gap-1.5 px-4 py-2 bg-amber-500 text-white rounded-full text-xs font-semibold hover:bg-amber-600 transition-colors whitespace-nowrap shrink-0">
-                Set Up Profile <ArrowRight className="w-3.5 h-3.5" />
+                {t('dashboard.setUpProfile')} <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
           )}
@@ -408,13 +438,17 @@ function HomePageInner() {
               className="lg:hidden flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50"
             >
               <SlidersHorizontal className="w-4 h-4" />
-              Filters
+              {t('dashboard.filters.title')}
             </button>
             <div className="flex flex-wrap items-center gap-2 ml-auto">
-              <span className="text-xs text-gray-400">Sort By:</span>
-              <select className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none">
-                <option>Newest First</option>
-                <option>Oldest First</option>
+              <span className="text-xs text-gray-400">{t('dashboard.sortBy')}</span>
+              <select
+                value={filters.sort || 'newest'}
+                onChange={e => setFilter('sort', e.target.value)}
+                className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none"
+              >
+                <option value="newest">{t('dashboard.newestFirst')}</option>
+                <option value="oldest">{t('dashboard.oldestFirst')}</option>
               </select>
             </div>
           </div>
@@ -424,9 +458,19 @@ function HomePageInner() {
             <div className="flex justify-center py-20">
               <div className="w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin" />
             </div>
+          ) : searchError ? (
+            <div className="text-center py-20 text-gray-400">
+              <p className="text-sm">{t('dashboard.searchFailed')}</p>
+              <button
+                onClick={() => search(filters, page)}
+                className="mt-3 px-5 py-2 border border-gray-200 rounded-full text-sm text-gray-600 hover:border-brand hover:text-brand transition-colors"
+              >
+                {t('dashboard.retry')}
+              </button>
+            </div>
           ) : results.length === 0 ? (
             <div className="text-center py-20 text-gray-400">
-              <p className="text-sm">No profiles found. Try adjusting your filters.</p>
+              <p className="text-sm">{t('dashboard.noProfiles')}</p>
             </div>
           ) : (
             <>
@@ -443,7 +487,7 @@ function HomePageInner() {
                     disabled={loading}
                     className="px-6 py-2.5 border border-gray-200 rounded-full text-sm text-gray-600 hover:border-brand hover:text-brand transition-colors disabled:opacity-50"
                   >
-                    {loading ? 'Loading…' : 'Load More'}
+                    {loading ? t('dashboard.loading') : t('dashboard.loadMore')}
                   </button>
                 </div>
               )}
