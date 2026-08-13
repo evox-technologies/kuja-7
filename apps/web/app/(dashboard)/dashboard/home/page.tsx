@@ -9,7 +9,7 @@ import Link from 'next/link'
 import { HEIGHT_MIN_IN, HEIGHT_MAX_IN, formatHeight } from '@/lib/height'
 import { useI18n } from '@/lib/i18n/use-i18n'
 import {
-  COUNTRIES, citiesForCountry, RELIGIONS, ETHNICITIES, PROFESSIONS,
+  citiesForCountry, RELIGIONS, PROFESSIONS,
   CIVIL_STATUSES, EDUCATION_LEVELS, FOOD_PREFS, DRINKING_OPTS, SMOKING_OPTS,
   KUJA_NUMBERS, MIN_AGE, MAX_AGE,
 } from '@/lib/options'
@@ -56,28 +56,18 @@ const EMPTY_FILTERS: Filters = {
 }
 
 // const AGE_QUICK = [21, 22, 23, 24, 25, 26]
-const CIVIL_STATUSES = ['Never Married', 'Divorced', 'Widowed', 'Separated']
-const EDUCATION_LEVELS = [
-  'Up to GCE O/L',
-  'Up to GCE A/L',
-  'Diploma',
-  'Professional Qualification',
-  'Undergraduate',
-  "Bachelor's Degree or Equivalent",
-  'Post Graduate Diploma',
-  "Master's Degree or Equivalent",
-  'Phd or Post Doctoral',
-]
+
+// Still local because they diverge from lib/options.ts, and adopting the shared
+// versions would change what the filters send to the API:
+//  - shared COUNTRIES drops Maldives and adds seven other countries
+//  - shared ETHNICITIES uses 'Sinhala'/'Moor', but onboarding stores
+//    'Sinhalese'/'Muslim' and the API's KNOWN_ETHNICITIES matches those
 const COUNTRIES = [
   'Australia', 'Canada', 'Italy', 'Japan', 'Maldives', 'New Zealand',
   'Singapore', 'South Korea', 'Sri Lanka', 'United Arab Emirates',
   'United Kingdom', 'United States', 'Other',
 ]
 const ETHNICITIES = ['Sinhalese', 'Tamil', 'Muslim', 'Burgher', 'Other']
-const FOOD_PREFS = ['Vegetarian', 'Non-Vegetarian', 'Vegan', 'Halal']
-const DRINKING_OPTS = ['Never', 'Occasionally', 'Regularly']
-const SMOKING_OPTS = ['Never', 'Occasionally', 'Regularly']
-const KUJA_NUMBERS = ['1', '2', '4', '7', '8', '12']
 
 function FilterSelect({ label, value, onChange, options, placeholder }: {
   label: string; value: string; onChange: (v: string) => void; options: string[]; placeholder: string
@@ -93,22 +83,6 @@ function FilterSelect({ label, value, onChange, options, placeholder }: {
         <option value="">{placeholder}</option>
         {options.map(o => <option key={o} value={o}>{o}</option>)}
       </select>
-    </div>
-  )
-}
-
-function FilterInput({ label, value, onChange, placeholder }: {
-  label: string; value: string; onChange: (v: string) => void; placeholder?: string
-}) {
-  return (
-    <div className="mb-3">
-      <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">{label}</label>
-      <input
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-1 focus:ring-brand-border"
-      />
     </div>
   )
 }

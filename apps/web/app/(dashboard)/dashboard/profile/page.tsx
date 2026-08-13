@@ -7,15 +7,9 @@ import { apiFetch, ApiError } from '@/lib/api'
 import { useProfileGuard } from '@/contexts/profile-guard'
 import HeightSlider from '@/components/dashboard/height-slider'
 import {
-  HEIGHT_MIN_IN,
-  HEIGHT_MAX_IN,
-  formatHeight,
-  heightToInches,
-} from '@/lib/height'
-import {
-  NATIONALITIES, ETHNICITIES, RELIGIONS, COUNTRIES, citiesForCountry, DISTRICTS,
+  NATIONALITIES, RELIGIONS, citiesForCountry, DISTRICTS,
   EDUCATION_LEVELS, PROFESSIONS, CIVIL_STATUSES,
-  DRINKING_OPTS, SMOKING_OPTS, FOOD_PREFS, KUJA_NUMBERS,
+  DRINKING_OPTS, SMOKING_OPTS, FOOD_PREFS,
 } from '@/lib/options'
 
 interface Profile {
@@ -73,53 +67,18 @@ interface Draft {
   address: string
 }
 
+// Still local because they diverge from lib/options.ts:
+//  - this KUJA_NUMBERS carries a trailing 'Other' the shared list does not have
+//  - shared COUNTRIES drops Maldives and adds seven other countries
+//  - shared ETHNICITIES uses 'Sinhala'/'Moor', but onboarding stores
+//    'Sinhalese'/'Muslim' and the API's KNOWN_ETHNICITIES matches those
 const KUJA_NUMBERS = ['1', '2', '4', '7', '8', '12', 'Other']
-const KNOWN_KUJA_NUMBERS = KUJA_NUMBERS.slice(0, -1)
-const CIVIL_STATUSES = ['Never Married', 'Divorced', 'Widowed', 'Separated']
-const DRINKING_OPTS = ['Never', 'Occasionally', 'Regularly']
-const SMOKING_OPTS = ['Never', 'Occasionally', 'Regularly']
-const FOOD_PREFS = ['Vegetarian', 'Non-Vegetarian', 'Vegan', 'Halal']
-const EDUCATION_LEVELS = [
-  'Up to GCE O/L',
-  'Up to GCE A/L',
-  'Diploma',
-  'Professional Qualification',
-  'Undergraduate',
-  "Bachelor's Degree or Equivalent",
-  'Post Graduate Diploma',
-  "Master's Degree or Equivalent",
-  'Phd or Post Doctoral',
-]
 const COUNTRIES = [
   'Australia', 'Canada', 'Italy', 'Japan', 'Maldives', 'New Zealand',
   'Singapore', 'South Korea', 'Sri Lanka', 'United Arab Emirates',
   'United Kingdom', 'United States', 'Other',
 ]
-const KNOWN_COUNTRIES = COUNTRIES.slice(0, -1)
 const ETHNICITIES = ['Sinhalese', 'Tamil', 'Muslim', 'Burgher', 'Other']
-const KNOWN_ETHNICITIES = ETHNICITIES.slice(0, -1)
-
-function deriveCountrySelection(country: string): string {
-  if (!country) return ''
-  return KNOWN_COUNTRIES.includes(country) ? country : 'Other'
-}
-
-function deriveEthnicitySelection(ethnicity: string): string {
-  if (!ethnicity) return ''
-  return KNOWN_ETHNICITIES.includes(ethnicity) ? ethnicity : 'Other'
-}
-
-function deriveKujaSelection(kujaNumber: string): string {
-  if (!kujaNumber) return ''
-  return KNOWN_KUJA_NUMBERS.includes(kujaNumber) ? kujaNumber : 'Other'
-}
-
-// A specific number is optional once 'Other' is picked — only pre-fill this when the
-// saved value is an actual custom number, not the literal 'Other' placeholder itself.
-function deriveKujaOther(kujaNumber: string): string {
-  if (!kujaNumber || kujaNumber === 'Other') return ''
-  return KNOWN_KUJA_NUMBERS.includes(kujaNumber) ? '' : kujaNumber
-}
 
 function age(dob: string) {
   return Math.floor((Date.now() - new Date(dob).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
@@ -182,38 +141,6 @@ function FormField({ label, value, onChange, type = 'text', placeholder, require
         placeholder={placeholder}
         className={inputCls + (error ? ' border-red-400 focus:border-red-400 focus:ring-red-200' : '')}
       />
-    </div>
-  )
-}
-
-function HeightSlider({ value, onChange, required, error }: {
-  value: string; onChange: (v: string) => void; required?: boolean; error?: boolean
-}) {
-  const inches = heightToInches(value)
-  const display = formatHeight(inches)
-
-  return (
-    <div className={error ? 'rounded-xl ring-2 ring-red-200' : ''}>
-      <div className="flex items-center justify-between mb-1">
-        <p className="text-[10px] text-gray-400 uppercase tracking-wide">
-          Height{required && <RequiredStar />}
-        </p>
-        <span className="text-sm font-semibold text-gray-900 tabular-nums">{display}</span>
-      </div>
-      <input
-        type="range"
-        min={HEIGHT_MIN_IN}
-        max={HEIGHT_MAX_IN}
-        step={1}
-        value={inches}
-        onChange={e => onChange(formatHeight(Number(e.target.value)))}
-        className="w-full h-2 accent-brand cursor-pointer"
-        aria-label="Height"
-      />
-      <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-        <span>{formatHeight(HEIGHT_MIN_IN)}</span>
-        <span>{formatHeight(HEIGHT_MAX_IN)}</span>
-      </div>
     </div>
   )
 }
@@ -286,10 +213,6 @@ export default function OwnProfilePage() {
   const { refreshStatus } = useProfileGuard()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [draft, setDraft] = useState<Draft | null>(null)
-  const [countrySelection, setCountrySelection] = useState('')
-  const [ethnicitySelection, setEthnicitySelection] = useState('')
-  const [kujaSelection, setKujaSelection] = useState('')
-  const [kujaOther, setKujaOther] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')

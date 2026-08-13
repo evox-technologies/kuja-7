@@ -7,7 +7,7 @@ import { apiFetch } from '@/lib/api'
 import { ChevronLeft, Lock, Info } from 'lucide-react'
 import HeightSlider from '@/components/dashboard/height-slider'
 import {
-  NATIONALITIES, ETHNICITIES, RELIGIONS, COUNTRIES, citiesForCountry, DISTRICTS,
+  NATIONALITIES, RELIGIONS, citiesForCountry, DISTRICTS,
   PROFESSIONS, CIVIL_STATUSES, EDUCATION_LEVELS,
   FOOD_PREFS, DRINKING_OPTS, SMOKING_OPTS, KUJA_NUMBERS,
   MIN_AGE, PHONE_COUNTRY_CODES,
@@ -54,28 +54,17 @@ const EMPTY: FormData = {
   mobileNumber: '', whatsappNumber: '', address: '', images: [],
 }
 
-const KUJA_NUMBERS = ['1', '2', '4', '7', '8', '12']
+// Still local because they diverge from lib/options.ts. These two decide what
+// gets written to the profile at signup, so switching to the shared versions
+// would change stored data: shared COUNTRIES drops Maldives and adds seven
+// other countries, and shared ETHNICITIES uses 'Sinhala'/'Moor' where the API's
+// KNOWN_ETHNICITIES expects 'Sinhalese'/'Muslim'.
 const COUNTRIES = [
   'Australia', 'Canada', 'Italy', 'Japan', 'Maldives', 'New Zealand',
   'Singapore', 'South Korea', 'Sri Lanka', 'United Arab Emirates',
   'United Kingdom', 'United States', 'Other',
 ]
 const ETHNICITIES = ['Sinhalese', 'Tamil', 'Muslim', 'Burgher', 'Other']
-const CIVIL_STATUSES = ['Never Married', 'Divorced', 'Widowed', 'Separated']
-const EDUCATION_LEVELS = [
-  'Up to GCE O/L',
-  'Up to GCE A/L',
-  'Diploma',
-  'Professional Qualification',
-  'Undergraduate',
-  "Bachelor's Degree or Equivalent",
-  'Post Graduate Diploma',
-  "Master's Degree or Equivalent",
-  'Phd or Post Doctoral',
-]
-const FOOD_PREFS = ['Vegetarian', 'Non-Vegetarian', 'Vegan', 'Halal']
-const DRINKING_OPTS = ['Never', 'Occasionally', 'Regularly']
-const SMOKING_OPTS = ['Never', 'Occasionally', 'Regularly']
 
 function FieldGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -214,8 +203,6 @@ export default function OnboardingPage() {
   const router = useRouter()
   const [step, setStep] = useState<Step>(1)
   const [form, setForm] = useState<FormData>(EMPTY)
-  const [countrySelection, setCountrySelection] = useState('')
-  const [ethnicitySelection, setEthnicitySelection] = useState('')
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -396,11 +383,6 @@ export default function OnboardingPage() {
                     options={COUNTRIES}
                     placeholder="Choose Country"
                   />
-                  {countrySelection === 'Other' && (
-                    <div className="mt-2">
-                      <TextInput value={form.country} onChange={v => set('country', v)} placeholder="Enter your country" />
-                    </div>
-                  )}
                 </FieldGroup>
                 <FieldGroup label="City">
                   <SelectInput value={form.city} onChange={v => set('city', v)} options={citiesForCountry(form.country)} placeholder="Choose City" />
