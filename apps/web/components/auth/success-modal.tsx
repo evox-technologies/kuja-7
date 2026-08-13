@@ -19,7 +19,7 @@ export default function SuccessModal() {
           {t('auth.successModal.subtitle')}
         </p>
         <Button variant="gradient" className="w-full rounded-full mb-3" size="lg" asChild>
-          <Link href="/profile/setup">{t('auth.successModal.completeProfile')} →</Link>
+          <Link href="/onboarding">{t('auth.successModal.completeProfile')} →</Link>
         </Button>
         <Button variant="outline" className="w-full rounded-full" size="lg" asChild>
           <Link href="/">{t('auth.successModal.skip')}</Link>
