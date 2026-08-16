@@ -3,17 +3,28 @@
   Subject: Confirm your new Kuja7 email
   Only needed if/when an email-change flow is added. MUST keep {{ .ConfirmationURL }}.
 -->
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:32px 0;font-family:Arial,Helvetica,sans-serif">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:32px 16px;font-family:Nunito,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif">
   <tr><td align="center">
-    <table width="440" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden">
-      <tr><td style="background:#E53856;padding:24px 32px">
-        <span style="color:#ffffff;font-size:20px;font-weight:bold;letter-spacing:3px">KUJA7</span>
+    <table role="presentation" width="440" cellpadding="0" cellspacing="0" style="width:100%;max-width:440px;background:#ffffff;border-radius:16px;overflow:hidden">
+
+      <tr><td style="padding:24px 32px;border-bottom:3px solid #f5b800">
+        <span style="font-family:'Playfair Display',Georgia,'Times New Roman',serif;font-size:24px;font-weight:800;letter-spacing:-0.5px;color:#1a1a1a">Kuja<span style="color:#d4970a">7</span><span style="font-weight:400;color:#7a7a7a">.lk</span></span>
       </td></tr>
+
       <tr><td style="padding:32px">
-        <h1 style="margin:0 0 8px;font-size:22px;color:#18181b">Confirm your new email</h1>
-        <p style="margin:0 0 24px;font-size:14px;color:#71717a">Confirm changing your address to <strong>{{ .Email }}</strong>.</p>
-        <a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#E53856;color:#ffffff;font-size:15px;font-weight:bold;text-decoration:none;padding:14px 28px;border-radius:999px">Confirm Email Change</a>
+        <h1 style="margin:0 0 8px;font-size:22px;font-weight:800;color:#18181b">Confirm your new email</h1>
+        <p style="margin:0 0 24px;font-size:14px;line-height:20px;color:#71717a">Confirm changing your address to <strong style="color:#18181b">{{ .Email }}</strong>.</p>
+
+        <a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#f5b800;color:#1a1a1a;font-size:15px;font-weight:700;text-decoration:none;padding:14px 28px;border-radius:999px">Confirm email change</a>
+
+        <!-- Some clients strip styled anchors; the raw link is the fallback. -->
+        <p style="margin:24px 0 0;font-size:11px;line-height:16px;color:#a1a1aa">Button not working? Paste this into your browser:<br><span style="color:#a06c00;word-break:break-all">{{ .ConfirmationURL }}</span></p>
       </td></tr>
+
+      <tr><td style="padding:0 32px 24px">
+        <p style="margin:0;font-size:11px;color:#c4c4c8">kuja7.lk</p>
+      </td></tr>
+
     </table>
   </td></tr>
 </table>
