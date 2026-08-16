@@ -139,11 +139,27 @@ do not hand-write them. Caddy's own config is not managed by CI:
 ```bash
 sudo mkdir -p /opt/infra && sudo chown ubuntu:ubuntu /opt/infra
 cp -r /opt/apps/kuja-seven/deploy/aws /opt/infra/caddy
+
+# Symlink, not the copy: a copied Caddyfile drifts silently the moment a hostname
+# is added to the repo, and the only symptom is a domain missing from Caddy's
+# "enabling automatic TLS certificate management" list — no error anywhere.
+ln -sf /opt/apps/kuja-seven/deploy/aws/Caddyfile /opt/infra/caddy/Caddyfile
+
 cat > /opt/infra/caddy/.env << 'EOF'
 WEB_DOMAIN=kuja7.lk
 API_DOMAIN=api.kuja7.lk
 EOF
 ```
+
+After any Caddyfile change lands in the repo, the box needs `git pull` in
+`/opt/apps/kuja-seven` and then:
+
+```bash
+cd /opt/infra/caddy && docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile
+```
+
+`reload` is graceful — no dropped connections, and issued certificates stay cached.
+CI does not do this; it only deploys the app containers.
 
 ---
 
