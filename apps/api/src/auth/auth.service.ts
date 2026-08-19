@@ -1,8 +1,29 @@
-import { Injectable, ConflictException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import type { Profile } from '@prisma/client';
+
+const MIN_AGE_YEARS = 18;
+
+function assertAdult(dateOfBirth: string): void {
+  const dob = new Date(dateOfBirth);
+  if (isNaN(dob.getTime())) {
+    throw new BadRequestException('Invalid date of birth');
+  }
+  const cutoff = new Date();
+  cutoff.setFullYear(cutoff.getFullYear() - MIN_AGE_YEARS);
+  if (dob > cutoff) {
+    throw new BadRequestException(
+      `You must be at least ${MIN_AGE_YEARS} years old`,
+    );
+  }
+}
 
 function computeProfileCompleted(p: Partial<Profile>): boolean {
   return !!(
@@ -29,6 +50,8 @@ export class AuthService {
   constructor(private prisma: PrismaService) {}
 
   async createProfile(supabaseId: string, dto: CreateProfileDto) {
+    assertAdult(dto.dateOfBirth);
+
     const existing = await this.prisma.profile.findUnique({
       where: { supabaseId },
     });

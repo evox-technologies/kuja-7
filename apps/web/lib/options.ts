@@ -30,14 +30,20 @@ export const COUNTRIES = [
 export const NATIONALITIES = [
   'Sri Lankan',
   'Indian',
+  'Bangladeshi',
+  'Pakistani',
+  'Nepali',
+  'Maldivian',
+  'Chinese',
+  'Japanese',
+  'Korean',
   'British',
   'American',
   'Australian',
   'Canadian',
-  'New Zealander',
-  'Emirati',
-  'Singaporean',
-  'Malaysian',
+  'German',
+  'French',
+  'Italian',
   'Other',
 ]
 
@@ -164,6 +170,7 @@ export const CITIES_BY_COUNTRY: Record<string, string[]> = {
   France: ['Lyon', 'Marseille', 'Nice', 'Paris', 'Toulouse', 'Other'],
   Italy: ['Florence', 'Milan', 'Naples', 'Rome', 'Turin', 'Other'],
   Switzerland: ['Basel', 'Bern', 'Geneva', 'Lausanne', 'Zurich', 'Other'],
+  Maldives: ['Addu City', 'Fuvahmulah', 'Hithadhoo', 'Kulhudhuffushi', 'Male', 'Other'],
   Other: ['Other'],
 }
 
@@ -178,68 +185,286 @@ export function citiesForCountry(country?: string): string[] {
   return CITIES_BY_COUNTRY[country] ?? ['Other']
 }
 
-export const DISTRICTS = [
-  'Ampara',
-  'Anuradhapura',
-  'Badulla',
-  'Batticaloa',
-  'Colombo',
-  'Galle',
-  'Gampaha',
-  'Hambantota',
-  'Jaffna',
-  'Kalutara',
-  'Kandy',
-  'Kegalle',
-  'Kilinochchi',
-  'Kurunegala',
-  'Mannar',
-  'Matara',
-  'Monaragala',
-  'Mullativu',
-  'Nuwara Eliya',
-  'Polonnaruwa',
-  'Puttalam',
-  'Ratnapura',
-  'Trincomalee',
-  'Vavuniya',
-]
+export const DISTRICTS_BY_COUNTRY: Record<string, string[]> = {
+  'Sri Lanka': [
+    'Ampara',
+    'Anuradhapura',
+    'Badulla',
+    'Batticaloa',
+    'Colombo',
+    'Galle',
+    'Gampaha',
+    'Hambantota',
+    'Jaffna',
+    'Kalutara',
+    'Kandy',
+    'Kegalle',
+    'Kilinochchi',
+    'Kurunegala',
+    'Mannar',
+    'Matara',
+    'Monaragala',
+    'Mullativu',
+    'Nuwara Eliya',
+    'Polonnaruwa',
+    'Puttalam',
+    'Ratnapura',
+    'Trincomalee',
+    'Vavuniya',
+    'Other',
+  ],
+  Australia: [
+    'Australian Capital Territory',
+    'New South Wales',
+    'Northern Territory',
+    'Queensland',
+    'South Australia',
+    'Tasmania',
+    'Victoria',
+    'Western Australia',
+    'Other',
+  ],
+  India: [
+    'Andhra Pradesh',
+    'Delhi',
+    'Goa',
+    'Gujarat',
+    'Karnataka',
+    'Kerala',
+    'Maharashtra',
+    'Punjab',
+    'Rajasthan',
+    'Tamil Nadu',
+    'Telangana',
+    'Uttar Pradesh',
+    'West Bengal',
+    'Other',
+  ],
+  'United Kingdom': [
+    'England',
+    'Northern Ireland',
+    'Scotland',
+    'Wales',
+    'Other',
+  ],
+  'United States': [
+    'California',
+    'Florida',
+    'Georgia',
+    'Illinois',
+    'Massachusetts',
+    'New Jersey',
+    'New York',
+    'Pennsylvania',
+    'Texas',
+    'Washington',
+    'Other',
+  ],
+  Canada: [
+    'Alberta',
+    'British Columbia',
+    'Manitoba',
+    'Ontario',
+    'Quebec',
+    'Saskatchewan',
+    'Other',
+  ],
+  'New Zealand': [
+    'Auckland',
+    'Bay of Plenty',
+    'Canterbury',
+    'Otago',
+    'Waikato',
+    'Wellington',
+    'Other',
+  ],
+  'United Arab Emirates': [
+    'Abu Dhabi',
+    'Ajman',
+    'Dubai',
+    'Fujairah',
+    'Ras Al Khaimah',
+    'Sharjah',
+    'Umm Al Quwain',
+    'Other',
+  ],
+  Qatar: ['Al Rayyan', 'Al Wakrah', 'Doha', 'Other'],
+  'Saudi Arabia': ['Eastern Province', 'Makkah', 'Madinah', 'Riyadh', 'Other'],
+  Singapore: ['Central', 'East', 'North', 'North-East', 'West', 'Other'],
+  Malaysia: [
+    'Johor',
+    'Kedah',
+    'Kelantan',
+    'Kuala Lumpur',
+    'Penang',
+    'Perak',
+    'Sabah',
+    'Sarawak',
+    'Selangor',
+    'Other',
+  ],
+  Japan: [
+    'Chubu',
+    'Chugoku',
+    'Hokkaido',
+    'Kansai',
+    'Kanto',
+    'Kyushu',
+    'Okinawa',
+    'Shikoku',
+    'Tohoku',
+    'Other',
+  ],
+  'South Korea': [
+    'Busan',
+    'Daegu',
+    'Gyeonggi',
+    'Incheon',
+    'Seoul',
+    'Other',
+  ],
+  Germany: [
+    'Baden-Württemberg',
+    'Bavaria',
+    'Berlin',
+    'Hamburg',
+    'Hesse',
+    'North Rhine-Westphalia',
+    'Other',
+  ],
+  France: [
+    'Auvergne-Rhône-Alpes',
+    'Île-de-France',
+    "Provence-Alpes-Côte d'Azur",
+    'Occitanie',
+    'Other',
+  ],
+  Italy: [
+    'Lazio',
+    'Lombardy',
+    'Piedmont',
+    'Sicily',
+    'Tuscany',
+    'Veneto',
+    'Other',
+  ],
+  Switzerland: ['Basel', 'Bern', 'Geneva', 'Vaud', 'Zurich', 'Other'],
+  Maldives: [
+    'Addu Atoll',
+    'Haa Alifu',
+    'Kaafu',
+    'Male',
+    'Seenu',
+    'Other',
+  ],
+  Other: ['Other'],
+}
 
-export const RELIGIONS = ['Buddhist', 'Catholic', 'Christian', 'Hindu', 'Muslim', 'Other']
+/** Sri Lankan districts — kept for seed/filter compatibility. */
+export const DISTRICTS = DISTRICTS_BY_COUNTRY['Sri Lanka'].filter(d => d !== 'Other')
+
+export function districtsForCountry(country?: string): string[] {
+  if (!country) return DISTRICTS
+  return DISTRICTS_BY_COUNTRY[country] ?? ['Other']
+}
+
+export const RELIGIONS = [
+  'Buddhism',
+  'Hinduism',
+  'Islam',
+  'Roman Catholic',
+  'Other Christian',
+  'Other',
+]
 
 export const ETHNICITIES = ['Sinhala', 'Tamil', 'Moor', 'Burgher', 'Other']
 
+export const CASTE_GROUPS: { label: string; options: string[] }[] = [
+  {
+    label: 'Sinhala caste categories',
+    options: [
+      'Govigama',
+      'Karava',
+      'Salagama',
+      'Durava',
+      'Wahumpura / Hakuru',
+      'Berava',
+      'Navandanna',
+      'Bathgama',
+      'Rodi',
+      'Achari',
+      'Kumbal',
+      'Hunu',
+      'Panna',
+      'Dewa',
+      'Oli',
+      'Nakatti',
+      'Radha',
+      'Vahumpura',
+      'Other',
+      'Prefer not to say',
+    ],
+  },
+  {
+    label: 'Sri Lankan Tamil caste categories',
+    options: [
+      'Vellalar',
+      'Karaiyar',
+      'Koviyar',
+      'Nalavar',
+      'Pallar',
+      'Paraiyar',
+      'Mukkuvar',
+      'Maravar',
+      'Agamudaiyar',
+      'Chettiar',
+      'Brahmin',
+      'Pandaram',
+      'Vannar',
+      'Ambattar',
+      'Navithar',
+      'Dhobi',
+      'Other',
+      'Prefer not to say',
+    ],
+  },
+  {
+    label: 'Malaiyaha / Indian Tamil communities',
+    options: [
+      'Pallar',
+      'Paraiyar',
+      'Vellalar',
+      'Kallar',
+      'Maravar',
+      'Agamudaiyar',
+      'Naidu',
+      'Chettiar',
+      'Brahmin',
+      'Other',
+      'Prefer not to say',
+    ],
+  },
+]
+
 export const PROFESSIONS = [
-  'Accountant',
-  'Architect',
-  'Army Officer',
-  'Bank Manager',
-  'Business Analyst',
-  'Chef',
-  'Civil Engineer',
-  'Data Scientist',
-  'Dentist',
-  'Doctor',
-  'Electrician',
-  'Entrepreneur',
-  'Financial Analyst',
-  'Government Officer',
-  'Graphic Designer',
-  'HR Manager',
-  'Journalist',
+  'Student',
+  'Software Engineer / IT',
+  'Doctor / Healthcare',
+  'Engineer',
+  'Teacher / Lecturer',
+  'Accountant / Finance',
   'Lawyer',
-  'Lecturer',
-  'Marketing Manager',
-  'Mechanic',
-  'Nurse',
-  'Pharmacist',
-  'Pilot',
-  'Plumber',
-  'Police Officer',
-  'Project Manager',
-  'Social Worker',
-  'Software Engineer',
-  'Teacher',
+  'Government Employee',
+  'Private Sector Employee',
+  'Business Owner / Entrepreneur',
+  'Banker',
+  'Marketing / Sales',
+  'Armed Forces / Police',
+  'Farmer / Agriculture',
+  'Driver / Transport',
+  'Self-Employed',
+  'Retired',
+  'Unemployed',
   'Other',
 ]
 
@@ -266,15 +491,46 @@ export const MIN_AGE = 18
 export const MAX_AGE = 80
 
 export const PHONE_COUNTRY_CODES = [
-  { code: '+94', label: 'LK +94' },
-  { code: '+91', label: 'IN +91' },
-  { code: '+44', label: 'UK +44' },
-  { code: '+1', label: 'US +1' },
-  { code: '+61', label: 'AU +61' },
-  { code: '+64', label: 'NZ +64' },
-  { code: '+971', label: 'AE +971' },
-  { code: '+974', label: 'QA +974' },
-  { code: '+966', label: 'SA +966' },
-  { code: '+65', label: 'SG +65' },
-  { code: '+60', label: 'MY +60' },
-]
+  { code: '+94', label: 'LK +94', min: 9, max: 9, placeholder: '771234567' },
+  { code: '+91', label: 'IN +91', min: 10, max: 10, placeholder: '9876543210' },
+  { code: '+44', label: 'UK +44', min: 10, max: 10, placeholder: '7911123456' },
+  { code: '+1', label: 'US/CA +1', min: 10, max: 10, placeholder: '2025550123' },
+  { code: '+61', label: 'AU +61', min: 9, max: 9, placeholder: '412345678' },
+  { code: '+64', label: 'NZ +64', min: 8, max: 10, placeholder: '211234567' },
+  { code: '+971', label: 'AE +971', min: 9, max: 9, placeholder: '501234567' },
+  { code: '+974', label: 'QA +974', min: 8, max: 8, placeholder: '33123456' },
+  { code: '+966', label: 'SA +966', min: 9, max: 9, placeholder: '512345678' },
+  { code: '+65', label: 'SG +65', min: 8, max: 8, placeholder: '81234567' },
+  { code: '+60', label: 'MY +60', min: 9, max: 10, placeholder: '123456789' },
+  { code: '+81', label: 'JP +81', min: 10, max: 10, placeholder: '9012345678' },
+  { code: '+82', label: 'KR +82', min: 9, max: 10, placeholder: '1012345678' },
+  { code: '+960', label: 'MV +960', min: 7, max: 7, placeholder: '7712345' },
+  { code: '+39', label: 'IT +39', min: 9, max: 10, placeholder: '3123456789' },
+  { code: '+49', label: 'DE +49', min: 10, max: 12, placeholder: '15123456789' },
+  { code: '+33', label: 'FR +33', min: 9, max: 9, placeholder: '612345678' },
+] as const
+
+export type PhoneCountryCode = (typeof PHONE_COUNTRY_CODES)[number]['code']
+
+export function phoneDigits(local: string): string {
+  return local.replace(/\D/g, '').replace(/^0+/, '')
+}
+
+export function formatPhone(code: string, local: string): string {
+  const digits = phoneDigits(local)
+  return digits ? `${code} ${digits}` : ''
+}
+
+export function validatePhone(code: string, local: string, label: string): string | null {
+  const digits = phoneDigits(local)
+  if (!digits) return null
+  const meta = PHONE_COUNTRY_CODES.find(c => c.code === code)
+  const min = meta?.min ?? 7
+  const max = meta?.max ?? 15
+  if (digits.length < min || digits.length > max) {
+    return min === max
+      ? `${label} must be ${min} digits`
+      : `${label} must be ${min}–${max} digits`
+  }
+  return null
+}

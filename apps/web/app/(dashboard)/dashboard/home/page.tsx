@@ -7,6 +7,14 @@ import { apiFetch, ApiError } from '@/lib/api'
 import ProfileCard, { ProfileCardData } from '@/components/dashboard/profile-card'
 import Link from 'next/link'
 import { HEIGHT_MIN_IN, HEIGHT_MAX_IN, formatHeight } from '@/lib/height'
+import {
+  NATIONALITIES,
+  RELIGIONS,
+  PROFESSIONS,
+  CASTE_GROUPS,
+  citiesForCountry,
+  districtsForCountry,
+} from '@/lib/options'
 
 interface SearchResult {
   profiles: ProfileCardData[]
@@ -31,9 +39,13 @@ interface Filters {
   religion: string
   country: string
   city: string
+  stateDistrict: string
   ethnicity: string
+  caste: string
+  nationality: string
   civilStatus: string
   educationLevel: string
+  profession: string
   drinking: string
   smoking: string
   foodPreference: string
@@ -42,8 +54,9 @@ interface Filters {
 
 const EMPTY_FILTERS: Filters = {
   gender: '', ageMin: '', ageMax: '', heightMin: '', heightMax: '',
-  religion: '', country: '', city: '',
-  ethnicity: '', civilStatus: '', educationLevel: '', drinking: '', smoking: '',
+  religion: '', country: '', city: '', stateDistrict: '',
+  ethnicity: '', caste: '', nationality: '', civilStatus: '',
+  educationLevel: '', profession: '', drinking: '', smoking: '',
   foodPreference: '', kujaNumber: '',
 }
 
@@ -71,8 +84,31 @@ const DRINKING_OPTS = ['Never', 'Occasionally', 'Regularly']
 const SMOKING_OPTS = ['Never', 'Occasionally', 'Regularly']
 const KUJA_NUMBERS = ['1', '2', '4', '7', '8', '12']
 
-function FilterSelect({ label, value, onChange, options, placeholder }: {
-  label: string; value: string; onChange: (v: string) => void; options: string[]; placeholder: string
+function FilterSelect({ label, value, onChange, options, placeholder, disabled }: {
+  label: string; value: string; onChange: (v: string) => void; options: string[]; placeholder: string; disabled?: boolean
+}) {
+  return (
+    <div className="mb-3">
+      <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">{label}</label>
+      <select
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        disabled={disabled}
+        className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-1 focus:ring-brand-border appearance-none disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        <option value="">{placeholder}</option>
+        {options.map(o => <option key={o} value={o}>{o}</option>)}
+      </select>
+    </div>
+  )
+}
+
+function FilterGroupedSelect({ label, value, onChange, groups, placeholder }: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  groups: { label: string; options: string[] }[]
+  placeholder: string
 }) {
   return (
     <div className="mb-3">
@@ -83,24 +119,14 @@ function FilterSelect({ label, value, onChange, options, placeholder }: {
         className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-1 focus:ring-brand-border appearance-none"
       >
         <option value="">{placeholder}</option>
-        {options.map(o => <option key={o} value={o}>{o}</option>)}
+        {groups.map(g => (
+          <optgroup key={g.label} label={g.label}>
+            {g.options.map(o => (
+              <option key={`${g.label}-${o}`} value={o}>{o}</option>
+            ))}
+          </optgroup>
+        ))}
       </select>
-    </div>
-  )
-}
-
-function FilterInput({ label, value, onChange, placeholder }: {
-  label: string; value: string; onChange: (v: string) => void; placeholder?: string
-}) {
-  return (
-    <div className="mb-3">
-      <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">{label}</label>
-      <input
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-1 focus:ring-brand-border"
-      />
     </div>
   )
 }
@@ -191,6 +217,7 @@ function HomePageInner() {
   }))
   const [results, setResults] = useState<ProfileCardData[]>([])
   const [page, setPage] = useState(1)
+  const [sort, setSort] = useState<'newest' | 'oldest'>('newest')
   const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -211,10 +238,10 @@ function HomePageInner() {
       })
   }, [router])
 
-  const search = useCallback(async (f: Filters, p: number) => {
+  const search = useCallback(async (f: Filters, p: number, s: 'newest' | 'oldest') => {
     setLoading(true)
     try {
-      const params = new URLSearchParams({ page: String(p) })
+      const params = new URLSearchParams({ page: String(p), sort: s })
       if (f.gender) params.set('gender', f.gender)
       // Clamp to sane technical bounds (0-120) — the backend rejects out-of-range
       // values outright, which search() then swallows silently, so an unclamped
@@ -226,9 +253,13 @@ function HomePageInner() {
       if (f.religion) params.set('religion', f.religion)
       if (f.country) params.set('country', f.country)
       if (f.city) params.set('city', f.city)
+      if (f.stateDistrict) params.set('stateDistrict', f.stateDistrict)
       if (f.ethnicity) params.set('ethnicity', f.ethnicity)
+      if (f.caste) params.set('caste', f.caste)
+      if (f.nationality) params.set('nationality', f.nationality)
       if (f.civilStatus) params.set('civilStatus', f.civilStatus)
       if (f.educationLevel) params.set('educationLevel', f.educationLevel)
+      if (f.profession) params.set('profession', f.profession)
       if (f.drinking) params.set('drinking', f.drinking)
       if (f.smoking) params.set('smoking', f.smoking)
       if (f.foodPreference) params.set('foodPreference', f.foodPreference)
@@ -247,8 +278,8 @@ function HomePageInner() {
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => search(filters, page), 300)
-  }, [filters, page, search])
+    debounceRef.current = setTimeout(() => search(filters, page, sort), 300)
+  }, [filters, page, sort, search])
 
   const profileIncomplete = currentUser && !currentUser.profileCompleted
 
@@ -329,10 +360,10 @@ function HomePageInner() {
         <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-2">Age Range</label>
         <div className="flex items-center gap-2">
           <input type="number" min={0} max={120} value={filters.ageMin} onChange={e => setFilter('ageMin', e.target.value)}
-            placeholder="Min" className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-gray-50 focus:outline-none" />
-          <span className="text-gray-300 text-xs">–</span>
+            placeholder="Min" className="w-full min-w-0 px-2 py-1.5 text-xs text-center border border-gray-200 rounded-lg bg-gray-50 focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
+          <span className="text-gray-300 text-xs shrink-0">–</span>
           <input type="number" min={0} max={120} value={filters.ageMax} onChange={e => setFilter('ageMax', e.target.value)}
-            placeholder="Max" className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-gray-50 focus:outline-none" />
+            placeholder="Max" className="w-full min-w-0 px-2 py-1.5 text-xs text-center border border-gray-200 rounded-lg bg-gray-50 focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
         </div>
       </div>
 
@@ -343,13 +374,39 @@ function HomePageInner() {
         onMaxChange={v => setFilter('heightMax', v)}
       />
 
-      <FilterSelect label="Country" value={filters.country} onChange={v => setFilter('country', v)} options={COUNTRIES} placeholder="Any" />
-      <FilterInput label="City" value={filters.city} onChange={v => setFilter('city', v)} placeholder="Any" />
-      <FilterInput label="Religion" value={filters.religion} onChange={v => setFilter('religion', v)} placeholder="Any" />
+      <FilterSelect label="Nationality" value={filters.nationality} onChange={v => setFilter('nationality', v)} options={NATIONALITIES} placeholder="Any" />
       <FilterSelect label="Ethnicity" value={filters.ethnicity} onChange={v => setFilter('ethnicity', v)} options={ETHNICITIES} placeholder="Any" />
+      <FilterGroupedSelect label="Caste" value={filters.caste} onChange={v => setFilter('caste', v)} groups={CASTE_GROUPS} placeholder="Any" />
       <FilterSelect label="Civil Status" value={filters.civilStatus} onChange={v => setFilter('civilStatus', v)} options={CIVIL_STATUSES} placeholder="Any" />
-      <FilterInput label="Profession" value={filters.country} onChange={v => setFilter('country', v)} placeholder="Any" />
+      <FilterSelect label="Religion" value={filters.religion} onChange={v => setFilter('religion', v)} options={RELIGIONS} placeholder="Any" />
+      <FilterSelect
+        label="Country"
+        value={filters.country}
+        onChange={v => {
+          setFilters(prev => ({ ...prev, country: v, city: '', stateDistrict: '' }))
+          setPage(1)
+        }}
+        options={COUNTRIES}
+        placeholder="Any"
+      />
+      <FilterSelect
+        label="City"
+        value={filters.city}
+        onChange={v => setFilter('city', v)}
+        options={filters.country ? citiesForCountry(filters.country) : []}
+        placeholder={filters.country ? 'Any' : 'Select a country first'}
+        disabled={!filters.country}
+      />
+      <FilterSelect
+        label="State / District"
+        value={filters.stateDistrict}
+        onChange={v => setFilter('stateDistrict', v)}
+        options={filters.country ? districtsForCountry(filters.country) : []}
+        placeholder={filters.country ? 'Any' : 'Select a country first'}
+        disabled={!filters.country}
+      />
       <FilterSelect label="Education Level" value={filters.educationLevel} onChange={v => setFilter('educationLevel', v)} options={EDUCATION_LEVELS} placeholder="Any" />
+      <FilterSelect label="Profession" value={filters.profession} onChange={v => setFilter('profession', v)} options={PROFESSIONS} placeholder="Any" />
       <FilterSelect label="Food Preference" value={filters.foodPreference} onChange={v => setFilter('foodPreference', v)} options={FOOD_PREFS} placeholder="Any" />
       <FilterSelect label="Drinking" value={filters.drinking} onChange={v => setFilter('drinking', v)} options={DRINKING_OPTS} placeholder="Any" />
       <FilterSelect label="Smoking" value={filters.smoking} onChange={v => setFilter('smoking', v)} options={SMOKING_OPTS} placeholder="Any" />
@@ -415,9 +472,16 @@ function HomePageInner() {
             </button>
             <div className="flex flex-wrap items-center gap-2 ml-auto">
               <span className="text-xs text-gray-400">Sort By:</span>
-              <select className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none">
-                <option>Newest First</option>
-                <option>Oldest First</option>
+              <select
+                value={sort}
+                onChange={e => {
+                  setSort(e.target.value as 'newest' | 'oldest')
+                  setPage(1)
+                }}
+                className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none"
+              >
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
               </select>
             </div>
           </div>

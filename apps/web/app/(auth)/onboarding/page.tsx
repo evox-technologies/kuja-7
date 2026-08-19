@@ -3,8 +3,24 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { apiFetch } from '@/lib/api'
-import { ChevronLeft, Lock, Info } from 'lucide-react'
+import { apiFetch, ApiError } from '@/lib/api'
+import { ChevronLeft, Lock, Info, Minus, Plus } from 'lucide-react'
+import {
+  HEIGHT_MIN_IN,
+  HEIGHT_MAX_IN,
+  HEIGHT_DEFAULT_IN,
+  formatHeight,
+  heightToInches,
+} from '@/lib/height'
+import {
+  citiesForCountry,
+  districtsForCountry,
+  MIN_AGE,
+  PHONE_COUNTRY_CODES,
+  formatPhone,
+  phoneDigits,
+  validatePhone,
+} from '@/lib/options'
 
 type Step = 1 | 2 | 3 | 'preview'
 
@@ -39,7 +55,7 @@ interface FormData {
 }
 
 const EMPTY: FormData = {
-  firstName: '', lastName: '', dateOfBirth: '', nationality: '', height: '',
+  firstName: '', lastName: '', dateOfBirth: '', nationality: '', height: formatHeight(HEIGHT_DEFAULT_IN),
   gender: '', ethnicity: '', caste: '', civilStatus: '', religion: '',
   country: '', city: '', stateDistrict: '',
   educationLevel: '', profession: '', drinking: '', smoking: '', foodPreference: '',
@@ -48,13 +64,116 @@ const EMPTY: FormData = {
 }
 
 const KUJA_NUMBERS = ['1', '2', '4', '7', '8', '12']
+const NATIONALITIES = [
+  'Sri Lankan',
+  'Indian',
+  'Bangladeshi',
+  'Pakistani',
+  'Nepali',
+  'Maldivian',
+  'Chinese',
+  'Japanese',
+  'Korean',
+  'British',
+  'American',
+  'Australian',
+  'Canadian',
+  'German',
+  'French',
+  'Italian',
+  'Other',
+]
 const COUNTRIES = [
   'Australia', 'Canada', 'Italy', 'Japan', 'Maldives', 'New Zealand',
   'Singapore', 'South Korea', 'Sri Lanka', 'United Arab Emirates',
   'United Kingdom', 'United States', 'Other',
 ]
 const ETHNICITIES = ['Sinhalese', 'Tamil', 'Muslim', 'Burgher', 'Other']
+const CASTE_GROUPS: { label: string; options: string[] }[] = [
+  {
+    label: 'Sinhala caste categories',
+    options: [
+      'Govigama',
+      'Karava',
+      'Salagama',
+      'Durava',
+      'Wahumpura / Hakuru',
+      'Berava',
+      'Navandanna',
+      'Bathgama',
+      'Rodi',
+      'Achari',
+      'Kumbal',
+      'Hunu',
+      'Panna',
+      'Dewa',
+      'Oli',
+      'Nakatti',
+      'Radha',
+      'Vahumpura',
+      'Other',
+      'Prefer not to say',
+    ],
+  },
+  {
+    label: 'Sri Lankan Tamil caste categories',
+    options: [
+      'Vellalar',
+      'Karaiyar',
+      'Koviyar',
+      'Nalavar',
+      'Pallar',
+      'Paraiyar',
+      'Mukkuvar',
+      'Maravar',
+      'Agamudaiyar',
+      'Chettiar',
+      'Brahmin',
+      'Pandaram',
+      'Vannar',
+      'Ambattar',
+      'Navithar',
+      'Dhobi',
+      'Other',
+      'Prefer not to say',
+    ],
+  },
+  {
+    label: 'Malaiyaha / Indian Tamil communities',
+    options: [
+      'Pallar',
+      'Paraiyar',
+      'Vellalar',
+      'Kallar',
+      'Maravar',
+      'Agamudaiyar',
+      'Naidu',
+      'Chettiar',
+      'Brahmin',
+      'Other',
+      'Prefer not to say',
+    ],
+  },
+]
+
+function casteOptionValue(groupLabel: string, option: string) {
+  return `${groupLabel}::${option}`
+}
+
+function casteOptionName(selection: string) {
+  const i = selection.indexOf('::')
+  return i === -1 ? selection : selection.slice(i + 2)
+}
+
 const CIVIL_STATUSES = ['Never Married', 'Divorced', 'Widowed', 'Separated']
+const RELIGIONS = [
+  'Buddhism',
+  'Hinduism',
+  'Islam',
+  'Roman Catholic',
+  'Other Christian',
+  'Other',
+]
 const EDUCATION_LEVELS = [
   'Up to GCE O/L',
   'Up to GCE A/L',
@@ -66,9 +185,66 @@ const EDUCATION_LEVELS = [
   "Master's Degree or Equivalent",
   'Phd or Post Doctoral',
 ]
+const PROFESSIONS = [
+  'Student',
+  'Software Engineer / IT',
+  'Doctor / Healthcare',
+  'Engineer',
+  'Teacher / Lecturer',
+  'Accountant / Finance',
+  'Lawyer',
+  'Government Employee',
+  'Private Sector Employee',
+  'Business Owner / Entrepreneur',
+  'Banker',
+  'Marketing / Sales',
+  'Armed Forces / Police',
+  'Farmer / Agriculture',
+  'Driver / Transport',
+  'Self-Employed',
+  'Retired',
+  'Unemployed',
+  'Other',
+]
 const FOOD_PREFS = ['Vegetarian', 'Non-Vegetarian', 'Vegan', 'Halal']
 const DRINKING_OPTS = ['Never', 'Occasionally', 'Regularly']
 const SMOKING_OPTS = ['Never', 'Occasionally', 'Regularly']
+
+function isoDate(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function maxAdultBirthDate(): string {
+  const d = new Date()
+  d.setFullYear(d.getFullYear() - MIN_AGE)
+  return isoDate(d)
+}
+
+function isAtLeast18(dateStr: string): boolean {
+  return !!dateStr && dateStr <= maxAdultBirthDate()
+}
+
+function toIso8601Date(dateStr: string): string {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return `${dateStr}T00:00:00.000Z`
+  const d = new Date(dateStr)
+  return isNaN(d.getTime()) ? dateStr : d.toISOString()
+}
+
+function uploadErrorMessage(err: unknown): string {
+  if (err instanceof ApiError) {
+    try {
+      const parsed = JSON.parse(err.message) as { message?: string | string[] }
+      if (typeof parsed.message === 'string') return parsed.message
+      if (Array.isArray(parsed.message)) return parsed.message.join(', ')
+    } catch {
+      if (err.message) return err.message
+    }
+  }
+  return 'Image upload failed'
+}
 
 function FieldGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -79,8 +255,8 @@ function FieldGroup({ label, children }: { label: string; children: React.ReactN
   )
 }
 
-function TextInput({ value, onChange, placeholder, type = 'text', max }: {
-  value: string; onChange: (v: string) => void; placeholder?: string; type?: string; max?: string
+function TextInput({ value, onChange, placeholder, type = 'text', min, max }: {
+  value: string; onChange: (v: string) => void; placeholder?: string; type?: string; min?: string; max?: string
 }) {
   return (
     <input
@@ -88,14 +264,73 @@ function TextInput({ value, onChange, placeholder, type = 'text', max }: {
       value={value}
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
+      min={min}
       max={max}
       className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-border focus:border-brand transition-colors"
     />
   )
 }
 
-function SelectInput({ value, onChange, options, placeholder }: {
-  value: string; onChange: (v: string) => void; options: string[]; placeholder: string
+function PhoneInput({ code, local, onCodeChange, onLocalChange, error }: {
+  code: string
+  local: string
+  onCodeChange: (code: string) => void
+  onLocalChange: (local: string) => void
+  error?: string
+}) {
+  const meta = PHONE_COUNTRY_CODES.find(c => c.code === code)
+  return (
+    <div>
+      <div className={`flex rounded-xl border bg-gray-50 overflow-hidden focus-within:ring-2 focus-within:ring-brand-border ${
+        error ? 'border-red-400' : 'border-gray-200 focus-within:border-brand'
+      }`}>
+        <select
+          value={code}
+          onChange={e => onCodeChange(e.target.value)}
+          className="w-[6.75rem] shrink-0 px-2 py-2 text-sm bg-gray-50 border-r border-gray-200 focus:outline-none appearance-none"
+          aria-label="Country code"
+        >
+          {PHONE_COUNTRY_CODES.map(c => (
+            <option key={c.label} value={c.code}>{c.label}</option>
+          ))}
+        </select>
+        <input
+          type="tel"
+          inputMode="numeric"
+          autoComplete="tel-national"
+          value={local}
+          onChange={e => onLocalChange(phoneDigits(e.target.value))}
+          placeholder={meta?.placeholder ?? 'Phone number'}
+          maxLength={meta ? meta.max : 15}
+          className="flex-1 min-w-0 px-3 py-2 text-sm bg-gray-50 focus:outline-none"
+        />
+      </div>
+      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+    </div>
+  )
+}
+
+function SelectInput({ value, onChange, options, placeholder, disabled }: {
+  value: string; onChange: (v: string) => void; options: string[]; placeholder: string; disabled?: boolean
+}) {
+  return (
+    <select
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      disabled={disabled}
+      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-border focus:border-brand transition-colors appearance-none disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      <option value="">{placeholder}</option>
+      {options.map(o => <option key={o} value={o}>{o}</option>)}
+    </select>
+  )
+}
+
+function GroupedSelectInput({ value, onChange, groups, placeholder }: {
+  value: string
+  onChange: (v: string) => void
+  groups: { label: string; options: string[] }[]
+  placeholder: string
 }) {
   return (
     <select
@@ -104,8 +339,54 @@ function SelectInput({ value, onChange, options, placeholder }: {
       className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-border focus:border-brand transition-colors appearance-none"
     >
       <option value="">{placeholder}</option>
-      {options.map(o => <option key={o} value={o}>{o}</option>)}
+      {groups.map(g => (
+        <optgroup key={g.label} label={g.label}>
+          {g.options.map(o => (
+            <option key={`${g.label}-${o}`} value={casteOptionValue(g.label, o)}>{o}</option>
+          ))}
+        </optgroup>
+      ))}
     </select>
+  )
+}
+
+function HeightStepper({ value, onChange }: {
+  value: string; onChange: (v: string) => void
+}) {
+  const inches = heightToInches(value)
+  const display = formatHeight(inches)
+
+  function step(delta: number) {
+    onChange(formatHeight(inches + delta))
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={() => step(-1)}
+        disabled={inches <= HEIGHT_MIN_IN}
+        aria-label="Decrease height by 1 inch"
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-gray-50 text-gray-700 hover:border-gray-300 hover:bg-white disabled:cursor-not-allowed disabled:opacity-40 transition-colors"
+      >
+        <Minus className="w-4 h-4" />
+      </button>
+      <div
+        className="flex-1 px-3 py-2 text-sm font-medium text-center text-gray-800 border border-gray-200 rounded-xl bg-gray-50 tabular-nums"
+        aria-live="polite"
+      >
+        {display}
+      </div>
+      <button
+        type="button"
+        onClick={() => step(1)}
+        disabled={inches >= HEIGHT_MAX_IN}
+        aria-label="Increase height by 1 inch"
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-gray-50 text-gray-700 hover:border-gray-300 hover:bg-white disabled:cursor-not-allowed disabled:opacity-40 transition-colors"
+      >
+        <Plus className="w-4 h-4" />
+      </button>
+    </div>
   )
 }
 
@@ -170,7 +451,18 @@ export default function OnboardingPage() {
   const [step, setStep] = useState<Step>(1)
   const [form, setForm] = useState<FormData>(EMPTY)
   const [countrySelection, setCountrySelection] = useState('')
+  const [citySelection, setCitySelection] = useState('')
+  const [districtSelection, setDistrictSelection] = useState('')
   const [ethnicitySelection, setEthnicitySelection] = useState('')
+  const [nationalitySelection, setNationalitySelection] = useState('')
+  const [casteSelection, setCasteSelection] = useState('')
+  const [religionSelection, setReligionSelection] = useState('')
+  const [professionSelection, setProfessionSelection] = useState('')
+  const [mobileCode, setMobileCode] = useState('+94')
+  const [mobileLocal, setMobileLocal] = useState('')
+  const [whatsappCode, setWhatsappCode] = useState('+94')
+  const [whatsappLocal, setWhatsappLocal] = useState('')
+  const [phoneErrors, setPhoneErrors] = useState({ mobile: '', whatsapp: '' })
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -187,26 +479,61 @@ export default function OnboardingPage() {
     setForm(prev => ({ ...prev, [key]: value }))
   }
 
+  function setMobile(code: string, local: string) {
+    setMobileCode(code)
+    setMobileLocal(local)
+    set('mobileNumber', formatPhone(code, local))
+    setPhoneErrors(prev => ({ ...prev, mobile: '' }))
+  }
+
+  function setWhatsapp(code: string, local: string) {
+    setWhatsappCode(code)
+    setWhatsappLocal(local)
+    set('whatsappNumber', formatPhone(code, local))
+    setPhoneErrors(prev => ({ ...prev, whatsapp: '' }))
+  }
+
+  function validatePhones() {
+    const mobile = validatePhone(mobileCode, mobileLocal, 'Mobile number') ?? ''
+    const whatsapp = validatePhone(whatsappCode, whatsappLocal, 'WhatsApp number') ?? ''
+    setPhoneErrors({ mobile, whatsapp })
+    return !mobile && !whatsapp
+  }
+
   function validateStep1() {
     if (!form.firstName.trim()) return 'First name is required'
     if (!form.lastName.trim()) return 'Last name is required'
-    if (!form.gender) return 'Gender is required'
     if (!form.dateOfBirth) return 'Date of birth is required'
+    if (!isAtLeast18(form.dateOfBirth)) return `You must be at least ${MIN_AGE} years old`
+    if (!form.gender) return 'Gender is required'
     return null
   }
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
+    e.target.value = ''
     if (!file) return
+
+    const allowed = ['image/jpeg', 'image/png', 'image/webp']
+    if (file.type && !allowed.includes(file.type)) {
+      setError('Only JPEG, PNG, and WebP images are allowed')
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError('File size must be under 5 MB')
+      return
+    }
+
     const idx = form.images.length
     setUploadingIdx(idx)
+    setError('')
     try {
       const fd = new FormData()
       fd.append('file', file)
       const res = await apiFetch<{ url: string }>('/upload/image', { method: 'POST', body: fd })
       set('images', [...form.images, res.url])
-    } catch {
-      setError('Image upload failed')
+    } catch (err: unknown) {
+      setError(uploadErrorMessage(err))
     } finally {
       setUploadingIdx(null)
     }
@@ -215,7 +542,22 @@ export default function OnboardingPage() {
   async function handleSubmit() {
     setLoading(true)
     setError('')
+    if (form.birthDay && !isAtLeast18(form.birthDay)) {
+      setError(`You must be at least ${MIN_AGE} years old`)
+      setLoading(false)
+      return
+    }
+    if (!validatePhones()) {
+      setLoading(false)
+      return
+    }
     try {
+      const dobSource = form.dateOfBirth || form.birthDay
+      if (!dobSource || !isAtLeast18(dobSource)) {
+        setError(`You must be at least ${MIN_AGE} years old`)
+        setLoading(false)
+        return
+      }
       const location = [form.city, form.stateDistrict, form.country].filter(Boolean).join(', ')
       await apiFetch('/auth/profile', {
         method: 'POST',
@@ -224,7 +566,7 @@ export default function OnboardingPage() {
           lastName: form.lastName,
           email,
           gender: form.gender,
-          dateOfBirth: form.dateOfBirth,
+          dateOfBirth: toIso8601Date(dobSource),
           nationality: form.nationality || undefined,
           ethnicity: form.ethnicity || undefined,
           caste: form.caste || undefined,
@@ -282,11 +624,29 @@ export default function OnboardingPage() {
                   <TextInput value={form.lastName} onChange={v => set('lastName', v)} placeholder="Last name" />
                 </FieldGroup>
                 <FieldGroup label="Date of Birth *">
-                  <TextInput type="date" value={form.dateOfBirth} onChange={v => set('dateOfBirth', v)}
-                    max={new Date().toISOString().split('T')[0]} />
-                </FieldGroup>
+                  <TextInput
+                    type="date"
+                    value={form.dateOfBirth}
+                    onChange={v => set('dateOfBirth', v)}
+                    max={maxAdultBirthDate()}
+                  />
+                  <p className="text-[10px] text-gray-400 mt-1">You must be at least {MIN_AGE} years old</p>
+                </FieldGroup> 
                 <FieldGroup label="Nationality">
-                  <TextInput value={form.nationality} onChange={v => set('nationality', v)} placeholder="e.g. Sri Lankan" />
+                  <SelectInput
+                    value={nationalitySelection}
+                    onChange={v => {
+                      setNationalitySelection(v)
+                      set('nationality', v === 'Other' ? '' : v)
+                    }}
+                    options={NATIONALITIES}
+                    placeholder="Select Nationality"
+                  />
+                  {nationalitySelection === 'Other' && (
+                    <div className="mt-2">
+                      <TextInput value={form.nationality} onChange={v => set('nationality', v)} placeholder="Enter your nationality" />
+                    </div>
+                  )}
                 </FieldGroup>
                 <FieldGroup label="Gender *">
                   <div className="grid grid-cols-2 gap-2">
@@ -317,16 +677,43 @@ export default function OnboardingPage() {
                   )}
                 </FieldGroup>
                 <FieldGroup label="Caste">
-                  <TextInput value={form.caste} onChange={v => set('caste', v)} placeholder="Optional" />
+                  <GroupedSelectInput
+                    value={casteSelection}
+                    onChange={v => {
+                      setCasteSelection(v)
+                      const name = casteOptionName(v)
+                      set('caste', name === 'Other' ? '' : name)
+                    }}
+                    groups={CASTE_GROUPS}
+                    placeholder="Select Caste"
+                  />
+                  {casteOptionName(casteSelection) === 'Other' && (
+                    <div className="mt-2">
+                      <TextInput value={form.caste} onChange={v => set('caste', v)} placeholder="Enter your caste" />
+                    </div>
+                  )}
                 </FieldGroup>
                 <FieldGroup label="Civil Status">
                   <SelectInput value={form.civilStatus} onChange={v => set('civilStatus', v)} options={CIVIL_STATUSES} placeholder="Choose Civil Status" />
                 </FieldGroup>
                 <FieldGroup label="Religion">
-                  <TextInput value={form.religion} onChange={v => set('religion', v)} placeholder="e.g. Buddhist, Catholic" />
+                  <SelectInput
+                    value={religionSelection}
+                    onChange={v => {
+                      setReligionSelection(v)
+                      set('religion', v === 'Other' ? '' : v)
+                    }}
+                    options={RELIGIONS}
+                    placeholder="Select Religion"
+                  />
+                  {religionSelection === 'Other' && (
+                    <div className="mt-2">
+                      <TextInput value={form.religion} onChange={v => set('religion', v)} placeholder="Enter your religion" />
+                    </div>
+                  )}
                 </FieldGroup>
-                  <FieldGroup label="Height">
-                  <TextInput value={form.height} onChange={v => set('height', v)} placeholder="e.g. 5ft 8in" />
+                <FieldGroup label="Height">
+                  <HeightStepper value={form.height} onChange={v => set('height', v)} />
                 </FieldGroup>
                 
               </div>
@@ -342,6 +729,10 @@ export default function OnboardingPage() {
                     onChange={v => {
                       setCountrySelection(v)
                       set('country', v === 'Other' ? '' : v)
+                      setCitySelection('')
+                      set('city', '')
+                      setDistrictSelection('')
+                      set('stateDistrict', '')
                     }}
                     options={COUNTRIES}
                     placeholder="Select Country"
@@ -353,10 +744,50 @@ export default function OnboardingPage() {
                   )}
                 </FieldGroup>
                 <FieldGroup label="City">
-                  <TextInput value={form.city} onChange={v => set('city', v)} placeholder="City" />
+                  {countrySelection === 'Other' ? (
+                    <TextInput value={form.city} onChange={v => set('city', v)} placeholder="City" />
+                  ) : (
+                    <>
+                      <SelectInput
+                        value={citySelection}
+                        onChange={v => {
+                          setCitySelection(v)
+                          set('city', v === 'Other' ? '' : v)
+                        }}
+                        options={countrySelection ? citiesForCountry(form.country) : []}
+                        placeholder={countrySelection ? 'Select City' : 'Select a country first'}
+                        disabled={!countrySelection}
+                      />
+                      {citySelection === 'Other' && (
+                        <div className="mt-2">
+                          <TextInput value={form.city} onChange={v => set('city', v)} placeholder="Enter your city" />
+                        </div>
+                      )}
+                    </>
+                  )}
                 </FieldGroup>
                 <FieldGroup label="State / District">
-                  <TextInput value={form.stateDistrict} onChange={v => set('stateDistrict', v)} placeholder="District" />
+                  {countrySelection === 'Other' ? (
+                    <TextInput value={form.stateDistrict} onChange={v => set('stateDistrict', v)} placeholder="District" />
+                  ) : (
+                    <>
+                      <SelectInput
+                        value={districtSelection}
+                        onChange={v => {
+                          setDistrictSelection(v)
+                          set('stateDistrict', v === 'Other' ? '' : v)
+                        }}
+                        options={countrySelection ? districtsForCountry(form.country) : []}
+                        placeholder={countrySelection ? 'Select State / District' : 'Select a country first'}
+                        disabled={!countrySelection}
+                      />
+                      {districtSelection === 'Other' && (
+                        <div className="mt-2">
+                          <TextInput value={form.stateDistrict} onChange={v => set('stateDistrict', v)} placeholder="Enter your state or district" />
+                        </div>
+                      )}
+                    </>
+                  )}
                 </FieldGroup>
               </div>
             </div>
@@ -369,7 +800,20 @@ export default function OnboardingPage() {
                   <SelectInput value={form.educationLevel} onChange={v => set('educationLevel', v)} options={EDUCATION_LEVELS} placeholder="Choose Education Level" />
                 </FieldGroup>
                 <FieldGroup label="Profession">
-                  <TextInput value={form.profession} onChange={v => set('profession', v)} placeholder="e.g. Engineer, Doctor" />
+                  <SelectInput
+                    value={professionSelection}
+                    onChange={v => {
+                      setProfessionSelection(v)
+                      set('profession', v === 'Other' ? '' : v)
+                    }}
+                    options={PROFESSIONS}
+                    placeholder="Select Profession"
+                  />
+                  {professionSelection === 'Other' && (
+                    <div className="mt-2">
+                      <TextInput value={form.profession} onChange={v => set('profession', v)} placeholder="Enter your profession" />
+                    </div>
+                  )}
                 </FieldGroup>
               </div>
             </div>
@@ -426,17 +870,41 @@ export default function OnboardingPage() {
               </select>
             </FieldGroup>
             <FieldGroup label="Birth Day">
-              <TextInput type="date" value={form.birthDay} onChange={v => set('birthDay', v)} />
+              <TextInput
+                type="date"
+                value={form.birthDay}
+                onChange={v => {
+                  setError('')
+                  set('birthDay', v)
+                }}
+                max={maxAdultBirthDate()}
+              />
+              <p className="text-[10px] text-gray-400 mt-1">You must be at least {MIN_AGE} years old</p>
             </FieldGroup>
           </div>
+          {error && <p className="text-xs text-red-500 mt-4">{error}</p>}
           <div className="flex flex-col-reverse sm:flex-row gap-3 mt-6">
             <button onClick={() => setStep(1)} className="flex items-center justify-center gap-1 text-sm text-gray-500 hover:text-gray-700 sm:mr-auto">
               <ChevronLeft className="w-4 h-4" /> Back
             </button>
-            <button onClick={() => setStep(3)} className="px-5 py-2 rounded-full border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
+            <button onClick={() => {
+              if (form.birthDay && !isAtLeast18(form.birthDay)) {
+                setError(`You must be at least ${MIN_AGE} years old`)
+                return
+              }
+              setError('')
+              setStep(3)
+            }} className="px-5 py-2 rounded-full border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
               Skip
             </button>
-            <button onClick={() => setStep(3)} className="flex-1 py-2.5 rounded-full bg-brand text-on-brand font-semibold text-sm hover:opacity-90 transition-opacity">
+            <button onClick={() => {
+              if (form.birthDay && !isAtLeast18(form.birthDay)) {
+                setError(`You must be at least ${MIN_AGE} years old`)
+                return
+              }
+              setError('')
+              setStep(3)
+            }} className="flex-1 py-2.5 rounded-full bg-brand text-on-brand font-semibold text-sm hover:opacity-90 transition-opacity">
               Save &amp; Continue →
             </button>
           </div>
@@ -457,10 +925,22 @@ export default function OnboardingPage() {
             <PrivacyBanner text="Your private details (photos, contact info, and horoscope) are only visible to profiles you grant permission to view." />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FieldGroup label="Mobile Number">
-                <TextInput value={form.mobileNumber} onChange={v => set('mobileNumber', v)} placeholder="-" type="tel" />
+                <PhoneInput
+                  code={mobileCode}
+                  local={mobileLocal}
+                  onCodeChange={c => setMobile(c, mobileLocal)}
+                  onLocalChange={n => setMobile(mobileCode, n)}
+                  error={phoneErrors.mobile}
+                />
               </FieldGroup>
               <FieldGroup label="WhatsApp Number">
-                <TextInput value={form.whatsappNumber} onChange={v => set('whatsappNumber', v)} placeholder="-" type="tel" />
+                <PhoneInput
+                  code={whatsappCode}
+                  local={whatsappLocal}
+                  onCodeChange={c => setWhatsapp(c, whatsappLocal)}
+                  onLocalChange={n => setWhatsapp(whatsappCode, n)}
+                  error={phoneErrors.whatsapp}
+                />
               </FieldGroup>
               <div className="sm:col-span-2">
                 <FieldGroup label="Address">
@@ -505,10 +985,18 @@ export default function OnboardingPage() {
             <button onClick={() => setStep(2)} className="flex items-center justify-center gap-1 text-sm text-gray-500 hover:text-gray-700 sm:mr-auto">
               <ChevronLeft className="w-4 h-4" /> Back
             </button>
-            <button onClick={() => { setError(''); setStep('preview') }} className="px-5 py-2 rounded-full border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
+            <button onClick={() => {
+              if (!validatePhones()) return
+              setError('')
+              setStep('preview')
+            }} className="px-5 py-2 rounded-full border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
               Skip
             </button>
-            <button onClick={() => { setError(''); setStep('preview') }} className="flex-1 py-2.5 rounded-full bg-brand text-on-brand font-semibold text-sm hover:opacity-90 transition-opacity">
+            <button onClick={() => {
+              if (!validatePhones()) return
+              setError('')
+              setStep('preview')
+            }} className="flex-1 py-2.5 rounded-full bg-brand text-on-brand font-semibold text-sm hover:opacity-90 transition-opacity">
               Save &amp; Review →
             </button>
           </div>

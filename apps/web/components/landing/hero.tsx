@@ -2,47 +2,93 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Minus, Plus } from "lucide-react";
 import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { asset } from "@/lib/assets";
 import { useI18n } from "@/lib/i18n/use-i18n";
 import { MIN_AGE, MAX_AGE } from "@/lib/options";
+
+function AgeStepper({
+  name,
+  value,
+  onChange,
+  min,
+  max,
+  label,
+}: {
+  name: string
+  value: number
+  onChange: (n: number) => void
+  min: number
+  max: number
+  label: string
+}) {
+  return (
+    <div className="flex h-14 min-w-[8.75rem] flex-1 items-center rounded-full border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-brand-border">
+      <button
+        type="button"
+        aria-label={`Decrease ${label}`}
+        disabled={value <= min}
+        onClick={() => onChange(value - 1)}
+        className="flex h-full w-11 shrink-0 items-center justify-center text-gray-500 hover:text-gray-800 disabled:cursor-not-allowed disabled:opacity-30"
+      >
+        <Minus className="h-4 w-4" />
+      </button>
+      <input type="hidden" name={name} value={value} />
+      <span className="flex-1 text-center text-base tabular-nums text-gray-900" aria-live="polite">
+        {value}
+      </span>
+      <button
+        type="button"
+        aria-label={`Increase ${label}`}
+        disabled={value >= max}
+        onClick={() => onChange(value + 1)}
+        className="flex h-full w-11 shrink-0 items-center justify-center text-gray-500 hover:text-gray-800 disabled:cursor-not-allowed disabled:opacity-30"
+      >
+        <Plus className="h-4 w-4" />
+      </button>
+    </div>
+  )
+}
 
 export default function Hero() {
   const { t } = useI18n();
   const router = useRouter();
   const [ageError, setAgeError] = useState("");
+  const [ageMin, setAgeMin] = useState(MIN_AGE);
+  const [ageMax, setAgeMax] = useState(MAX_AGE);
+
+  function changeMin(next: number) {
+    const clamped = Math.min(MAX_AGE, Math.max(MIN_AGE, next));
+    setAgeMin(clamped);
+    if (clamped > ageMax) setAgeMax(clamped);
+    setAgeError("");
+  }
+
+  function changeMax(next: number) {
+    const clamped = Math.min(MAX_AGE, Math.max(MIN_AGE, next));
+    setAgeMax(clamped);
+    if (clamped < ageMin) setAgeMin(clamped);
+    setAgeError("");
+  }
 
   function handleSearch(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const params = new URLSearchParams();
     const gender = fd.get("gender") as string;
-    const ageMinRaw = (fd.get("ageMin") as string).trim();
-    const ageMaxRaw = (fd.get("ageMax") as string).trim();
 
-    const ageMin = ageMinRaw ? Number(ageMinRaw) : null;
-    const ageMax = ageMaxRaw ? Number(ageMaxRaw) : null;
-
-    if (
-      (ageMin !== null && (!Number.isInteger(ageMin) || ageMin < MIN_AGE || ageMin > MAX_AGE)) ||
-      (ageMax !== null && (!Number.isInteger(ageMax) || ageMax < MIN_AGE || ageMax > MAX_AGE))
-    ) {
-      setAgeError(t("hero.ageRangeError"));
-      return;
-    }
-    if (ageMin !== null && ageMax !== null && ageMin > ageMax) {
+    if (ageMin > ageMax) {
       setAgeError(t("hero.ageOrderError"));
       return;
     }
 
     setAgeError("");
     if (gender) params.set("gender", gender);
-    if (ageMin !== null) params.set("ageMin", String(ageMin));
-    if (ageMax !== null) params.set("ageMax", String(ageMax));
+    params.set("ageMin", String(ageMin));
+    params.set("ageMax", String(ageMax));
     router.push(`/dashboard/home?${params.toString()}`);
   }
 
@@ -74,7 +120,7 @@ export default function Hero() {
       </motion.div>
 
       {/* Search card */}
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4 z-10">
+      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-full max-w-4xl px-4 z-10">
         <motion.div
           initial={{ y: 48, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -87,7 +133,7 @@ export default function Hero() {
         >
           <form onSubmit={handleSearch} className="w-full max-w-6xl mx-auto" noValidate>
             <div className="bg-white rounded-3xl shadow-2xl px-6 py-6 lg:px-9 lg:py-8 flex flex-col lg:flex-row items-stretch lg:items-end gap-5 lg:gap-6">
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <label className="block text-xs font-bold tracking-widest text-gray-400 uppercase mb-3">
                   {t("hero.lookingFor")}
                 </label>
@@ -108,34 +154,30 @@ export default function Hero() {
                 </div>
               </div>
 
-              <div className="flex-1">
+              <div className="flex-1 min-w-[20rem]">
                 <label className="block text-xs font-bold tracking-widest text-gray-400 uppercase mb-3">
                   {t("hero.ageRange")}
                 </label>
 
                 <div className="flex items-center gap-3">
-                  <Input
+                  <AgeStepper
                     name="ageMin"
-                    type="number"
-                    inputMode="numeric"
+                    value={ageMin}
+                    onChange={changeMin}
                     min={MIN_AGE}
                     max={MAX_AGE}
-                    placeholder={t("hero.min")}
-                    onChange={() => setAgeError("")}
-                    className="h-14 rounded-full text-center text-base"
+                    label={t("hero.min")}
                   />
 
-                  <span className="text-gray-300 text-xl font-light">—</span>
+                  <span className="text-gray-300 text-xl font-light shrink-0">—</span>
 
-                  <Input
+                  <AgeStepper
                     name="ageMax"
-                    type="number"
-                    inputMode="numeric"
+                    value={ageMax}
+                    onChange={changeMax}
                     min={MIN_AGE}
                     max={MAX_AGE}
-                    placeholder={t("hero.max")}
-                    onChange={() => setAgeError("")}
-                    className="h-14 rounded-full text-center text-base"
+                    label={t("hero.max")}
                   />
                 </div>
               </div>
