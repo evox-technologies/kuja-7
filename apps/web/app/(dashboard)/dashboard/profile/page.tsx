@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Lock, User, Camera } from 'lucide-react'
 import { apiFetch, ApiError } from '@/lib/api'
@@ -119,6 +119,11 @@ function age(dob: string) {
   return Math.floor((Date.now() - new Date(dob).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
 }
 
+function toDateInput(value: string): string {
+  const m = value.match(/^(\d{4}-\d{2}-\d{2})/)
+  return m ? m[1] : value
+}
+
 function profileToDraft(p: Profile): Draft {
   return {
     firstName: p.firstName ?? '',
@@ -138,7 +143,7 @@ function profileToDraft(p: Profile): Draft {
     smoking: p.smoking ?? '',
     foodPreference: p.foodPreference ?? '',
     kujaNumber: p.kujaNumber ?? '',
-    birthDay: p.birthDay ?? '',
+    birthDay: toDateInput(p.birthDay ?? ''),
     mobileNumber: p.mobileNumber ?? '',
     whatsappNumber: p.whatsappNumber ?? '',
     address: p.address ?? '',
@@ -289,17 +294,40 @@ export default function OwnProfilePage() {
   const [saveError, setSaveError] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof Draft, true>>>({})
   const [uploadingIdx, setUploadingIdx] = useState<number | null>(null)
+  const [formKey, setFormKey] = useState(0)
+  const savedRef = useRef<{
+    draft: Draft
+    countrySelection: string
+    ethnicitySelection: string
+    kujaSelection: string
+    kujaOther: string
+  } | null>(null)
+
+  function applySaved(p: Profile) {
+    const d = profileToDraft(p)
+    const countrySel = deriveCountrySelection(d.country)
+    const ethnicitySel = deriveEthnicitySelection(d.ethnicity)
+    const kujaSel = deriveKujaSelection(d.kujaNumber)
+    const kujaOth = deriveKujaOther(d.kujaNumber)
+    setDraft(d)
+    setCountrySelection(countrySel)
+    setEthnicitySelection(ethnicitySel)
+    setKujaSelection(kujaSel)
+    setKujaOther(kujaOth)
+    savedRef.current = {
+      draft: d,
+      countrySelection: countrySel,
+      ethnicitySelection: ethnicitySel,
+      kujaSelection: kujaSel,
+      kujaOther: kujaOth,
+    }
+  }
 
   useEffect(() => {
     apiFetch<Profile>('/auth/me')
       .then(p => {
         setProfile(p)
-        const d = profileToDraft(p)
-        setDraft(d)
-        setCountrySelection(deriveCountrySelection(d.country))
-        setEthnicitySelection(deriveEthnicitySelection(d.ethnicity))
-        setKujaSelection(deriveKujaSelection(d.kujaNumber))
-        setKujaOther(deriveKujaOther(d.kujaNumber))
+        applySaved(p)
       })
       .catch((err) => {
         if (err instanceof ApiError && err.status === 401) router.replace('/login')
@@ -351,7 +379,7 @@ export default function OwnProfilePage() {
         }),
       })
       setProfile(updated)
-      setDraft(profileToDraft(updated))
+      applySaved(updated)
       refreshStatus()
       router.push('/dashboard/home')
     } catch {
@@ -362,16 +390,16 @@ export default function OwnProfilePage() {
   }
 
   function handleReset() {
-    if (profile) {
-      const d = profileToDraft(profile)
-      setDraft(d)
-      setCountrySelection(deriveCountrySelection(d.country))
-      setEthnicitySelection(deriveEthnicitySelection(d.ethnicity))
-      setKujaSelection(deriveKujaSelection(d.kujaNumber))
-      setKujaOther(deriveKujaOther(d.kujaNumber))
-    }
+    const saved = savedRef.current
+    if (!saved) return
+    setDraft({ ...saved.draft })
+    setCountrySelection(saved.countrySelection)
+    setEthnicitySelection(saved.ethnicitySelection)
+    setKujaSelection(saved.kujaSelection)
+    setKujaOther(saved.kujaOther)
     setSaveError('')
     setFieldErrors({})
+    setFormKey(k => k + 1)
   }
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -416,8 +444,9 @@ export default function OwnProfilePage() {
   const displayAvatar = profile.images?.[0] ?? profile.avatarUrl ?? null
 
   return (
-    <div className="h-full w-full overflow-y-auto">
-      <div className="w-full max-w-3xl mx-auto px-3 sm:px-6 pt-4 sm:pt-6 pb-32">
+    <div className="h-full w-full flex flex-col">
+      <div className="flex-1 min-h-0 overflow-y-auto">
+      <div key={formKey} className="w-full max-w-3xl mx-auto px-3 sm:px-6 pt-4 sm:pt-6 pb-6">
 
         {/* ── Profile header ── */}
         <div className="bg-gray-900 text-white rounded-2xl p-4 sm:p-6 mb-3 sm:mb-4">
@@ -651,9 +680,9 @@ export default function OwnProfilePage() {
         </Section>
 
       </div>
+      </div>
 
-      {/* ── Sticky action bar ── */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 bg-white/95 backdrop-blur border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]"
+      <div className="shrink-0 bg-white/95 backdrop-blur border-t border-gray-100"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <div className="max-w-3xl mx-auto px-3 sm:px-6 py-3 flex flex-wrap items-center gap-3">
           {saveError
@@ -661,6 +690,7 @@ export default function OwnProfilePage() {
             : <p className="flex-1 text-xs text-gray-400 hidden sm:block">Changes are saved to your profile</p>
           }
           <button
+            type="button"
             onClick={handleReset}
             disabled={saving}
             className="px-4 sm:px-6 py-2 rounded-full border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
@@ -668,6 +698,7 @@ export default function OwnProfilePage() {
             Reset
           </button>
           <button
+            type="button"
             onClick={handleSave}
             disabled={saving}
             className="px-5 sm:px-7 py-2 rounded-full bg-brand text-on-brand text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"

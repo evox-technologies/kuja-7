@@ -7,12 +7,12 @@ import {
   BadRequestException,
   InternalServerErrorException,
   Logger,
+  Req,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { CurrentUser } from '../auth/current-user.decorator';
+import { JwtTokenGuard } from '../auth/jwt-token.guard';
 import { createClient } from '@supabase/supabase-js';
-import type { Profile } from '@prisma/client';
+import type { Request } from 'express';
 import WebSocket from 'ws';
 
 // `ws`'s types (Event, onopen, etc.) don't structurally match the DOM lib
@@ -24,7 +24,7 @@ const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 
 @Controller('upload')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtTokenGuard)
 export class UploadController {
   private readonly logger = new Logger(UploadController.name);
 
@@ -32,16 +32,21 @@ export class UploadController {
   @UseInterceptors(FileInterceptor('file'))
   async uploadImage(
     @UploadedFile() file: Express.Multer.File,
-    @CurrentUser() user: Profile,
+    @Req() req: Request,
   ) {
+    const userId = req.supabaseId;
+    if (!userId) {
+      throw new BadRequestException('Missing user');
+    }
+
     if (!file) {
-      this.logger.warn(`uploadImage – no file provided: userId=${user.id}`);
+      this.logger.warn(`uploadImage – no file provided: userId=${userId}`);
       throw new BadRequestException('No file provided');
     }
 
     if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
       this.logger.warn(
-        `uploadImage – rejected mimetype "${file.mimetype}": userId=${user.id}`,
+        `uploadImage – rejected mimetype "${file.mimetype}": userId=${userId}`,
       );
       throw new BadRequestException(
         'Only JPEG, PNG, and WebP images are allowed',
@@ -50,7 +55,7 @@ export class UploadController {
 
     if (file.size > MAX_SIZE_BYTES) {
       this.logger.warn(
-        `uploadImage – file too large (${file.size} bytes): userId=${user.id}`,
+        `uploadImage – file too large (${file.size} bytes): userId=${userId}`,
       );
       throw new BadRequestException('File size must be under 5 MB');
     }
@@ -73,10 +78,10 @@ export class UploadController {
     });
 
     const ext = file.originalname.split('.').pop() ?? 'jpg';
-    const path = `${user.id}/${Date.now()}.${ext}`;
+    const path = `${userId}/${Date.now()}.${ext}`;
 
     this.logger.log(
-      `uploadImage – uploading to path="${path}" size=${file.size} type=${file.mimetype} userId=${user.id}`,
+      `uploadImage – uploading to path="${path}" size=${file.size} type=${file.mimetype} userId=${userId}`,
     );
 
     const { error } = await supabase.storage
@@ -85,7 +90,7 @@ export class UploadController {
 
     if (error) {
       this.logger.error(
-        `uploadImage – Supabase upload failed for path="${path}" userId=${user.id}: ${error.message}`,
+        `uploadImage – Supabase upload failed for path="${path}" userId=${userId}: ${error.message}`,
       );
       throw new InternalServerErrorException(
         'Image upload failed. Please try again.',
@@ -95,7 +100,7 @@ export class UploadController {
     const { data } = supabase.storage.from('profile-images').getPublicUrl(path);
 
     this.logger.log(
-      `uploadImage – upload successful: path="${path}" url=${data.publicUrl} userId=${user.id}`,
+      `uploadImage – upload successful: path="${path}" url=${data.publicUrl} userId=${userId}`,
     );
 
     return { url: data.publicUrl };

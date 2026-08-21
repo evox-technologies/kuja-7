@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Gender, Prisma } from '@prisma/client';
-import { IsOptional, IsString, IsEnum, IsInt, Min, Max } from 'class-validator';
+import { IsOptional, IsString, IsEnum, IsInt, IsIn, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
 import { parseHeightToInches } from './height.util';
 
@@ -81,6 +81,26 @@ export class SearchProfilesDto {
   @IsOptional()
   @IsString()
   kujaNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  nationality?: string;
+
+  @IsOptional()
+  @IsString()
+  caste?: string;
+
+  @IsOptional()
+  @IsString()
+  profession?: string;
+
+  @IsOptional()
+  @IsString()
+  stateDistrict?: string;
+
+  @IsOptional()
+  @IsIn(['newest', 'oldest'])
+  sort?: 'newest' | 'oldest';
 
   @IsOptional()
   @IsInt()
@@ -170,6 +190,10 @@ export class UsersService {
     if (dto.smoking) where.smoking = dto.smoking;
     if (dto.foodPreference) where.foodPreference = dto.foodPreference;
     if (dto.kujaNumber) where.kujaNumber = dto.kujaNumber;
+    if (dto.nationality) where.nationality = dto.nationality;
+    if (dto.caste) where.caste = dto.caste;
+    if (dto.profession) where.profession = dto.profession;
+    if (dto.stateDistrict) where.stateDistrict = dto.stateDistrict;
 
     if (dto.ageMin || dto.ageMax) {
       where.dateOfBirth = {
@@ -200,6 +224,9 @@ export class UsersService {
     // breaks DB-level pagination, so when a height filter is present we fetch every
     // profile matching the other criteria and paginate the filtered array ourselves.
     const hasHeightFilter = dto.heightMin != null || dto.heightMax != null;
+    const orderBy: Prisma.ProfileOrderByWithRelationInput = {
+      createdAt: dto.sort === 'oldest' ? 'asc' : 'desc',
+    };
 
     let profiles: Array<
       Prisma.ProfileGetPayload<{ select: typeof PUBLIC_PROFILE_SELECT }>
@@ -213,7 +240,7 @@ export class UsersService {
       const all = await this.prisma.profile.findMany({
         where,
         select: PUBLIC_PROFILE_SELECT,
-        orderBy: { createdAt: 'desc' },
+        orderBy,
       });
 
       const filtered = all.filter((p) => {
@@ -230,7 +257,7 @@ export class UsersService {
           skip,
           take,
           select: PUBLIC_PROFILE_SELECT,
-          orderBy: { createdAt: 'desc' },
+          orderBy,
         }),
         this.prisma.profile.count({ where }),
       ]);
