@@ -8,7 +8,7 @@ export const si = {
     links: [
       { href: "/", label: "මුල් පිටුව" },
       { href: "/about", label: "අප ගැන" },
-      { href: "/pricing", label: "ගාස්තු" },
+      // { href: "/pricing", label: "ගාස්තු" },
     ],
     login: "පිවිසෙන්න",
     join: "සම්බන්ධ වන්න",

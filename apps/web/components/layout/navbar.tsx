@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Menu, X } from 'lucide-react'
@@ -9,11 +9,45 @@ import { Button } from '@/components/ui/button'
 import Logo from '@/components/layout/logo'
 import LanguageToggle from '@/components/layout/language-toggle'
 import { useI18n } from '@/lib/i18n/use-i18n'
+import { createClient } from '@/lib/supabase/client'
+import UserMenu from '@/components/layout/user-menu'
 
 export default function Navbar() {
   const { messages, t } = useI18n()
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
+  const [signedIn, setSignedIn] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    const supabase = createClient()
+    let active = true
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (active) setSignedIn(!!session)
+    })
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSignedIn(!!session)
+    })
+
+    return () => {
+      active = false
+      subscription.unsubscribe()
+    }
+  }, [])
+
+  const authButtons = (
+    <div className="hidden lg:flex items-center gap-2">
+      <Button variant="ghost" size="sm" className="rounded-full" asChild>
+        <Link href="/login">{t('nav.login')}</Link>
+      </Button>
+      <Button size="sm" className="rounded-full shadow-sm shadow-md" asChild>
+        <Link href="/register">{t('nav.join')}</Link>
+      </Button>
+    </div>
+  )
 
   return (
     <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
@@ -47,19 +81,11 @@ export default function Navbar() {
         <div className="flex items-center gap-2 lg:gap-3">
           <LanguageToggle />
 
-          {/* Desktop auth */}
-          <div className="hidden lg:flex items-center gap-2">
-            <Button variant="ghost" size="sm" className="rounded-full" asChild>
-              <Link href="/login">{t('nav.login')}</Link>
-            </Button>
-            <Button
-              size="sm"
-              className="rounded-full shadow-sm shadow-md"
-              asChild
-            >
-              <Link href="/register">{t('nav.join')}</Link>
-            </Button>
-          </div>
+          {/* Signed out: desktop auth buttons (mobile gets them in the menu below) */}
+          {signedIn === false && authButtons}
+
+          {/* Signed in: same notifications + avatar menu as the dashboard */}
+          {signedIn === true && <UserMenu signOutRedirect="/" fallback={authButtons} />}
 
           {/* Mobile hamburger */}
           <button
@@ -95,18 +121,20 @@ export default function Navbar() {
                   {label}
                 </Link>
               ))}
-              <div className="flex gap-3 mt-3">
-                <Button variant="outline" className="rounded-full flex-1" asChild>
-                  <Link href="/login" onClick={() => setOpen(false)}>
-                    {t('nav.login')}
-                  </Link>
-                </Button>
-                <Button className="rounded-full flex-1" asChild>
-                  <Link href="/register" onClick={() => setOpen(false)}>
-                    {t('nav.join')}
-                  </Link>
-                </Button>
-              </div>
+              {signedIn === false && (
+                <div className="flex gap-3 mt-3">
+                  <Button variant="outline" className="rounded-full flex-1" asChild>
+                    <Link href="/login" onClick={() => setOpen(false)}>
+                      {t('nav.login')}
+                    </Link>
+                  </Button>
+                  <Button className="rounded-full flex-1" asChild>
+                    <Link href="/register" onClick={() => setOpen(false)}>
+                      {t('nav.join')}
+                    </Link>
+                  </Button>
+                </div>
+              )}
             </div>
           </motion.div>
         )}
