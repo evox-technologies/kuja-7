@@ -7,7 +7,7 @@ export const en = {
     links: [
       { href: '/dashboard/home/', label: 'Home' },
       { href: '/about', label: 'About' },
-      { href: '/pricing', label: 'Pricing' },
+      // { href: '/pricing', label: 'Pricing' },
     ],
     login: 'Log In',
     join: "Let's Join",

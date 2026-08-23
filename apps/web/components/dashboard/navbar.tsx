@@ -130,10 +130,10 @@ export default function DashboardNavbar() {
               </div>
 
               {/* Upgrade */}
-              <button className="flex items-center gap-1 sm:gap-1.5 bg-brand text-on-brand text-xs sm:text-sm font-semibold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full hover:bg-brand-hover transition-colors">
+              {/* <button className="flex items-center gap-1 sm:gap-1.5 bg-brand text-on-brand text-xs sm:text-sm font-semibold px-3 sm:px-4 py-1.5 sm:py-2 rounded-full hover:bg-brand-hover transition-colors">
                 <Crown className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 <span className="hidden sm:inline">{t('dashboard.upgrade')}</span>
-              </button>
+              </button> */}
             </>
           )}
         </div>
