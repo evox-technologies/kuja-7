@@ -8,15 +8,13 @@ name: Deploy — Kuja7 (customer AWS)
 # target's domains do not collide with deploy.yml's droplet.
 
 on:
-  # Manual only. deploy.yml ships the droplet on every push to main; the customer's
-  # box ships when someone decides it ships — a merge is not that decision.
   workflow_dispatch:
 
-concurrency:
-  # Deliberately NOT the `deploy` group deploy.yml uses — sharing one would let a
-  # droplet deploy cancel a run halfway through restarting the customer's box.
-  group: deploy-aws
-  cancel-in-progress: true
+  # Every merge to main ships the customer's box. A PR merge arrives here as a push
+  # whatever the merge strategy, so squash, merge-commit and rebase all trigger it.
+  push:
+    branches:
+      - main
 
 jobs:
   build:
@@ -25,6 +23,12 @@ jobs:
     permissions:
       contents: read
       packages: write
+    concurrency:
+      # Deliberately NOT the `deploy` group deploy.yml uses — sharing one would let a
+      # droplet deploy cancel a run halfway through restarting the customer's box.
+      # Superseding a build is free: only the newest commit is worth an image.
+      group: deploy-aws-build
+      cancel-in-progress: true
 
     steps:
       - uses: actions/checkout@v4
@@ -73,6 +77,12 @@ jobs:
     permissions:
       contents: read
       packages: read
+    # Separate group from the build, and never cancelled: two merges in quick
+    # succession must not kill an SSH session midway through `docker compose up`
+    # and leave the box half-restarted. The second run waits its turn instead.
+    concurrency:
+      group: deploy-aws-deploy
+      cancel-in-progress: false
 
     steps:
       - name: Pull images and restart on EC2

@@ -278,8 +278,12 @@ hang and time out. Either:
 
 ### Run it
 
-**Actions → Deploy — Kuja7 (customer AWS) → Run workflow.** First run takes ~8 minutes
-(cold layer cache); later runs are 2–3.
+Every push to `main` runs this automatically. For the first run — or any redeploy
+without a commit — use **Actions → Deploy — Kuja7 (customer AWS) → Run workflow**.
+First run takes ~8 minutes (cold layer cache); later runs are 2–3.
+
+To hold merges behind a human, add a **required reviewer** to the `customer-aws`
+environment: the build still runs, the deploy job waits for approval.
 
 Then bring up the proxy:
 
@@ -338,9 +342,12 @@ free -h                                 # watch swap usage on the micro
   do it repeatedly while debugging.
 - **Changing a domain** means re-running the workflow, not restarting — `NEXT_PUBLIC_*`
   are compiled into the JS bundle at build time.
-- **The two targets deploy independently.** `deploy.yml` ships the droplet on every
-  push to main; this one is `workflow_dispatch` only, so the customer's box moves when
-  you run it and not before. A merge to main does not touch production here.
+- **The two targets deploy independently, and both ship on every push to main.**
+  `deploy.yml` ships the droplet, this one ships the customer's box; separate
+  concurrency groups mean neither can cancel the other. Within this workflow a newer
+  merge supersedes an in-flight *build*, but never an in-flight *deploy* — that one
+  finishes and the next run queues behind it. Run it from **Actions** by hand for a
+  redeploy without a commit (e.g. after changing a secret).
 - **GHCR storage** counts against the org's package quota. Two images per commit adds
   up; set a retention rule under **Packages → Manage versions** if it grows.
 - **Backups:** the EC2 box holds no data — everything is in Supabase. Rebuilding it is
