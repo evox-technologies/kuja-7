@@ -16,7 +16,7 @@ import {
 export const inputCls =
   'w-full text-sm bg-white border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-border focus:border-brand transition-colors'
 
-const errorCls = ' border-danger focus:border-danger focus:ring-danger-border'
+const errorCls = ' border-danger bg-danger-bg ring-2 ring-danger-border focus:border-danger focus:ring-danger-border'
 
 export function RequiredStar() {
   return (
@@ -36,6 +36,7 @@ function Label({ label, required }: { label: string; required?: boolean }) {
 }
 
 export function FormField({
+  name,
   label,
   value,
   onChange,
@@ -45,6 +46,7 @@ export function FormField({
   error,
   hint,
 }: {
+  name?: string
   label: string
   value: string
   onChange: (v: string) => void
@@ -55,7 +57,7 @@ export function FormField({
   hint?: string
 }) {
   return (
-    <label className="block">
+    <label className="block" data-field={name}>
       <Label label={label} required={required} />
       <input
         type={type}
@@ -72,6 +74,7 @@ export function FormField({
 }
 
 export function FormSelect({
+  name,
   label,
   value,
   onChange,
@@ -80,6 +83,7 @@ export function FormSelect({
   error,
   placeholder = '— Select —',
 }: {
+  name?: string
   label: string
   value: string
   onChange: (v: string) => void
@@ -89,7 +93,7 @@ export function FormSelect({
   placeholder?: string
 }) {
   return (
-    <label className="block">
+    <label className="block" data-field={name}>
       <Label label={label} required={required} />
       <select
         value={value}
@@ -109,6 +113,7 @@ export function FormSelect({
 }
 
 export function FormDate({
+  name,
   label,
   value,
   onChange,
@@ -117,6 +122,7 @@ export function FormDate({
   max,
   hint,
 }: {
+  name?: string
   label: string
   value: string
   onChange: (v: string) => void
@@ -126,7 +132,7 @@ export function FormDate({
   hint?: string
 }) {
   return (
-    <label className="block">
+    <label className="block" data-field={name}>
       <Label label={label} required={required} />
       <input
         type="date"
@@ -142,6 +148,7 @@ export function FormDate({
 }
 
 export function FormTextarea({
+  name,
   label,
   value,
   onChange,
@@ -150,6 +157,7 @@ export function FormTextarea({
   error,
   placeholder,
 }: {
+  name?: string
   label: string
   value: string
   onChange: (v: string) => void
@@ -159,7 +167,7 @@ export function FormTextarea({
   placeholder?: string
 }) {
   return (
-    <label className="block">
+    <label className="block" data-field={name}>
       <Label label={label} required={required} />
       <textarea
         rows={rows}
@@ -178,11 +186,13 @@ export function FormTextarea({
  * lib/height.ts — so the slider converts in both directions.
  */
 export function HeightField({
+  name,
   value,
   onChange,
   required,
   error,
 }: {
+  name?: string
   value: string
   onChange: (v: string) => void
   required?: boolean
@@ -191,7 +201,10 @@ export function HeightField({
   const inches = heightToInches(value)
 
   return (
-    <div className={error ? 'rounded-xl ring-2 ring-danger-border' : ''}>
+    <div
+      data-field={name}
+      className={error ? 'rounded-xl bg-danger-bg ring-2 ring-danger-border' : ''}
+    >
       <div className="mb-1 flex items-center justify-between">
         <span className="text-[10px] uppercase tracking-wide text-gray-400">
           Height
@@ -221,4 +234,27 @@ export function HeightField({
 
 export function FieldGrid({ children }: { children: React.ReactNode }) {
   return <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">{children}</div>
+}
+
+/**
+ * A derived value shown in the field grid — same label and box as the editable
+ * fields so a computed cell (age from date of birth) doesn't break the row
+ * rhythm, but greyed and non-interactive so it doesn't read as an input.
+ */
+export function FormReadout({
+  label,
+  value,
+  hint,
+}: {
+  label: string
+  value: string
+  hint?: string
+}) {
+  return (
+    <div className="block">
+      <Label label={label} />
+      <output className={inputCls + ' block bg-gray-50 text-gray-600'}>{value || '—'}</output>
+      {hint && <span className="mt-1 block text-[11px] text-gray-400">{hint}</span>}
+    </div>
+  )
 }

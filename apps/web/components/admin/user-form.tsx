@@ -11,6 +11,7 @@ import {
   FieldGrid,
   FormDate,
   FormField,
+  FormReadout,
   FormSelect,
   FormTextarea,
   HeightField,
@@ -78,7 +79,6 @@ const REQUIRED: (keyof UserDraft)[] = [
   'lastName',
   'email',
   'gender',
-  'dateOfBirth',
   'mobileNumber',
   'address',
   'height',
@@ -146,7 +146,9 @@ export function draftFromProfile(profile: AdminUserDetail): UserDraft {
     smoking: profile.smoking ?? '',
     foodPreference: profile.foodPreference ?? '',
     kujaNumber: profile.kujaNumber ?? '',
-    birthDay: profile.birthDay ?? '',
+    // dateOfBirth wins where a pre-merge profile has both: it is the field the
+    // whole platform ages off, so editing must not quietly shift it.
+    birthDay: isoDate(profile.dateOfBirth) || (profile.birthDay ?? ''),
     mobileNumber: profile.mobileNumber ?? '',
     whatsappNumber: profile.whatsappNumber ?? '',
     address: profile.address ?? '',
@@ -177,6 +179,7 @@ export function UserForm({
 
   const cities = useMemo(() => citiesForCountry(draft.country), [draft.country])
   const districts = useMemo(() => districtsForCountry(draft.country), [draft.country])
+  const age = useMemo(() => ageFrom(draft.birthDay || draft.dateOfBirth), [draft.birthDay, draft.dateOfBirth])
 
   function set<K extends keyof UserDraft>(key: K, value: UserDraft[K]) {
     setDraft((d) => ({ ...d, [key]: value }))
@@ -184,6 +187,22 @@ export function UserForm({
       if (!e[key]) return e
       const next = { ...e }
       delete next[key]
+      return next
+    })
+  }
+
+  /**
+   * Birth day is the only date the form asks for: the horoscope reading and the
+   * profile's age are the same day, and asking twice produced two dates that
+   * could silently disagree. It writes dateOfBirth too, which is what the API
+   * and every age calculation actually read.
+   */
+  function setBirthDay(value: string) {
+    setDraft((d) => ({ ...d, birthDay: value, dateOfBirth: value }))
+    setErrors((e) => {
+      if (!e.birthDay) return e
+      const next = { ...e }
+      delete next.birthDay
       return next
     })
   }
@@ -228,6 +247,17 @@ export function UserForm({
     if (Object.keys(found).length) {
       setErrors(found)
       setSaveError('Fill in every field marked with an asterisk.')
+      revealFirstError(found)
+      return
+    }
+
+    // `max` on a date input only constrains the picker — a typed or pasted date
+    // gets through, and the API would reject it after the round trip.
+    const birthDay = draft.birthDay || draft.dateOfBirth
+    if (ageFrom(birthDay) < MIN_AGE) {
+      setErrors({ birthDay: true })
+      setSaveError(`The birth day must make this profile at least ${MIN_AGE}.`)
+      revealFirstError({ birthDay: true })
       return
     }
 
@@ -241,7 +271,7 @@ export function UserForm({
       lastName: draft.lastName,
       email: draft.email,
       gender: draft.gender,
-      dateOfBirth: toIso(draft.dateOfBirth),
+      dateOfBirth: toIso(birthDay),
       isDummy: draft.isDummy,
       images: draft.images,
       location: [draft.city, draft.stateDistrict, draft.country].filter(Boolean).join(', '),
@@ -300,42 +330,42 @@ export function UserForm({
 
       <Panel title="Basic details" className="mb-4">
         <FieldGrid>
-          <FormField label="First name" value={draft.firstName} onChange={(v) => set('firstName', v)} required error={errors.firstName} />
-          <FormField label="Last name" value={draft.lastName} onChange={(v) => set('lastName', v)} required error={errors.lastName} />
-          <FormField label="Email" type="email" value={draft.email} onChange={(v) => set('email', v)} required error={errors.email} hint={mode === 'create' && draft.isDummy ? 'Sample profiles never receive email, but the address must still be unique.' : undefined} />
-          <FormSelect label="Gender" value={draft.gender} onChange={(v) => set('gender', v)} options={['MALE', 'FEMALE']} required error={errors.gender} />
-          <FormDate label="Date of birth" value={draft.dateOfBirth} onChange={(v) => set('dateOfBirth', v)} required error={errors.dateOfBirth} max={maxAdultBirthDate()} hint={`Must be at least ${MIN_AGE}.`} />
-          <FormSelect label="Nationality" value={draft.nationality} onChange={(v) => set('nationality', v)} options={NATIONALITIES} />
-          <FormSelect label="Ethnicity" value={draft.ethnicity} onChange={(v) => set('ethnicity', v)} options={ETHNICITIES} />
-          <FormField label="Caste" value={draft.caste} onChange={(v) => set('caste', v)} />
-          <FormSelect label="Civil status" value={draft.civilStatus} onChange={(v) => set('civilStatus', v)} options={CIVIL_STATUSES} />
-          <FormSelect label="Religion" value={draft.religion} onChange={(v) => set('religion', v)} options={RELIGIONS} />
-          <HeightField value={draft.height} onChange={(v) => set('height', v)} required error={errors.height} />
+          <FormField name="firstName" label="First name" value={draft.firstName} onChange={(v) => set('firstName', v)} required error={errors.firstName} />
+          <FormField name="lastName" label="Last name" value={draft.lastName} onChange={(v) => set('lastName', v)} required error={errors.lastName} />
+          <FormField name="email" label="Email" type="email" value={draft.email} onChange={(v) => set('email', v)} required error={errors.email} hint={mode === 'create' && draft.isDummy ? 'Sample profiles never receive email, but the address must still be unique.' : undefined} />
+          <FormSelect name="gender" label="Gender" value={draft.gender} onChange={(v) => set('gender', v)} options={['MALE', 'FEMALE']} required error={errors.gender} />
+          <FormSelect name="nationality" label="Nationality" value={draft.nationality} onChange={(v) => set('nationality', v)} options={NATIONALITIES} />
+          <FormSelect name="ethnicity" label="Ethnicity" value={draft.ethnicity} onChange={(v) => set('ethnicity', v)} options={ETHNICITIES} />
+          <FormField name="caste" label="Caste" value={draft.caste} onChange={(v) => set('caste', v)} />
+          <FormSelect name="civilStatus" label="Civil status" value={draft.civilStatus} onChange={(v) => set('civilStatus', v)} options={CIVIL_STATUSES} />
+          <FormSelect name="religion" label="Religion" value={draft.religion} onChange={(v) => set('religion', v)} options={RELIGIONS} />
+          <HeightField name="height" value={draft.height} onChange={(v) => set('height', v)} required error={errors.height} />
         </FieldGrid>
       </Panel>
 
       <Panel title="Residency" className="mb-4">
         <FieldGrid>
-          <FormSelect label="Country" value={draft.country} onChange={setCountry} options={COUNTRIES} required error={errors.country} />
-          <FormSelect label="City" value={draft.city} onChange={(v) => set('city', v)} options={cities} required error={errors.city} />
-          <FormSelect label="State / district" value={draft.stateDistrict} onChange={(v) => set('stateDistrict', v)} options={districts} />
+          <FormSelect name="country" label="Country" value={draft.country} onChange={setCountry} options={COUNTRIES} required error={errors.country} />
+          <FormSelect name="city" label="City" value={draft.city} onChange={(v) => set('city', v)} options={cities} required error={errors.city} />
+          <FormSelect name="stateDistrict" label="State / district" value={draft.stateDistrict} onChange={(v) => set('stateDistrict', v)} options={districts} />
         </FieldGrid>
       </Panel>
 
       <Panel title="Education, work and habits" className="mb-4">
         <FieldGrid>
-          <FormSelect label="Education level" value={draft.educationLevel} onChange={(v) => set('educationLevel', v)} options={EDUCATION_LEVELS} required error={errors.educationLevel} />
-          <FormSelect label="Profession" value={draft.profession} onChange={(v) => set('profession', v)} options={PROFESSIONS} required error={errors.profession} />
-          <FormSelect label="Drinking" value={draft.drinking} onChange={(v) => set('drinking', v)} options={DRINKING_OPTS} />
-          <FormSelect label="Smoking" value={draft.smoking} onChange={(v) => set('smoking', v)} options={SMOKING_OPTS} />
-          <FormSelect label="Food preference" value={draft.foodPreference} onChange={(v) => set('foodPreference', v)} options={FOOD_PREFS} />
+          <FormSelect name="educationLevel" label="Education level" value={draft.educationLevel} onChange={(v) => set('educationLevel', v)} options={EDUCATION_LEVELS} required error={errors.educationLevel} />
+          <FormSelect name="profession" label="Profession" value={draft.profession} onChange={(v) => set('profession', v)} options={PROFESSIONS} required error={errors.profession} />
+          <FormSelect name="drinking" label="Drinking" value={draft.drinking} onChange={(v) => set('drinking', v)} options={DRINKING_OPTS} />
+          <FormSelect name="smoking" label="Smoking" value={draft.smoking} onChange={(v) => set('smoking', v)} options={SMOKING_OPTS} />
+          <FormSelect name="foodPreference" label="Food preference" value={draft.foodPreference} onChange={(v) => set('foodPreference', v)} options={FOOD_PREFS} />
         </FieldGrid>
       </Panel>
 
       <Panel title="Horoscope" className="mb-4">
         <FieldGrid>
-          <FormSelect label="Kuja number" value={draft.kujaNumber} onChange={(v) => set('kujaNumber', v)} options={KUJA_NUMBERS} required error={errors.kujaNumber} />
-          <FormDate label="Birth day" value={draft.birthDay} onChange={(v) => set('birthDay', v)} required error={errors.birthDay} />
+          <FormSelect name="kujaNumber" label="Kuja number" value={draft.kujaNumber} onChange={(v) => set('kujaNumber', v)} options={KUJA_NUMBERS} required error={errors.kujaNumber} />
+          <FormDate name="birthDay" label="Birth day" value={draft.birthDay} onChange={setBirthDay} required error={errors.birthDay} max={maxAdultBirthDate()} hint={`Also used as the date of birth. Must be at least ${MIN_AGE}.`} />
+          <FormReadout label="Age" value={age > 0 ? `${age}` : ''} hint="Calculated from the birth day." />
         </FieldGrid>
       </Panel>
 
@@ -349,14 +379,14 @@ export function UserForm({
           <p>These fields are never returned by the public profile API until contact is agreed.</p>
         </div>
         <FieldGrid>
-          <FormField label="Mobile number" value={draft.mobileNumber} onChange={(v) => set('mobileNumber', v)} required error={errors.mobileNumber} placeholder="+94 771234567" />
-          <FormField label="WhatsApp number" value={draft.whatsappNumber} onChange={(v) => set('whatsappNumber', v)} placeholder="+94 771234567" />
+          <FormField name="mobileNumber" label="Mobile number" value={draft.mobileNumber} onChange={(v) => set('mobileNumber', v)} required error={errors.mobileNumber} placeholder="+94 771234567" />
+          <FormField name="whatsappNumber" label="WhatsApp number" value={draft.whatsappNumber} onChange={(v) => set('whatsappNumber', v)} placeholder="+94 771234567" />
         </FieldGrid>
         <div className="mt-3 sm:mt-4">
-          <FormTextarea label="Address" value={draft.address} onChange={(v) => set('address', v)} required error={errors.address} rows={2} />
+          <FormTextarea name="address" label="Address" value={draft.address} onChange={(v) => set('address', v)} required error={errors.address} rows={2} />
         </div>
         <div className="mt-3 sm:mt-4">
-          <FormTextarea label="About" value={draft.bio} onChange={(v) => set('bio', v)} rows={3} placeholder="A short introduction shown on the profile." />
+          <FormTextarea name="bio" label="About" value={draft.bio} onChange={(v) => set('bio', v)} rows={3} placeholder="A short introduction shown on the profile." />
         </div>
       </Panel>
 
@@ -452,6 +482,39 @@ function toIso(dateStr: string): string {
   if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return `${dateStr}T00:00:00.000Z`
   const d = new Date(dateStr)
   return isNaN(d.getTime()) ? dateStr : d.toISOString()
+}
+
+/**
+ * Scrolls to the topmost field that failed validation and focuses it.
+ *
+ * The offenders are read out of the DOM rather than off REQUIRED, because the
+ * two orders differ — contact details sit near the top of REQUIRED but at the
+ * bottom of the form — and the admin should land on the first one they can see,
+ * not the first one the array happens to list.
+ */
+function revealFirstError(found: Partial<Record<keyof UserDraft, true>>) {
+  // One frame late, so the red styling is painted before we scroll to it.
+  requestAnimationFrame(() => {
+    const fields = Array.from(document.querySelectorAll<HTMLElement>('[data-field]'))
+    const target = fields.find((el) => el.dataset.field && found[el.dataset.field as keyof UserDraft])
+    if (!target) return
+    // Centred rather than 'start': the sticky save bar covers the bottom of the
+    // viewport and a short field can end up underneath it.
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    target.querySelector<HTMLElement>('input, select, textarea')?.focus({ preventScroll: true })
+  })
+}
+
+/** Whole years elapsed, so a birthday later this year hasn't counted yet. */
+function ageFrom(dateStr: string): number {
+  if (!dateStr) return 0
+  const dob = new Date(dateStr)
+  if (isNaN(dob.getTime())) return 0
+  const now = new Date()
+  let years = now.getFullYear() - dob.getFullYear()
+  const monthDelta = now.getMonth() - dob.getMonth()
+  if (monthDelta < 0 || (monthDelta === 0 && now.getDate() < dob.getDate())) years--
+  return years
 }
 
 function maxAdultBirthDate(): string {
