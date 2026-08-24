@@ -74,6 +74,98 @@ export class MatchesService {
     }
   }
 
+  /**
+   * Matches a member with a sample profile on the spot.
+   *
+   * Mirrors the auto-mutual branch below: both directions are ACCEPTED, the
+   * conversation is opened, and the member is notified as though the profile
+   * had accepted them. The reciprocal row matters — `isMutual` is read from
+   * whichever side is accepted, and the interests screens list rows, so without
+   * it the match would be invisible from the sample profile's side.
+   */
+  private async autoReciprocateInterest(senderId: string, receiverId: string) {
+    this.logger.log(
+      `sendInterest – receiver is a sample profile, auto-matching: senderId=${senderId} receiverId=${receiverId}`,
+    );
+
+    const [myInterest, theirInterest] = await this.prisma.$transaction([
+      this.prisma.interest.upsert({
+        where: { senderId_receiverId: { senderId, receiverId } },
+        create: { senderId, receiverId, status: InterestStatus.ACCEPTED },
+        update: { status: InterestStatus.ACCEPTED },
+      }),
+      this.prisma.interest.upsert({
+        where: {
+          senderId_receiverId: { senderId: receiverId, receiverId: senderId },
+        },
+        create: {
+          senderId: receiverId,
+          receiverId: senderId,
+          status: InterestStatus.ACCEPTED,
+        },
+        update: { status: InterestStatus.ACCEPTED },
+      }),
+    ]);
+
+    await this.ensureConversation(receiverId, senderId);
+
+    await this.notifications.notifyInterestAccepted(
+      senderId,
+      receiverId,
+      theirInterest.id,
+    );
+
+    this.logger.log(
+      `sendInterest – sample profile auto-match complete: senderId=${senderId} receiverId=${receiverId}`,
+    );
+    return myInterest;
+  }
+
+  /**
+   * Approves a contact request against a sample profile immediately.
+   *
+   * Both rows are written on purpose. Contact details are a two-way exchange —
+   * users.service.ts only reveals them when the requester's row *and* the
+   * incoming row are both ACCEPTED — so approving one side alone would leave
+   * the member looking at a blank phone number with no way to explain it.
+   */
+  private async autoApproveContactRequest(
+    requesterId: string,
+    targetId: string,
+  ) {
+    this.logger.log(
+      `sendContactRequest – target is a sample profile, auto-approving: requesterId=${requesterId} targetId=${targetId}`,
+    );
+
+    const [req] = await this.prisma.$transaction([
+      this.prisma.contactRequest.upsert({
+        where: { requesterId_targetId: { requesterId, targetId } },
+        create: {
+          requesterId,
+          targetId,
+          status: ContactRequestStatus.ACCEPTED,
+        },
+        update: { status: ContactRequestStatus.ACCEPTED },
+      }),
+      this.prisma.contactRequest.upsert({
+        where: {
+          requesterId_targetId: {
+            requesterId: targetId,
+            targetId: requesterId,
+          },
+        },
+        create: {
+          requesterId: targetId,
+          targetId: requesterId,
+          status: ContactRequestStatus.ACCEPTED,
+        },
+        update: { status: ContactRequestStatus.ACCEPTED },
+      }),
+    ]);
+
+    return req;
+  }
+
   async sendInterest(senderId: string, receiverId: string) {
     if (senderId === receiverId) {
       this.logger.warn(
@@ -105,6 +197,24 @@ export class MatchesService {
     const mine = await this.prisma.interest.findUnique({
       where: { senderId_receiverId: { senderId, receiverId } },
     });
+
+    const receiver = await this.prisma.profile.findUnique({
+      where: { id: receiverId },
+      select: { isDummy: true },
+    });
+
+    if (!receiver) {
+      this.logger.warn(
+        `sendInterest – receiver not found: receiverId=${receiverId}`,
+      );
+      throw new NotFoundException('Profile not found');
+    }
+
+    // Sample profiles have nobody behind them to press accept, so they answer
+    // for themselves: the interest comes straight back and the pair matches.
+    if (receiver.isDummy && mine?.status !== InterestStatus.ACCEPTED) {
+      return this.autoReciprocateInterest(senderId, receiverId);
+    }
 
     if (mine?.status === InterestStatus.ACCEPTED) {
       this.logger.log(
@@ -396,6 +506,15 @@ export class MatchesService {
         `sendContactRequest – mutual interest required but not met: requesterId=${requesterId} targetId=${targetId}`,
       );
       throw new ForbiddenException('Contact request requires mutual interest');
+    }
+
+    const target = await this.prisma.profile.findUnique({
+      where: { id: targetId },
+      select: { isDummy: true },
+    });
+
+    if (target?.isDummy) {
+      return this.autoApproveContactRequest(requesterId, targetId);
     }
 
     const req = await this.prisma.contactRequest.upsert({

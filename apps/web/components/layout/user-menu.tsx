@@ -4,18 +4,20 @@ import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
-import { LogOut, UserCircle, User } from 'lucide-react'
+import { LogOut, Shield, UserCircle, User } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { apiFetch, ApiError } from '@/lib/api'
 import { defaultAvatarSrc } from '@/lib/avatar'
 import { useI18n } from '@/lib/i18n/use-i18n'
 import NotificationBell from '@/components/dashboard/notification-bell'
 import NotificationInterests from '@/components/dashboard/notification-interests'
+import { isStaff, type Role } from '@/lib/admin/types'
 
 interface ProfileSummary {
   avatarUrl?: string | null
   images: string[]
   gender?: string | null
+  role?: Role | null
 }
 
 interface UserMenuProps {
@@ -36,6 +38,7 @@ export default function UserMenu({ fallback = null, signOutRedirect = '/login' }
   const [open, setOpen] = useState(false)
   const [avatar, setAvatar] = useState<string | null>(null)
   const [gender, setGender] = useState<string | null>(null)
+  const [role, setRole] = useState<Role | null>(null)
   const [signedIn, setSignedIn] = useState<boolean | null>(null)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -45,11 +48,15 @@ export default function UserMenu({ fallback = null, signOutRedirect = '/login' }
       .then(p => {
         setAvatar(p.images?.[0] ?? p.avatarUrl ?? null)
         setGender(p.gender ?? null)
+        // /auth/me has always returned the role; the member site simply never
+        // read it. Staff get a way back to the portal from here.
+        setRole(p.role ?? null)
         setSignedIn(true)
       })
       .catch((err) => {
         setAvatar(null)
         setGender(null)
+        setRole(null)
         // Only a 401 means signed out — a network blip shouldn't log the user out of the UI.
         setSignedIn(!(err instanceof ApiError && err.status === 401))
       })
@@ -105,6 +112,16 @@ export default function UserMenu({ fallback = null, signOutRedirect = '/login' }
               <UserCircle className="w-4 h-4" />
               {t('dashboard.myProfile')}
             </Link>
+            {isStaff(role) && (
+              <Link
+                href="/admin"
+                onClick={() => setOpen(false)}
+                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                <Shield className="w-4 h-4" />
+                Admin portal
+              </Link>
+            )}
             <hr className="my-1 border-gray-100" />
             <button
               onClick={handleLogout}

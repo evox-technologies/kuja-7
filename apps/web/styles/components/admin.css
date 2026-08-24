@@ -1,0 +1,25 @@
+/* Admin portal zone overrides — target via [data-scale-zone="admin"] */
+
+/*
+ * Opt the portal out of the global 1280px zoom-to-fit below `lg`, the same way
+ * the dashboard does. Without this the whole document is scaled down to fit a
+ * fixed canvas, which turns every data table into unreadable 8px type instead
+ * of letting it scroll and reflow.
+ */
+@media (max-width: 1023px) {
+  /* Chrome / Safari (zoom) */
+  html.supports-zoom:has([data-scale-zone='admin']),
+  html.supports-zoom:has([data-scale-zone='admin']) body {
+    zoom: 1;
+    min-width: 0;
+    overflow-x: hidden;
+  }
+
+  /* Firefox (transform fallback) */
+  html.no-zoom:has([data-scale-zone='admin']) #viewport-canvas {
+    width: auto;
+    min-width: 0;
+    transform: none;
+    min-height: 0;
+  }
+}
