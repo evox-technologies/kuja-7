@@ -13,6 +13,11 @@ export function isStaff(role: Role | undefined | null): boolean {
   return !!role && STAFF_ROLES.includes(role)
 }
 
+/** Top of STAFF_ROLES — the only role that sees deployment-level configuration. */
+export function isSuperAdmin(role: Role | undefined | null): boolean {
+  return role === 'SUPER_ADMIN'
+}
+
 export const ROLE_LABELS: Record<Role, string> = {
   USER: 'Member',
   MODERATOR: 'Moderator',

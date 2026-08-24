@@ -35,26 +35,39 @@ const DialogContent = React.forwardRef<
 >(({ className, children, hideClose = false, ...props }, ref) => (
   <DialogPrimitive.Portal>
     <DialogOverlay />
-    <DialogPrimitive.Content
-      ref={ref}
-      className={cn(
-        'fixed left-1/2 top-1/2 z-50 w-[calc(100vw-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2',
-        'max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl border border-gray-100 bg-white p-5 shadow-xl',
-        'animate-scale-in outline-none',
-        className
-      )}
-      {...props}
-    >
-      {children}
-      {!hideClose && (
-        <DialogPrimitive.Close
-          className="absolute right-4 top-4 rounded-full p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-border"
-          aria-label="Close"
-        >
-          <X className="h-4 w-4" />
-        </DialogPrimitive.Close>
-      )}
-    </DialogPrimitive.Content>
+    {/*
+      A fixed flex wrapper does the centring, rather than left/top 50% plus a
+      -translate-1/2 on the panel itself. `animate-scale-in` animates
+      `transform` and ends on `transform: none` with fill mode `both`
+      (app/globals.css), which would wipe out a translate-based centre and
+      leave the panel offset by half its own size. Keeping the two concerns
+      apart means any future animation can't break the position again.
+
+      pointer-events-none lets clicks fall through to the overlay beneath, so
+      Radix still closes on an outside click.
+    */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+      <DialogPrimitive.Content
+        ref={ref}
+        className={cn(
+          'pointer-events-auto relative w-full max-w-lg',
+          'max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl border border-gray-100 bg-white p-5 shadow-xl',
+          'animate-scale-in outline-none',
+          className
+        )}
+        {...props}
+      >
+        {children}
+        {!hideClose && (
+          <DialogPrimitive.Close
+            className="absolute right-4 top-4 rounded-full p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-border"
+            aria-label="Close"
+          >
+            <X className="h-4 w-4" />
+          </DialogPrimitive.Close>
+        )}
+      </DialogPrimitive.Content>
+    </div>
   </DialogPrimitive.Portal>
 ))
 DialogContent.displayName = DialogPrimitive.Content.displayName
