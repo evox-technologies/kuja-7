@@ -4,13 +4,14 @@ import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
-import { LogOut, Shield, UserCircle, User } from 'lucide-react'
+import { KeyRound, LogOut, Shield, UserCircle, User } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { apiFetch, ApiError } from '@/lib/api'
 import { defaultAvatarSrc } from '@/lib/avatar'
 import { useI18n } from '@/lib/i18n/use-i18n'
 import NotificationBell from '@/components/dashboard/notification-bell'
 import NotificationInterests from '@/components/dashboard/notification-interests'
+import ChangePasswordDialog from '@/components/auth/change-password-dialog'
 import { isStaff, type Role } from '@/lib/admin/types'
 
 interface ProfileSummary {
@@ -40,6 +41,7 @@ export default function UserMenu({ fallback = null, signOutRedirect = '/login' }
   const [gender, setGender] = useState<string | null>(null)
   const [role, setRole] = useState<Role | null>(null)
   const [signedIn, setSignedIn] = useState<boolean | null>(null)
+  const [passwordOpen, setPasswordOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
   // Re-fetch avatar whenever the user navigates (catches post-upload nav back from profile)
@@ -103,7 +105,7 @@ export default function UserMenu({ fallback = null, signOutRedirect = '/login' }
         </button>
 
         {open && (
-          <div className="absolute right-0 mt-2 w-44 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
+          <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
             <Link
               href="/dashboard/profile"
               onClick={() => setOpen(false)}
@@ -122,6 +124,13 @@ export default function UserMenu({ fallback = null, signOutRedirect = '/login' }
                 Admin portal
               </Link>
             )}
+            <button
+              onClick={() => { setOpen(false); setPasswordOpen(true) }}
+              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <KeyRound className="w-4 h-4" />
+              {t('auth.changePassword.menuLabel')}
+            </button>
             <hr className="my-1 border-gray-100" />
             <button
               onClick={handleLogout}
@@ -133,6 +142,8 @@ export default function UserMenu({ fallback = null, signOutRedirect = '/login' }
           </div>
         )}
       </div>
+
+      <ChangePasswordDialog open={passwordOpen} onOpenChange={setPasswordOpen} />
     </>
   )
 }
