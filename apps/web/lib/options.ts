@@ -485,7 +485,22 @@ export const EDUCATION_LEVELS = [
 export const FOOD_PREFS = ['Vegetarian', 'Non-Vegetarian', 'Vegan', 'Halal']
 export const DRINKING_OPTS = ['Never', 'Occasionally', 'Regularly']
 export const SMOKING_OPTS = ['Never', 'Occasionally', 'Regularly']
-export const KUJA_NUMBERS = ['1', '2', '4', '7', '8', '12']
+/**
+ * The six kuja positions the horoscope readings actually distinguish.
+ *
+ * 'Other' is appended for every entry form: the API treats a blank kujaNumber
+ * as an incomplete profile (auth.service.ts), which would lock anyone who
+ * doesn't know their number — or would rather not give it — out of sending
+ * interests. Picking 'Other' records that they declined, rather than a number.
+ */
+export const KNOWN_KUJA_NUMBERS = ['1', '2', '4', '7', '8', '12']
+export const KUJA_OTHER = 'Other'
+export const KUJA_NUMBERS = [...KNOWN_KUJA_NUMBERS, KUJA_OTHER]
+
+/** False for a blank or 'Other' value, so display badges can skip a non-answer. */
+export function hasKujaNumber(value?: string | null): boolean {
+  return !!value && value !== KUJA_OTHER
+}
 
 export const MIN_AGE = 18
 export const MAX_AGE = 80

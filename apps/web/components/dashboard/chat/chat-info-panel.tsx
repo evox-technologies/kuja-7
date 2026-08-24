@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { User, Loader2 } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
+import { hasKujaNumber } from '@/lib/options'
 import { defaultAvatarSrc } from '@/lib/avatar'
 
 interface OtherProfileSummary {
@@ -92,7 +93,7 @@ export default function ChatInfoPanel({ otherId }: Props) {
           <span className="font-semibold text-gray-900">
             {profile.firstName} {profile.lastName}
           </span>
-          {profile.kujaNumber && (
+          {hasKujaNumber(profile.kujaNumber) && (
             <span className="bg-brand-light text-brand-text text-[10px] font-bold px-1.5 py-0.5 rounded-full">
               Kuja {profile.kujaNumber}
             </span>

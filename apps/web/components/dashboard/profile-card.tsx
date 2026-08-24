@@ -6,6 +6,7 @@ import { Heart, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { apiFetch } from '@/lib/api'
 import { useState } from 'react'
+import { hasKujaNumber } from '@/lib/options'
 import { useProfileGuard } from '@/contexts/profile-guard'
 import { defaultAvatarSrc } from '@/lib/avatar'
 
@@ -144,7 +145,7 @@ export default function ProfileCard({ profile, badge, actions, note }: Props) {
                 <span className="font-semibold text-gray-900 text-base truncate">
                   {profile.firstName} {profile.lastName}
                 </span>
-                {profile.kujaNumber && (
+                {hasKujaNumber(profile.kujaNumber) && (
                   <span className="bg-brand-light text-brand-text text-xs font-bold px-1.5 py-0.5 rounded-full shrink-0">
                     Kuja {profile.kujaNumber}
                   </span>

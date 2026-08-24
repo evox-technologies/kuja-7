@@ -44,8 +44,11 @@ export default function RolesPage() {
     void load()
   }, [load])
 
+  // USER holds no admin permissions and never will. SUPER_ADMIN is fixed in
+  // code and every box would be ticked and disabled — a column nobody can act
+  // on is just noise, so both are left out and explained in the note below.
   const columns = useMemo(
-    () => matrix?.roles.filter((r) => r.role !== 'USER') ?? [],
+    () => matrix?.roles.filter((r) => r.role !== 'USER' && r.role !== 'SUPER_ADMIN') ?? [],
     [matrix]
   )
 
@@ -189,9 +192,9 @@ export default function RolesPage() {
       </Panel>
 
       <p className="mt-3 text-xs text-gray-400">
-        Super admin holds every permission and cannot be edited — otherwise one bad save could
-        lock everybody out of this screen. Locations and Master Data are hidden until those
-        modules are built.
+        Super admin is not shown: it holds every permission and cannot be edited, otherwise one
+        bad save could lock everybody out of this screen. Locations and Master Data are hidden
+        until those modules are built.
       </p>
     </AdminPage>
   )

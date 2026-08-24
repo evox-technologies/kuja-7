@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Lock, User, Camera } from 'lucide-react'
 import { apiFetch, ApiError } from '@/lib/api'
 import { useProfileGuard } from '@/contexts/profile-guard'
+import { hasKujaNumber, KNOWN_KUJA_NUMBERS, KUJA_NUMBERS, KUJA_OTHER } from '@/lib/options'
 import {
   HEIGHT_MIN_IN,
   HEIGHT_MAX_IN,
@@ -67,8 +68,6 @@ interface Draft {
   address: string
 }
 
-const KUJA_NUMBERS = ['1', '2', '4', '7', '8', '12', 'Other']
-const KNOWN_KUJA_NUMBERS = KUJA_NUMBERS.slice(0, -1)
 const CIVIL_STATUSES = ['Never Married', 'Divorced', 'Widowed', 'Separated']
 const DRINKING_OPTS = ['Never', 'Occasionally', 'Regularly']
 const SMOKING_OPTS = ['Never', 'Occasionally', 'Regularly']
@@ -105,13 +104,13 @@ function deriveEthnicitySelection(ethnicity: string): string {
 
 function deriveKujaSelection(kujaNumber: string): string {
   if (!kujaNumber) return ''
-  return KNOWN_KUJA_NUMBERS.includes(kujaNumber) ? kujaNumber : 'Other'
+  return KNOWN_KUJA_NUMBERS.includes(kujaNumber) ? kujaNumber : KUJA_OTHER
 }
 
 // A specific number is optional once 'Other' is picked — only pre-fill this when the
 // saved value is an actual custom number, not the literal 'Other' placeholder itself.
 function deriveKujaOther(kujaNumber: string): string {
-  if (!kujaNumber || kujaNumber === 'Other') return ''
+  if (!kujaNumber || kujaNumber === KUJA_OTHER) return ''
   return KNOWN_KUJA_NUMBERS.includes(kujaNumber) ? '' : kujaNumber
 }
 
@@ -476,7 +475,7 @@ export default function OwnProfilePage() {
                 <span className="font-bold text-lg sm:text-xl truncate">
                   {profile.firstName} {profile.lastName}
                 </span>
-                {profile.kujaNumber && (
+                {hasKujaNumber(profile.kujaNumber) && (
                   <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
                     Kuja {profile.kujaNumber}
                   </span>
@@ -660,14 +659,14 @@ export default function OwnProfilePage() {
                 required
                 error={!!fieldErrors.kujaNumber}
               />
-              {kujaSelection === 'Other' && (
+              {kujaSelection === KUJA_OTHER && (
                 <div className="mt-2">
                   <FormField
                     label="Specify Kuja Number (optional)"
                     value={kujaOther}
                     onChange={v => {
                       setKujaOther(v)
-                      set('kujaNumber', v.trim() ? v : 'Other')
+                      set('kujaNumber', v.trim() ? v : KUJA_OTHER)
                     }}
                     type="number"
                     placeholder="Enter your Kuja number"

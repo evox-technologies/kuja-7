@@ -15,6 +15,8 @@ import {
 import {
   citiesForCountry,
   districtsForCountry,
+  KUJA_NUMBERS,
+  KUJA_OTHER,
   MIN_AGE,
   PHONE_COUNTRY_CODES,
   formatPhone,
@@ -63,7 +65,6 @@ const EMPTY: FormData = {
   mobileNumber: '', whatsappNumber: '', address: '', images: [],
 }
 
-const KUJA_NUMBERS = ['1', '2', '4', '7', '8', '12']
 const NATIONALITIES = [
   'Sri Lankan',
   'Indian',
@@ -865,7 +866,7 @@ export default function OnboardingPage() {
               >
                 <option value="">-</option>
                 {KUJA_NUMBERS.map(n => (
-                  <option key={n} value={n}>Kuja {n}</option>
+                  <option key={n} value={n}>{n === KUJA_OTHER ? 'Other' : `Kuja ${n}`}</option>
                 ))}
               </select>
             </FieldGroup>
