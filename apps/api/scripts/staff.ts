@@ -21,6 +21,13 @@
 import { PrismaClient, Role, Gender } from '@prisma/client';
 import { createClient } from '@supabase/supabase-js';
 import { randomBytes } from 'crypto';
+import WebSocket from 'ws';
+
+// realtime-js resolves a WebSocket constructor inside `new SupabaseClient`, not on
+// first subscribe, and Node 20 has no global one — so without this every call here
+// dies before it reaches Supabase at all. `ws`'s types don't structurally match the
+// DOM lib types realtime-js expects, though they are functionally compatible.
+const wsTransport: any = WebSocket;
 
 const prisma = new PrismaClient();
 
@@ -46,6 +53,7 @@ function admin() {
   if (!url || !key) fail('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set');
   return createClient(url, key, {
     auth: { autoRefreshToken: false, persistSession: false },
+    realtime: { transport: wsTransport },
   });
 }
 

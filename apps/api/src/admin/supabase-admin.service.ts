@@ -4,6 +4,12 @@ import {
   Logger,
 } from '@nestjs/common';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import WebSocket from 'ws';
+
+// See the comment on the createClient call below. Same cast as
+// upload.controller.ts: ws's types don't structurally match the DOM lib types
+// realtime-js expects, though they are functionally compatible.
+const wsTransport: any = WebSocket;
 
 /**
  * The service-role Supabase client, used for the one thing the portal cannot do
@@ -31,11 +37,14 @@ export class SupabaseAdminService {
 
     this.client = createClient(url, serviceRoleKey, {
       // Server-side client: nothing to persist, nothing to refresh.
-      //
-      // No realtime transport, unlike upload.controller.ts: this client only
-      // ever calls auth.admin.*, and realtime-js opens no socket until a
-      // channel is subscribed to.
       auth: { autoRefreshToken: false, persistSession: false },
+      // Needed even though this client only calls auth.admin.* and never opens a
+      // channel. realtime-js resolves its WebSocket constructor inside
+      // `new SupabaseClient`, not on first subscribe, and Node 20 has no global
+      // one — so omitting this threw before any request was made, taking every
+      // moderator creation with it.
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- see wsTransport
+      realtime: { transport: wsTransport },
     });
     return this.client;
   }
