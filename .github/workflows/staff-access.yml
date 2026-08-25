@@ -1,27 +1,33 @@
 name: Staff access (break-glass)
 
-# Sets a profile's role directly in the database, bypassing the app.
+# Creates staff accounts and changes roles from outside the application.
 #
-# This is NOT the everyday way to manage staff — the portal already does that via
-# POST/PATCH /moderators, with permission checks and an audit trail in
-# admin_audit_logs. Use that. This workflow exists for the one thing the portal
-# cannot do: a fresh database has no SUPER_ADMIN, so nobody can grant the first
-# one from inside the app. It is also the way back in if the last SUPER_ADMIN
-# leaves or locks themselves out.
+# The portal manages staff itself via POST/PATCH /moderators, with permission
+# checks and an audit row — prefer it. This exists because it cannot mint the
+# first SUPER_ADMIN: assertMayGrant requires one to already exist, and a fresh
+# database has none. It is also the way back in if the last one is locked out.
 #
-# Deliberate trade-off: a raw UPDATE writes no admin_audit_logs row. The run
-# record here — who dispatched it, when, with which inputs — is the audit trail,
-# and unlike a DB row it cannot be edited by anyone who gains admin.
+# Deliberate trade-off: these changes write no admin_audit_logs row. The run
+# record — who dispatched it, when, with which inputs — is the trail instead,
+# and unlike a database row it cannot be edited by whoever just gained admin.
 
 on:
   workflow_dispatch:
     inputs:
+      action:
+        description: "create a new staff account, or change an existing profile's role"
+        required: true
+        type: choice
+        default: set-role
+        options:
+          - set-role
+          - create
       email:
-        description: "Email of an existing profile (must have signed up already)"
+        description: "Email address"
         required: true
         type: string
       role:
-        description: "Role to set. USER revokes all staff access."
+        description: "Role to grant. USER revokes all staff access (set-role only)."
         required: true
         type: choice
         default: MODERATOR
@@ -30,79 +36,106 @@ on:
           - MODERATOR
           - ADMIN
           - SUPER_ADMIN
+      first_name:
+        description: "create only — first name"
+        required: false
+        type: string
+      last_name:
+        description: "create only — last name"
+        required: false
+        type: string
+      gender:
+        description: "create only — required by the schema, not used by the portal"
+        required: false
+        type: choice
+        default: MALE
+        options:
+          - MALE
+          - FEMALE
+      date_of_birth:
+        description: "create only — YYYY-MM-DD, required by the schema"
+        required: false
+        type: string
+        default: "1990-01-01"
 
 concurrency:
-  # Two concurrent grants on one row would race; queue instead of cancelling,
-  # since a cancelled run leaves you unsure whether the UPDATE landed.
+  # Queued, never cancelled: a cancelled run leaves you unsure whether the write
+  # landed, and this is the tool you reach for when you are already locked out.
   group: staff-access
   cancel-in-progress: false
 
 jobs:
-  set-role:
+  staff:
     runs-on: ubuntu-latest
     environment: customer-aws
 
     steps:
-      - name: Set role
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: apps/api/pnpm-lock.yaml
+
+      # postinstall runs `prisma generate`, so the client is ready after this.
+      - name: Install
+        working-directory: apps/api
+        run: pnpm install --frozen-lockfile
+
+      - name: Run
+        working-directory: apps/api
         env:
-          # DIRECT_URL (5432, session pooler) rather than DATABASE_URL: pgbouncer
-          # in transaction mode is for the app's query load, not one-off DDL-ish work.
-          PGURL: ${{ secrets.DIRECT_URL }}
+          # Prisma reads both; DIRECT_URL is the one it uses for schema-level work.
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ACTION: ${{ inputs.action }}
           EMAIL: ${{ inputs.email }}
           ROLE: ${{ inputs.role }}
+          FIRST_NAME: ${{ inputs.first_name }}
+          LAST_NAME: ${{ inputs.last_name }}
+          GENDER: ${{ inputs.gender }}
+          DOB: ${{ inputs.date_of_birth }}
           ACTOR: ${{ github.actor }}
         run: |
           set -euo pipefail
 
-          command -v psql >/dev/null || {
-            sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
-          }
-
-          # Everything user-supplied arrives through env, never interpolated into the
-          # script body, and psql's :'var' quoting escapes it into the SQL. An email
-          # is free text — pasting it straight into the query would be an injection
-          # hole. Do not write a GitHub expression here, even inside a comment: the
-          # whole run block is scanned for them, and an empty one fails the parse.
-          rows=$(psql "$PGURL" -v ON_ERROR_STOP=1 -qtAX \
-            -v email="$EMAIL" -v role="$ROLE" <<'SQL'
-          UPDATE profiles
-             SET role = :'role'::"Role"
-           WHERE lower(email) = lower(trim(:'email'))
-          RETURNING id || ' | ' || email || ' | ' || role;
-          SQL
-          )
-
-          if [ -z "$rows" ]; then
-            # Signing up only creates an auth.users row; the profile appears when
-            # onboarding POSTs /auth/profile. Distinguishing the two states turns a
-            # dead end into an instruction. Non-fatal — if the auth schema is not
-            # readable from this role, fall through to the generic message.
-            authed=$(psql "$PGURL" -qtAX -v email="$EMAIL" \
-              -c "SELECT 1 FROM auth.users WHERE lower(email) = lower(trim(:'email')) LIMIT 1" \
-              2>/dev/null || true)
-
-            if [ -n "$authed" ]; then
-              echo "::error::'$EMAIL' has an account but has not completed onboarding," \
-                   "so no profiles row exists yet. Finish the onboarding form, then re-run."
-            else
-              echo "::error::No account and no profile for '$EMAIL' in this database." \
-                   "Sign up and complete onboarding first — this workflow only changes" \
-                   "the role on an existing row, it cannot create one."
-            fi
-            exit 1
+          # Arguments are passed positionally from env, never interpolated into the
+          # command line by the templating engine — an email is free text.
+          if [ "$ACTION" = "create" ]; then
+            pnpm exec ts-node scripts/staff.ts create \
+              "$EMAIL" "$ROLE" "$FIRST_NAME" "$LAST_NAME" "$GENDER" "$DOB" | tee /tmp/out
+          else
+            pnpm exec ts-node scripts/staff.ts set-role "$EMAIL" "$ROLE" | tee /tmp/out
           fi
 
-          echo "Updated: $rows"
-          echo "### Staff access updated" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "\`$rows\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "Dispatched by @$ACTOR." >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "### Staff access"
+            echo ""
+            echo '```'
+            cat /tmp/out
+            echo '```'
+            echo ""
+            echo "Dispatched by @$ACTOR."
+          } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Show current staff
+      - name: Current staff
+        if: always()
+        working-directory: apps/api
         env:
-          PGURL: ${{ secrets.DIRECT_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
         run: |
-          set -euo pipefail
-          psql "$PGURL" -v ON_ERROR_STOP=1 -X -c \
-            "SELECT email, role FROM profiles WHERE role <> 'USER' ORDER BY role, email;"
+          node -e "
+            const { PrismaClient } = require('@prisma/client');
+            new PrismaClient().profile
+              .findMany({ where: { role: { not: 'USER' } }, select: { email: true, role: true }, orderBy: { role: 'asc' } })
+              .then(r => console.table(r))
+              .finally(() => process.exit(0));
+          "

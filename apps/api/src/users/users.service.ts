@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Gender, Prisma } from '@prisma/client';
+import { Gender, Prisma, Role } from '@prisma/client';
 import { IsOptional, IsString, IsEnum, IsInt, IsIn, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
 import { parseHeightToInches } from './height.util';
@@ -161,6 +161,11 @@ export class UsersService {
     const where: Record<string, unknown> = {
       isActive: true,
       isVerified: true,
+      // Staff exist to run the admin portal, not to be matched with. They never
+      // go through onboarding, so their rows carry no photos or bio — without
+      // this they surface in browse as blank profiles, since isVerified and
+      // isActive both default to true.
+      role: Role.USER,
     };
     if (requesterId) where.id = { not: requesterId };
 
@@ -296,6 +301,10 @@ export class UsersService {
       where: {
         id: { not: requesterId },
         isActive: true,
+        // Same reason as search(): staff are not chat partners. This query is
+        // looser than browse — it does not check isVerified — so the role filter
+        // is the only thing keeping them out of the people picker.
+        role: Role.USER,
         OR: [
           { firstName: { contains: q, mode: 'insensitive' } },
           { lastName: { contains: q, mode: 'insensitive' } },
