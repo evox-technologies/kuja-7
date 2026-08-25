@@ -93,12 +93,16 @@ jobs:
           # Prisma reads both; DIRECT_URL is the one it uses for schema-level work.
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DIRECT_URL: ${{ secrets.DIRECT_URL }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          # vars, not secrets. Neither value is one: SUPABASE_URL is the same
+          # string as NEXT_PUBLIC_SUPABASE_URL, compiled into the JS bundle and
+          # served to every visitor, and FRONTEND_URL is the public site. Held as
+          # secrets they were redacted from the recovery link this job prints,
+          # leaving a URL with *** where the host should be.
+          #
+          # Define both under Settings → Environments → customer-aws → Variables.
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          FRONTEND_URL: ${{ vars.FRONTEND_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          # Where the recovery link lands. Without it Supabase falls back to the
-          # project's Site URL, which drops them on the home page with the token
-          # in the fragment and no page ready to consume it.
-          FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
           ACTION: ${{ inputs.action }}
           EMAIL: ${{ inputs.email }}
           ROLE: ${{ inputs.role }}
