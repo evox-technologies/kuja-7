@@ -8,15 +8,12 @@ name: Deploy — Kuja7 (customer AWS)
 # target's domains do not collide with deploy.yml's droplet.
 
 on:
--  # Manual only. deploy.yml ships the droplet on every push to main; the customer's
--  # box ships when someone decides it ships — a merge is not that decision.
-   workflow_dispatch:
- 
--concurrency:
--  # Deliberately NOT the `deploy` group deploy.yml uses — sharing one would let a
--  # droplet deploy cancel a run halfway through restarting the customer's box.
--  group: deploy-aws
--  cancel-in-progress: true
+  # Manual only. deploy.yml ships the droplet on every push to main; the customer's
+  # box ships when someone decides it ships — a merge is not that decision.
+  workflow_dispatch:
+
+# Concurrency is per-job below, not here: the build may be superseded freely, the
+# deploy may not.
 
 jobs:
   build:
