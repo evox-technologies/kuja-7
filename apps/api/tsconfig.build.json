@@ -1,4 +1,12 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": ["node_modules", "test", "dist", "prisma", "**/*spec.ts"]
+  "compilerOptions": {
+    // Pinned, not inferred. Without it TypeScript derives the root from whatever
+    // files happen to be compiled, so adding scripts/make-admin.ts moved every
+    // output down a level — dist/src/main.js — and `node dist/main` in the
+    // Dockerfile could no longer find it. The build stayed green throughout.
+    // With rootDir set, a compiled file outside src/ is a build error instead.
+    "rootDir": "./src"
+  },
+  "exclude": ["node_modules", "test", "dist", "prisma", "scripts", "**/*spec.ts"]
 }
