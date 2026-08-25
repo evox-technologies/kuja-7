@@ -8,13 +8,15 @@ name: Deploy — Kuja7 (customer AWS)
 # target's domains do not collide with deploy.yml's droplet.
 
 on:
-  workflow_dispatch:
-
-  # Every merge to main ships the customer's box. A PR merge arrives here as a push
-  # whatever the merge strategy, so squash, merge-commit and rebase all trigger it.
-  push:
-    branches:
-      - main
+-  # Manual only. deploy.yml ships the droplet on every push to main; the customer's
+-  # box ships when someone decides it ships — a merge is not that decision.
+   workflow_dispatch:
+ 
+-concurrency:
+-  # Deliberately NOT the `deploy` group deploy.yml uses — sharing one would let a
+-  # droplet deploy cancel a run halfway through restarting the customer's box.
+-  group: deploy-aws
+-  cancel-in-progress: true
 
 jobs:
   build:
