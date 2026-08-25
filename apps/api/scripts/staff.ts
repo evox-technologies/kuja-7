@@ -57,6 +57,55 @@ function admin() {
   });
 }
 
+function linkOptionsFor(email: string) {
+  const site = process.env.FRONTEND_URL?.replace(/\/$/, '');
+  return {
+    type: 'recovery' as const,
+    email,
+    ...(site && { options: { redirectTo: `${site}/reset-password/` } }),
+  };
+}
+
+/**
+ * Reissues a sign-in link. Recovery links are single-use, and `create` refuses
+ * once a profile exists, so without this a staff member who lost or burned their
+ * link had no way back in short of deleting and recreating the account.
+ */
+async function resetLink(argv: string[]) {
+  const [emailRaw] = argv;
+  if (!emailRaw) fail('usage: reset-link <email>');
+  const email = emailRaw.trim().toLowerCase();
+
+  const profile = await prisma.profile.findUnique({
+    where: { email },
+    select: { role: true, supabaseId: true },
+  });
+  if (!profile) fail(`no profile for ${email}`);
+  if (!profile.supabaseId) {
+    fail(`${email} has no linked auth user, so it cannot sign in at all`);
+  }
+
+  const supabase = admin();
+  const { data, error } = await supabase.auth.admin.generateLink(
+    linkOptionsFor(email),
+  );
+  if (error || !data?.properties?.action_link) {
+    fail(`could not generate a link: ${error?.message}`);
+  }
+
+  // Drift between these two is invisible until someone tries to sign in and gets
+  // "User from sub claim in JWT does not exist" — worth naming when it happens.
+  if (data.user?.id !== profile.supabaseId) {
+    console.log(
+      `warning: profile.supabaseId is ${profile.supabaseId} but the auth user is ` +
+        `${data.user?.id}. The profile points at an account that no longer exists.`,
+    );
+  }
+
+  console.log(`recovery link for ${email} (${profile.role}):`);
+  console.log(data.properties.action_link);
+}
+
 async function create(argv: string[]) {
   const [emailRaw, roleRaw, firstName, lastName, genderRaw, dob] = argv;
 
@@ -91,12 +140,7 @@ async function create(argv: string[]) {
   const password = randomBytes(18).toString('base64url');
 
   const supabase = admin();
-  const site = process.env.FRONTEND_URL?.replace(/\/$/, '');
-  const linkOptions = {
-    type: 'recovery' as const,
-    email,
-    ...(site && { options: { redirectTo: `${site}/reset-password/` } }),
-  };
+  const linkOptions = linkOptionsFor(email);
 
   const { data, error } = await supabase.auth.admin.createUser({
     email,
@@ -229,6 +273,8 @@ async function main() {
       return create(argv);
     case 'set-role':
       return setRole(argv);
+    case 'reset-link':
+      return resetLink(argv);
     default:
       fail(
         'usage: staff.ts create|set-role ... (see the comment at the top of this file)',

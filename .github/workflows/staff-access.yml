@@ -22,6 +22,7 @@ on:
         options:
           - set-role
           - create
+          - reset-link
       email:
         description: "Email address"
         required: true
@@ -119,6 +120,8 @@ jobs:
           if [ "$ACTION" = "create" ]; then
             pnpm exec ts-node scripts/staff.ts create \
               "$EMAIL" "$ROLE" "$FIRST_NAME" "$LAST_NAME" "$GENDER" "$DOB" | tee /tmp/out
+          elif [ "$ACTION" = "reset-link" ]; then
+            pnpm exec ts-node scripts/staff.ts reset-link "$EMAIL" | tee /tmp/out
           else
             pnpm exec ts-node scripts/staff.ts set-role "$EMAIL" "$ROLE" | tee /tmp/out
           fi
