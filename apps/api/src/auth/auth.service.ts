@@ -11,7 +11,9 @@ import type { Profile } from '@prisma/client';
 
 const MIN_AGE_YEARS = 18;
 
-function assertAdult(dateOfBirth: string): void {
+// Exported so the admin portal creates members under exactly the same rules as
+// self-signup rather than drifting a second copy.
+export function assertAdult(dateOfBirth: string): void {
   const dob = new Date(dateOfBirth);
   if (isNaN(dob.getTime())) {
     throw new BadRequestException('Invalid date of birth');
@@ -25,7 +27,7 @@ function assertAdult(dateOfBirth: string): void {
   }
 }
 
-function computeProfileCompleted(p: Partial<Profile>): boolean {
+export function computeProfileCompleted(p: Partial<Profile>): boolean {
   return !!(
     p.firstName?.trim() &&
     p.lastName?.trim() &&
@@ -108,14 +110,15 @@ export class AuthService {
     return profile;
   }
 
-  async updateProfile(supabaseId: string, dto: UpdateProfileDto) {
-    this.logger.log(
-      `updateProfile – updating profile for supabaseId=${supabaseId}`,
-    );
+  // Keyed on the profile id rather than supabaseId: since staff-created sample
+  // profiles have no auth user, supabaseId is nullable and no longer a
+  // guaranteed handle on a row.
+  async updateProfile(id: string, dto: UpdateProfileDto) {
+    this.logger.log(`updateProfile – updating profile for id=${id}`);
 
     // Fetch current values so we can compute profileCompleted across the full merged state
     const current = await this.prisma.profile.findUniqueOrThrow({
-      where: { supabaseId },
+      where: { id },
     });
 
     const merged: Partial<Profile> = {
@@ -135,7 +138,7 @@ export class AuthService {
     };
 
     const profile = await this.prisma.profile.update({
-      where: { supabaseId },
+      where: { id },
       data: {
         ...(dto.firstName !== undefined && { firstName: dto.firstName }),
         ...(dto.lastName !== undefined && { lastName: dto.lastName }),

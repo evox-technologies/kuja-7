@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Heart, MessageCircle, Phone, ChevronLeft, User, Lock, Bell } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import { useProfileGuard } from '@/contexts/profile-guard'
+import { hasKujaNumber } from '@/lib/options'
 import { defaultAvatarSrc } from '@/lib/avatar'
 
 interface Relationship {
@@ -236,7 +237,7 @@ function OtherProfileInner() {
             <div className="flex-1 text-center sm:text-left">
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                 <span className="font-bold text-lg text-gray-900">{profile.firstName} {profile.lastName}</span>
-                {profile.kujaNumber && (
+                {hasKujaNumber(profile.kujaNumber) && (
                   <span className="bg-brand-light text-brand-text text-[10px] font-bold px-2 py-0.5 rounded-full">
                     Kuja {profile.kujaNumber}
                   </span>

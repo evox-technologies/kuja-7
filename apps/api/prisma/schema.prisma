@@ -8,10 +8,22 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+// SUPER_ADMIN is appended rather than ordered by seniority: the Postgres enum
+// already exists, and reordering would mean recreating the type.
 enum Role {
   USER
   ADMIN
   MODERATOR
+  SUPER_ADMIN
+}
+
+// The moderation workflow. `isVerified` stays as the flag browse filters on
+// (users.service.ts) and is kept in sync with this: VERIFIED → true, else false.
+enum VerificationStatus {
+  PENDING
+  UNDER_REVIEW
+  VERIFIED
+  REJECTED
 }
 
 enum Gender {
@@ -38,7 +50,10 @@ enum NotificationType {
 
 model Profile {
   id          String   @id @default(uuid())
-  supabaseId  String   @unique
+  // Nullable since the admin portal creates sample profiles that have no
+  // Supabase auth user and can never sign in. Postgres permits many NULLs in a
+  // unique index, and every lookup passes a non-null `sub` from a verified JWT.
+  supabaseId  String?  @unique
   email       String   @unique
   role        Role     @default(USER)
   firstName   String
@@ -56,11 +71,11 @@ model Profile {
   updatedAt   DateTime @updatedAt
 
   // Extended personal info
-  nationality   String?
-  height        String?
-  ethnicity     String?
-  caste         String?
-  civilStatus   String?
+  nationality String?
+  height      String?
+  ethnicity   String?
+  caste       String?
+  civilStatus String?
 
   // Structured residency
   country       String?
@@ -86,6 +101,25 @@ model Profile {
   // True once all mandatory profile fields are filled in
   profileCompleted Boolean @default(false)
 
+  // Sample profiles seeded by staff before launch. They have no auth user, and
+  // they auto-reciprocate: an interest sent to one comes straight back as a
+  // match, and a contact request to one is approved on the spot.
+  // See matches.service.ts.
+  isDummy Boolean @default(false)
+
+  // Moderation workflow. Defaults to VERIFIED so self-signups stay visible
+  // exactly as they are today; staff move profiles into the queue deliberately.
+  verificationStatus VerificationStatus @default(VERIFIED)
+  rejectionReason    String?
+  verifiedAt         DateTime?
+
+  // Staff attribution. Deliberately plain columns, not relations: every other
+  // FK into Profile is RESTRICT, and three more self-relations would make
+  // deleting a staff account almost impossible. Names are resolved separately.
+  verifiedById String?
+  createdById  String?
+  updatedById  String?
+
   sentInterests     Interest[]     @relation("SentInterests")
   receivedInterests Interest[]     @relation("ReceivedInterests")
   shortlisted       Shortlist[]    @relation("ShortlistedBy")
@@ -100,7 +134,39 @@ model Profile {
   notificationsReceived Notification[] @relation("NotificationRecipient")
   notificationsCaused   Notification[] @relation("NotificationActor")
 
+  // The admin user list filters and sorts on these; without them it table-scans.
+  @@index([role])
+  @@index([verificationStatus])
+  @@index([createdAt])
+  @@index([createdById])
   @@map("profiles")
+}
+
+/// Which permissions each role holds. Editable from the Roles & Permissions
+/// screen, so the matrix lives in data rather than in code.
+model RolePermission {
+  id         String   @id @default(uuid())
+  role       Role
+  permission String
+  createdAt  DateTime @default(now())
+
+  @@unique([role, permission])
+  @@map("role_permissions")
+}
+
+/// Trail of staff actions. Also the only accurate source for "profiles edited
+/// by moderator X" — profiles.updatedById records just the most recent editor.
+model AdminAuditLog {
+  id        String   @id @default(uuid())
+  actorId   String
+  action    String
+  targetId  String?
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([actorId, createdAt])
+  @@index([action, createdAt])
+  @@map("admin_audit_logs")
 }
 
 model Interest {

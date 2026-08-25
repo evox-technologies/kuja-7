@@ -32,7 +32,7 @@ export class AuthController {
   @Patch('me')
   @UseGuards(JwtAuthGuard)
   updateProfile(@CurrentUser() user: Profile, @Body() dto: UpdateProfileDto) {
-    return this.authService.updateProfile(user.supabaseId, dto);
+    return this.authService.updateProfile(user.id, dto);
   }
 
   @Get('me')

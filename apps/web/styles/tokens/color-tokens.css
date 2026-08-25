@@ -16,4 +16,30 @@
   --color-brand-text: var(--color-primary-800);
   --color-brand-text-strong: var(--color-primary-900);
   --color-on-brand: #1a1a1a;
+
+  /*
+   * Status palette. The app previously reached for raw Tailwind classes ad hoc
+   * (text-red-500 here, bg-amber-50 there); the admin portal shows four
+   * verification states side by side, so they are named once and used
+   * everywhere. Values are Tailwind's own, kept so existing screens still
+   * match.
+   *
+   * Every text tone clears 4.5:1 on white — see docs/email-templates/README.md
+   * for why brand yellow can never be one of them.
+   */
+  --color-success: #047857;
+  --color-success-bg: #ecfdf5;
+  --color-success-border: #a7f3d0;
+
+  --color-warning: #92400e;
+  --color-warning-bg: #fffbeb;
+  --color-warning-border: #fde68a;
+
+  --color-danger: #b91c1c;
+  --color-danger-bg: #fef2f2;
+  --color-danger-border: #fecaca;
+
+  --color-info: #1d4ed8;
+  --color-info-bg: #eff6ff;
+  --color-info-border: #bfdbfe;
 }
