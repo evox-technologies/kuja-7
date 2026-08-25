@@ -1,0 +1,92 @@
+name: Staff access (break-glass)
+
+# Sets a profile's role directly in the database, bypassing the app.
+#
+# This is NOT the everyday way to manage staff — the portal already does that via
+# POST/PATCH /moderators, with permission checks and an audit trail in
+# admin_audit_logs. Use that. This workflow exists for the one thing the portal
+# cannot do: a fresh database has no SUPER_ADMIN, so nobody can grant the first
+# one from inside the app. It is also the way back in if the last SUPER_ADMIN
+# leaves or locks themselves out.
+#
+# Deliberate trade-off: a raw UPDATE writes no admin_audit_logs row. The run
+# record here — who dispatched it, when, with which inputs — is the audit trail,
+# and unlike a DB row it cannot be edited by anyone who gains admin.
+
+on:
+  workflow_dispatch:
+    inputs:
+      email:
+        description: "Email of an existing profile (must have signed up already)"
+        required: true
+        type: string
+      role:
+        description: "Role to set. USER revokes all staff access."
+        required: true
+        type: choice
+        default: MODERATOR
+        options:
+          - USER
+          - MODERATOR
+          - ADMIN
+          - SUPER_ADMIN
+
+concurrency:
+  # Two concurrent grants on one row would race; queue instead of cancelling,
+  # since a cancelled run leaves you unsure whether the UPDATE landed.
+  group: staff-access
+  cancel-in-progress: false
+
+jobs:
+  set-role:
+    runs-on: ubuntu-latest
+    environment: customer-aws
+
+    steps:
+      - name: Set role
+        env:
+          # DIRECT_URL (5432, session pooler) rather than DATABASE_URL: pgbouncer
+          # in transaction mode is for the app's query load, not one-off DDL-ish work.
+          PGURL: ${{ secrets.DIRECT_URL }}
+          EMAIL: ${{ inputs.email }}
+          ROLE: ${{ inputs.role }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          set -euo pipefail
+
+          command -v psql >/dev/null || {
+            sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+          }
+
+          # Everything user-supplied arrives through env, never through ${{ }} in the
+          # script body, and psql's :'var' quoting escapes it into the SQL. An email
+          # is free text — interpolating it directly would be an injection hole.
+          rows=$(psql "$PGURL" -v ON_ERROR_STOP=1 -qtAX \
+            -v email="$EMAIL" -v role="$ROLE" <<'SQL'
+          UPDATE profiles
+             SET role = :'role'::"Role"
+           WHERE lower(email) = lower(trim(:'email'))
+          RETURNING id || ' | ' || email || ' | ' || role;
+          SQL
+          )
+
+          if [ -z "$rows" ]; then
+            echo "::error::No profile with email '$EMAIL'. They must sign up first —" \
+                 "this only changes an existing row, it does not create an account."
+            exit 1
+          fi
+
+          echo "Updated: $rows"
+          echo "### Staff access updated" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "\`$rows\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Dispatched by @$ACTOR." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Show current staff
+        env:
+          PGURL: ${{ secrets.DIRECT_URL }}
+        run: |
+          set -euo pipefail
+          psql "$PGURL" -v ON_ERROR_STOP=1 -X -c \
+            "SELECT email, role FROM profiles WHERE role <> 'USER' ORDER BY role, email;"
