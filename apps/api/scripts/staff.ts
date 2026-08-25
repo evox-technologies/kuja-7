@@ -91,14 +91,45 @@ async function create(argv: string[]) {
   const password = randomBytes(18).toString('base64url');
 
   const supabase = admin();
+  const site = process.env.FRONTEND_URL?.replace(/\/$/, '');
+  const linkOptions = {
+    type: 'recovery' as const,
+    email,
+    ...(site && { options: { redirectTo: `${site}/reset-password/` } }),
+  };
+
   const { data, error } = await supabase.auth.admin.createUser({
     email,
     password,
     email_confirm: true, // no confirmation mail to chase; they can sign in at once
   });
-  if (error || !data.user) fail(`could not create auth user: ${error?.message}`);
 
-  const supabaseId = data.user.id;
+  let supabaseId: string;
+  let adopted = false;
+  let actionLink = '';
+
+  if (data?.user) {
+    supabaseId = data.user.id;
+  } else {
+    // Almost always "already registered": someone signed up and abandoned
+    // onboarding, leaving an auth user with no profile. set-role cannot help
+    // (no row to update) and create used to dead-end here, so the account was
+    // unreachable by the one tool meant for exactly this. Adopt it instead.
+    //
+    // generateLink is the probe as well as the fix — it resolves the existing
+    // user without paging listUsers, and returns the link needed anyway.
+    const { data: link, error: linkError } =
+      await supabase.auth.admin.generateLink(linkOptions);
+
+    if (linkError || !link?.user) {
+      fail(`could not create auth user: ${error?.message}`);
+    }
+
+    supabaseId = link.user.id;
+    actionLink = link.properties?.action_link ?? '';
+    adopted = true;
+    console.log(`adopting the existing auth user for ${email}`);
+  }
 
   try {
     const profile = await prisma.profile.create({
@@ -121,25 +152,31 @@ async function create(argv: string[]) {
     // anyone with repo *read* access — a wider set than the write access needed to
     // dispatch this — and they persist for 90 days. This link is single-use and
     // expires, and whatever password they choose through it is never logged.
-    const site = process.env.FRONTEND_URL?.replace(/\/$/, '');
-    const { data: link, error: linkError } =
-      await supabase.auth.admin.generateLink({
-        type: 'recovery',
-        email,
-        ...(site && { options: { redirectTo: `${site}/reset-password/` } }),
-      });
+    if (!actionLink) {
+      const { data: link, error: linkError } =
+        await supabase.auth.admin.generateLink(linkOptions);
 
-    if (linkError || !link?.properties?.action_link) {
-      console.log(
-        `account created, but the recovery link failed: ${linkError?.message}. ` +
-          'Use "Forgot password" on the sign-in page to set one.',
-      );
-      return;
+      if (linkError || !link?.properties?.action_link) {
+        console.log(
+          `account created, but the recovery link failed: ${linkError?.message}. ` +
+            'Use "Forgot password" on the sign-in page to set one.',
+        );
+        return;
+      }
+      actionLink = link.properties.action_link;
     }
 
     console.log('set the password with this single-use link:');
-    console.log(link.properties.action_link);
+    console.log(actionLink);
   } catch (e) {
+    // Roll back only what this run created. Deleting an adopted user would
+    // destroy a real person's account — and their Supabase identity, sessions and
+    // any linked OAuth — because a profile insert failed.
+    if (adopted) {
+      fail(
+        `profile insert failed for the existing auth user, which was left alone: ${(e as Error).message}`,
+      );
+    }
     // Otherwise the email is claimed by an auth user with no profile behind it,
     // and every retry fails on a duplicate that is invisible in the profiles table.
     await supabase.auth.admin.deleteUser(supabaseId);
