@@ -76,9 +76,10 @@ async function create(argv: string[]) {
     );
   }
 
-  // The admin portal signs in with a password (signInWithPassword), so one has to
-  // exist. It is generated rather than taken as an argument: workflow_dispatch
-  // inputs are written to the run log verbatim and are never masked.
+  // The portal signs in with signInWithPassword, so a password has to exist — but
+  // this one is never disclosed to anyone, including the operator. Access comes
+  // from the single-use recovery link printed below, so the password the account
+  // ends up with was never written down anywhere.
   const password = randomBytes(18).toString('base64url');
 
   const supabase = admin();
@@ -107,7 +108,29 @@ async function create(argv: string[]) {
     });
 
     console.log(`created ${profile.email} as ${profile.role} (${profile.id})`);
-    console.log(`password: ${password}`);
+
+    // A recovery link rather than the password itself. Run logs are readable by
+    // anyone with repo *read* access — a wider set than the write access needed to
+    // dispatch this — and they persist for 90 days. This link is single-use and
+    // expires, and whatever password they choose through it is never logged.
+    const site = process.env.FRONTEND_URL?.replace(/\/$/, '');
+    const { data: link, error: linkError } =
+      await supabase.auth.admin.generateLink({
+        type: 'recovery',
+        email,
+        ...(site && { options: { redirectTo: `${site}/reset-password/` } }),
+      });
+
+    if (linkError || !link?.properties?.action_link) {
+      console.log(
+        `account created, but the recovery link failed: ${linkError?.message}. ` +
+          'Use "Forgot password" on the sign-in page to set one.',
+      );
+      return;
+    }
+
+    console.log('set the password with this single-use link:');
+    console.log(link.properties.action_link);
   } catch (e) {
     // Otherwise the email is claimed by an auth user with no profile behind it,
     // and every retry fails on a duplicate that is invisible in the profiles table.

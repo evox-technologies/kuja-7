@@ -95,6 +95,10 @@ jobs:
           DIRECT_URL: ${{ secrets.DIRECT_URL }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          # Where the recovery link lands. Without it Supabase falls back to the
+          # project's Site URL, which drops them on the home page with the token
+          # in the fragment and no page ready to consume it.
+          FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
           ACTION: ${{ inputs.action }}
           EMAIL: ${{ inputs.email }}
           ROLE: ${{ inputs.role }}
